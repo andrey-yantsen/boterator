@@ -116,20 +116,23 @@ class BotMother:
     @coroutine
     def __wait_for_registration_complete(self, user_id, timeout=3600):
         stage = self.stages.get(user_id)
-        slave = Slave(stage[1]['token'], self, None, None)
+        slave = Slave(stage[1]['token'], self, None, None, {}, None, None)
         slave.listen()
         while True:
             stage_id, stage_meta, stage_begin = self.stages.get(user_id)
 
             if stage_id == self.STAGE_REGISTERED:
+                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24}
                 yield slave.stop()
 
                 yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
                 yield get_db().execute("""
                                       INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
-                                      VALUES (%s, %s, %s, %s, %s, True, '{"delay": 15, "votes": 5, "vote_timeout": 24}')
-                                      """, (stage_meta['bot_info']['id'], stage_meta['token'], user_id, stage_meta['moderation'], stage_meta['channel']))
-                slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'])
+                                      VALUES (%s, %s, %s, %s, %s, True, %s)
+                                      """, (stage_meta['bot_info']['id'], stage_meta['token'], user_id,
+                                            stage_meta['moderation'], stage_meta['channel'], dumps(default_settings)))
+                slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'],
+                              default_settings, user_id, stage_meta['bot_info']['id'])
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
