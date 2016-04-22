@@ -14,6 +14,10 @@ def main():
         yield bot.forward_message(message['chat']['id'], message['chat']['id'], message['message_id'])
 
     @coroutine
+    def parce_command(message):
+        yield bot.parce_command(message['chat']['id'], message['text'])
+
+    @coroutine
     def new_chat(message):
         if message['new_chat_member']['id'] == bot.me['id']:
             msg = 'Hi there, @%s, thank you!' % message['from']['username']
@@ -29,7 +33,8 @@ def main():
             return False
 
     bot = get_telegram()
-    bot.add_handler(print, '/start')
+    bot.add_handler(parce_command,'/start')
+    bot.add_handler(parce_command,'/reg')
     bot.add_handler(forward_message)
     bot.add_handler(partial(print, 'Non-command message'))
     bot.add_handler(new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)
