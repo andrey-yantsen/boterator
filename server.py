@@ -18,11 +18,10 @@ if __name__ == '__main__':
 
     parse_command_line()
 
-    if not options.token or not options.db:
+    if not options.token:
         print_help()
         exit(1)
 
     ioloop = IOLoop.instance()
 
-    ioloop.run_sync(init_db)
     ioloop.run_sync(main)
