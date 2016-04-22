@@ -60,8 +60,8 @@ class BotMother:
                     return
                 yield self.bot.send_message(user_id, 'Ok, I\'ve got basic information for %s' % new_bot_me['username'])
                 yield self.bot.send_message(user_id,
-                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to the group, in  '
-                                            'case you’ve already added him), where I should send messages for verification, or type  '
+                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to the group, in '
+                                            'case you’ve already added him), where I should send messages for verification, or type '
                                             '/cancel' % new_bot_me['username'],
                                             parse_mode=Api.PARSE_MODE_MD)
                 self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me)
@@ -136,9 +136,9 @@ class BotMother:
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
-                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes to approve the message, perform 15 minutes delay  '
-                                                     'between channel posts and wait 24 hours before closing a voting for each message. To '
-                                                     'modify this settings send /help in PM to @%s . You’re '
+                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes to approve the message, perform 15 minutes delay '
+                                                     'between channel messages and wait 24 hours before closing a voting for each message. To '
+                                                     'modify this settings send /help in PM to @%s. You’re '
                                                      'the only user who can change these settings and use /help command' % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
@@ -258,7 +258,7 @@ class Slave:
 
     @coroutine
     def start_command(self, message):
-        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we\'re ready.'
+        yield self.bot.send_message(message['from']['id'], 'Just enter your message, and we\'re ready. '
                                                            'At this moment we do support only text messages.')
 
     @coroutine
@@ -341,14 +341,14 @@ class Slave:
 
         mes = message['text']
         if mes.strip() != '':
-            if 120 < len(mes) < 1000:
-                yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your post one more time.')
+            if 50 < len(mes) < 1000:
+                yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your message one more time.')
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
                 yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise - /cancel')
                 self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
                                 message_id=message['message_id'])
             else:
-                yield self.bot.send_message(message['chat']['id'], 'Sorry, but we can proceed only messages with length between 150 and 1 000 symbols.')
+                yield self.bot.send_message(message['chat']['id'], 'Sorry, but we can proceed only messages with length between 50 and 1 000 symbols.')
         else:
             yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
@@ -418,7 +418,7 @@ class Slave:
 
     @coroutine
     def vote_no(self, message):
-        match = self.RE_MATCH_YES.match(message['text'])
+        match = self.RE_MATCH_NO.match(message['text'])
         original_chat_id = match.group('chat_id')
         message_id = match.group('message_id')
         yield self.__vote(message['from']['id'], message_id, original_chat_id, False)
@@ -429,10 +429,10 @@ class Slave:
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
 /setvotes — change required amount of :+1:-votes to publish a message (current: %s)
-/settimeout — change voting duration (current: %s hours")
+/settimeout — change voting duration (current: %s hours)
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
-                                                                      self.settings['vote_timeout']))
+                                                                      self.settings['vote_timeout']), Api.PARSE_MODE_MD)
         else:
             return False
 
