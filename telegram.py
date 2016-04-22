@@ -129,7 +129,6 @@ class Api:
 
             for update in updates:
                 yield self.processing_queue.put(update)
-                self._process_update(update)
                 last_update_id = update['update_id']
 
     @coroutine
