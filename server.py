@@ -1,7 +1,6 @@
-import logging
 from functools import partial
 
-from tornado.gen import coroutine, Task
+from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
@@ -10,10 +9,13 @@ from globals import get_db, get_telegram
 
 @coroutine
 def main():
-    logging.info('Do something')
+    @coroutine
+    def forward_message(message):
+        yield bot.forward_message(message['chat']['id'], message['chat']['id'], message['message_id'])
 
     bot = get_telegram()
     bot.add_handler(print, '/start')
+    bot.add_handler(forward_message)
     bot.add_handler(partial(print, 'Non-command message'))
     yield bot.wait_commands()
 
