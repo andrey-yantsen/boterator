@@ -1,15 +1,9 @@
-from tornado.gen import coroutine
+import signal
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
 from globals import init_db
 from boterator import BotMother
-
-
-@coroutine
-def main():
-    bm = BotMother(options.token)
-    yield bm.listen()
 
 
 if __name__ == '__main__':
@@ -25,4 +19,9 @@ if __name__ == '__main__':
     ioloop = IOLoop.instance()
 
     ioloop.run_sync(init_db)
-    ioloop.run_sync(main)
+
+    bm = BotMother(options.token)
+    ioloop.run_sync(bm.listen)
+
+    signal.signal(signal.SIGTERM, bm.stop)
+    signal.signal(signal.SIGINT, bm.stop)
