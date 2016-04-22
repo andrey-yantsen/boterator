@@ -234,6 +234,14 @@ class Slave:
     @coroutine
     def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
+        cur = get_db().execute('SELECT owner_id, id, original_chat_id, (SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+                               'FROM incoming_messages im WHERE bot_id = %s AND '
+                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
+
+        for owner_id, message_id, chat_id, votes in cur.fetchall():
+            yield self.bot.send_message(owner_id,
+                                        'Unfortunately your message has failed moderation with %s votes out of required %s' % (votes, self.settings['votes']))
+
         yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
         if self.bot.consumption_state == Api.STATE_WORKING:
@@ -387,8 +395,14 @@ class Slave:
                                    """, (user_id, message_id, original_chat_id, yes))
 
             if current_yes >= self.settings.get('votes', 5):
-                yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
+                cur = yield get_db().execute('SELECT is_voting_success, owner_id FROM incoming_messages WHERE id = %s AND original_chat_id = %s',
                                        (message_id, original_chat_id))
+                row = cur.fetchone()
+                if not row[0]:
+                    yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
+                                           (message_id, original_chat_id))
+                    yield self.bot.send_message(row[1], 'Your message has successfully passed moderation and queued for publishing.')
+                    yield self.bot.forward_message(row[1], original_chat_id, message_id)
 
     @coroutine
     def vote_yes(self, message):
