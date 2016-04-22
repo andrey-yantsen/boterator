@@ -350,7 +350,7 @@ class Slave:
             if 50 < len(mes) < 1000:
                 yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your message one more time.')
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-                yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise - /cancel')
+                yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise — /cancel')
                 self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
                                 message_id=message['message_id'])
             else:
