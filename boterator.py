@@ -51,14 +51,15 @@ def main():
 
 if __name__ == '__main__':
     define('token', type=str, help='TelegramBot\'s token')
-    define('db', type=str, help='DB connection DSN, e.g. "dbname=bot user=bot host=localhost port=5432"')
+    define('db', type=str, help='DB connection DSN, e.g. "dbname=boterator user=boterator host=localhost port=5432"')
 
     parse_command_line()
 
-    if not options.token:
+    if not options.token or not options.db:
         print_help()
         exit(1)
 
     ioloop = IOLoop.instance()
 
+    ioloop.run_sync(get_db)
     ioloop.run_sync(main)
