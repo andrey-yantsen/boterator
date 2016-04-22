@@ -217,8 +217,12 @@ class Slave:
     def check_votes_success(self):
         cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s', (self.bot_id, ))
         row = cur.fetchone()
-        allowed_time = datetime.now() - timedelta(minutes=self.settings.get('delay', 15))
-        if not row[0] or row[0] >= allowed_time:
+        if row[0]:
+            allowed_time = row[0] + timedelta(minutes=self.settings.get('delay', 15))
+        else:
+            allowed_time = datetime.now()
+
+        if datetime.now() >= allowed_time:
             cur = yield get_db().execute('SELECT id, original_chat_id FROM incoming_messages WHERE bot_id = %s '
                                          'AND is_voting_success = True and is_published = False '
                                          'ORDER BY created_at LIMIT 1', (self.bot_id, ))
