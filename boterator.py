@@ -428,11 +428,11 @@ class Slave:
         if message['chat']['id'] == self.owner_id:
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
-/setvotes — change required amount of :+1:-votes to publish a message (current: %s)
+/setvotes — change required amount of yes-votes to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
-                                                                      self.settings['vote_timeout']), Api.PARSE_MODE_MD)
+                                                                      self.settings['vote_timeout']))
         else:
             return False
 
