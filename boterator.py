@@ -230,6 +230,8 @@ class Slave:
                     yield self.bot.forward_message(self.channel_name, row[1], row[0])
                     yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
                                            (row[0], row[1]))
+                    yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE bot_id = %s',
+                                           (self.bot_id, ))
                 except:
                     logging.exception('Message forwarding failed (#%s from %s)', row[0], row[1])
 
