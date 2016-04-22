@@ -198,7 +198,7 @@ class Api:
     def _execute_message_handler(self, message_type, cmd, message):
         handled = False
         for required_message_type, required_cmd, handler in self.callbacks:
-            if required_message_type == message_type and (required_cmd == cmd or (hasattr(required_cmd, 'match') and required_cmd.match(cmd))):
+            if required_message_type == message_type and (required_cmd == cmd or (cmd and hasattr(required_cmd, 'match') and required_cmd.match(cmd))):
                 ret = handler(message)
                 if isinstance(ret, Future):
                     ret = yield ret

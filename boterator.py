@@ -2,6 +2,7 @@ import logging
 import re
 from datetime import datetime, timedelta
 from time import time
+from ujson import dumps
 
 from tornado.gen import coroutine, sleep
 from tornado.ioloop import PeriodicCallback, IOLoop
@@ -78,7 +79,7 @@ class BotMother:
         if self.stages.get_id(user_id) == self.STAGE_PUBLIC_CHANNEL:
             channel_name = message['text'].strip()
             if message['text'][0] != '@' or ' ' in channel_name:
-                yield self.bot.send_message(user_id, 'Invalid channel name. Try again on type /cancel')
+                yield self.bot.send_message(user_id, 'Invalid channel name. Try again or type /cancel')
             else:
                 self.stages.set(user_id, self.STAGE_REGISTERED, channel=channel_name)
         else:
@@ -93,7 +94,7 @@ class BotMother:
                                      'registered_bots WHERE active = True')
 
         for bot_id, token, owner_id, moderator_chat_id, target_channel, settings in cur.fetchall():
-            slave = Slave(token, self, moderator_chat_id, target_channel, settings)
+            slave = Slave(token, self, moderator_chat_id, target_channel, settings, owner_id, bot_id)
             try:
                 yield slave.bot.get_me()
                 slave.listen()
@@ -132,8 +133,8 @@ class BotMother:
                 yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
                 yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes for the article, '
                                                      'perform 15 minutes delay between channel posts and wait 24 hours '
-                                                     'before close a voting. We\'re unable to change it right now, '
-                                                     'sorry')
+                                                     'before close a voting. To modify this settings send /help in PM '
+                                                     'to @%s' % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
@@ -165,15 +166,28 @@ class BotMother:
 class Slave:
     STAGE_ADDING_MESSAGE = 1
 
+    STAGE_WAIT_DELAY_VALUE = 3
+
+    STAGE_WAIT_VOTES_VALUE = 5
+
+    STAGE_WAIT_VOTE_TIMEOUT_VALUE = 7
+
     RE_MATCH_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_MATCH_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
 
-    def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings):
+    def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
         bot.add_handler(self.confirm_command, '/confirm')
         bot.add_handler(self.start_command, '/start')
         bot.add_handler(self.cancel_command, '/cancel')
-        bot.add_handler(self.plaintext_handler)
+        bot.add_handler(self.help_command, '/help')
+        bot.add_handler(self.setdelay_command, '/setdelay')
+        bot.add_handler(self.setvotes_command, '/setvotes')
+        bot.add_handler(self.settimeout_command, '/settimeout')
+        bot.add_handler(self.plaintext_post_handler)
+        bot.add_handler(self.plaintext_delay_handler)
+        bot.add_handler(self.plaintext_votes_handler)
+        bot.add_handler(self.plaintext_timeout_handler)
         bot.add_handler(self.vote_yes, self.RE_MATCH_YES)
         bot.add_handler(self.vote_no, self.RE_MATCH_NO)
         bot.add_handler(self.new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)
@@ -184,6 +198,8 @@ class Slave:
         self.channel_name = channel_name
         self.stages = StagesStorage()
         self.settings = settings
+        self.owner_id = owner_id
+        self.bot_id = bot_id
 
     @coroutine
     def listen(self):
@@ -194,14 +210,13 @@ class Slave:
 
     @coroutine
     def check_votes_success(self):
-        bot_info = yield self.bot.get_me()
-        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s', (bot_info['id'], ))
+        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s', (self.bot_id, ))
         row = cur.fetchone()
         allowed_time = datetime.now() - timedelta(minutes=self.settings.get('delay', 15))
         if not row[0] or row[0] >= allowed_time:
             cur = yield get_db().execute('SELECT id, original_chat_id FROM incoming_messages WHERE bot_id = %s '
                                          'AND is_voting_success = True and is_published = False '
-                                         'ORDER BY created_at LIMIT 1', (bot_info['id'], ))
+                                         'ORDER BY created_at LIMIT 1', (self.bot_id, ))
 
             row = cur.fetchone()
 
@@ -218,10 +233,9 @@ class Slave:
 
     @coroutine
     def check_votes_failures(self):
-        bot_info = yield self.bot.get_me()
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
         yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
-                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (bot_info['id'], vote_timeout))
+                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
         if self.bot.consumption_state == Api.STATE_WORKING:
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
 
@@ -231,7 +245,8 @@ class Slave:
 
     @coroutine
     def start_command(self, message):
-        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we\'re ready')
+        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we\'re ready. '
+                                                           'Only text messages are supported for now.')
 
     @coroutine
     def is_moderators_chat(self, chat_id):
@@ -303,14 +318,13 @@ class Slave:
         yield self.bot.send_message(message['from']['id'], 'Action cancelled')
 
     @coroutine
-    def plaintext_handler(self, message):
+    def plaintext_post_handler(self, message):
         if message['from']['id'] != message['chat']['id']:
             return False  # Allow only in private
 
         user_id = message['from']['id']
         if self.stages.get_id(user_id):
-            yield self.bot.send_message(user_id, 'You already doing some shit, maybe you would like to /cancel it?')
-            return
+            return False
 
         mes = message['text']
         if mes.strip() != '':
@@ -389,6 +403,85 @@ class Slave:
         original_chat_id = match.group('chat_id')
         message_id = match.group('message_id')
         yield self.__vote(message['from']['id'], message_id, original_chat_id, False)
+
+    @coroutine
+    def help_command(self, message):
+        if message['chat']['id'] == self.owner_id:
+            msg = """Bot owner's help:
+/setdelay - Change delay between messages (current: %s minutes)
+/setvotes - Change required yes-votes to publish a message (current: %s)
+/settimeout - Change poll timeout (current: %s hours)
+"""
+            yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
+                                                                      self.settings['vote_timeout']))
+        else:
+            return False
+
+    @coroutine
+    def setdelay_command(self, message):
+        if message['chat']['id'] == self.owner_id:
+            yield self.bot.send_message(message['chat']['id'], 'Enter new messages interval value (in minutes, only a digits)')
+            self.stages.set(message['chat']['id'], self.STAGE_WAIT_DELAY_VALUE)
+        else:
+            return False
+
+    @coroutine
+    def plaintext_delay_handler(self, message):
+        user_id = message['chat']['id']
+        if self.stages.get_id(user_id) == self.STAGE_WAIT_DELAY_VALUE:
+            if message['text'].isdigit():
+                self.settings['delay'] = int(message['text'])
+                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
+                yield self.bot.send_message(user_id, 'Delay value updated to %s minutes' % self.settings['delay'])
+                self.stages.drop(user_id)
+            else:
+                yield self.bot.send_message(user_id, 'Invalid delay value. Try again or type /cancel')
+        else:
+            return False
+
+    @coroutine
+    def setvotes_command(self, message):
+        if message['chat']['id'] == self.owner_id:
+            yield self.bot.send_message(message['chat']['id'], 'Enter new required votes value')
+            self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTES_VALUE)
+        else:
+            return False
+
+    @coroutine
+    def plaintext_votes_handler(self, message):
+        user_id = message['chat']['id']
+        if self.stages.get_id(user_id) == self.STAGE_WAIT_VOTES_VALUE:
+            if message['text'].isdigit():
+                self.settings['votes'] = int(message['text'])
+                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
+                yield self.bot.send_message(user_id, 'Required votes count updated to %s' % self.settings['votes'])
+                self.stages.drop(user_id)
+            else:
+                yield self.bot.send_message(user_id, 'Invalid votes count value. Try again or type /cancel')
+        else:
+            return False
+
+    @coroutine
+    def settimeout_command(self, message):
+        if message['chat']['id'] == self.owner_id:
+            yield self.bot.send_message(message['chat']['id'], 'Enter new poll timeout value (in hours, only a digits)')
+            self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
+        else:
+            return False
+
+    @coroutine
+    def plaintext_timeout_handler(self, message):
+        user_id = message['chat']['id']
+        if self.stages.get_id(user_id) == self.STAGE_WAIT_VOTE_TIMEOUT_VALUE:
+            if message['text'].isdigit():
+                self.settings['vote_timeout'] = int(message['text'])
+                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
+                yield self.bot.send_message(user_id, 'Poll timeout updated to %s hours' % self.settings['vote_timeout'])
+                self.stages.drop(user_id)
+            else:
+                yield self.bot.send_message(user_id, 'Invalid poll timeout value. Try again or type /cancel')
+        else:
+            return False
 
 
 class StagesStorage:
