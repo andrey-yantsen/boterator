@@ -1,8 +1,10 @@
 import logging
+import re
+from datetime import datetime, timedelta
 from time import time
 
 from tornado.gen import coroutine, sleep
-from tornado.ioloop import PeriodicCallback
+from tornado.ioloop import PeriodicCallback, IOLoop
 
 from globals import get_db
 from telegram import Api
@@ -87,10 +89,11 @@ class BotMother:
         logging.info('Initializing slaves')
         self.slaves = dict()
 
-        cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel FROM registered_bots WHERE active = True')
+        cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel, settings FROM '
+                                     'registered_bots WHERE active = True')
 
-        for bot_id, token, owner_id, moderator_chat_id, target_channel in cur.fetchall():
-            slave = Slave(token, self, moderator_chat_id, target_channel)
+        for bot_id, token, owner_id, moderator_chat_id, target_channel, settings in cur.fetchall():
+            slave = Slave(token, self, moderator_chat_id, target_channel, settings)
             try:
                 yield slave.bot.get_me()
                 slave.listen()
@@ -105,6 +108,7 @@ class BotMother:
 
         logging.info('Waiting for commands')
         yield self.bot.wait_commands()
+        logging.info('Mother termination')
 
     @coroutine
     def __wait_for_registration_complete(self, user_id, timeout=3600):
@@ -120,15 +124,16 @@ class BotMother:
                 yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
                 yield get_db().execute("""
                                       INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
-                                      VALUES (%s, %s, %s, %s, %s, True, '{"delay": 15, "votes": 1}')
+                                      VALUES (%s, %s, %s, %s, %s, True, '{"delay": 15, "votes": 5, "vote_timeout": 24}')
                                       """, (stage_meta['bot_info']['id'], stage_meta['token'], user_id, stage_meta['moderation'], stage_meta['channel']))
                 slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'])
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
-                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes for the article and '
-                                                     'perform 15 minutes delay between channel posts. We\'re unable to '
-                                                     'change it right now, sorry')
+                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes for the article, '
+                                                     'perform 15 minutes delay between channel posts and wait 24 hours '
+                                                     'before close a voting. We\'re unable to change it right now, '
+                                                     'sorry')
                 break
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
@@ -160,12 +165,17 @@ class BotMother:
 class Slave:
     STAGE_ADDING_MESSAGE = 1
 
-    def __init__(self, token, m: BotMother, moderator_chat_id, channel_name):
+    RE_MATCH_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
+    RE_MATCH_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
+
+    def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings):
         bot = Api(token)
         bot.add_handler(self.confirm_command, '/confirm')
         bot.add_handler(self.start_command, '/start')
         bot.add_handler(self.cancel_command, '/cancel')
         bot.add_handler(self.plaintext_handler)
+        bot.add_handler(self.vote_yes, self.RE_MATCH_YES)
+        bot.add_handler(self.vote_no, self.RE_MATCH_NO)
         bot.add_handler(self.new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.MSG_LEFT_CHAT_MEMBER)
         self.bot = bot
@@ -173,11 +183,47 @@ class Slave:
         self.moderator_chat_id = moderator_chat_id
         self.channel_name = channel_name
         self.stages = StagesStorage()
+        self.settings = settings
 
     @coroutine
     def listen(self):
+        IOLoop.current().add_callback(self.check_votes_success)
+        IOLoop.current().add_callback(self.check_votes_failures)
         yield self.bot.wait_commands()
-        logging.info('Termination')
+        logging.info('Slave termination')
+
+    @coroutine
+    def check_votes_success(self):
+        bot_info = yield self.bot.get_me()
+        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s', (bot_info['id'], ))
+        row = cur.fetchone()
+        allowed_time = datetime.now() - timedelta(minutes=self.settings.get('delay', 15))
+        if not row[0] or row[0] >= allowed_time:
+            cur = yield get_db().execute('SELECT id, original_chat_id FROM incoming_messages WHERE bot_id = %s '
+                                         'AND is_voting_success = True and is_published = False '
+                                         'ORDER BY created_at LIMIT 1', (bot_info['id'], ))
+
+            row = cur.fetchone()
+
+            if row:
+                try:
+                    yield self.bot.forward_message(self.channel_name, row[1], row[0])
+                    yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
+                                           (row[0], row[1]))
+                except:
+                    logging.exception('Message forwarding failed (#%s from %s)', row[0], row[1])
+
+        if self.bot.consumption_state == Api.STATE_WORKING:
+            IOLoop.current().add_timeout(timedelta(minutes=1), self.check_votes_success)
+
+    @coroutine
+    def check_votes_failures(self):
+        bot_info = yield self.bot.get_me()
+        vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
+        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
+                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (bot_info['id'], vote_timeout))
+        if self.bot.consumption_state == Api.STATE_WORKING:
+            IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
 
     @coroutine
     def stop(self):
@@ -282,7 +328,67 @@ class Slave:
     @coroutine
     def post_new_moderation_request(self, message_id, original_chat_id, target_chat_id):
         yield self.bot.forward_message(target_chat_id, original_chat_id, message_id)
-        yield self.bot.send_message(target_chat_id, 'Type /vote_%s_yes or /vote_%s_no to vote for or against this message' % (message_id, message_id))
+        yield self.bot.send_message(target_chat_id, 'Type /vote_%s_%s_yes or /vote_%s_%s_no to vote for or against this message' % (original_chat_id, message_id, original_chat_id, message_id))
+        bot_info = yield self.bot.get_me()
+        yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
+
+    @coroutine
+    def __is_user_voted(self, user_id, original_chat_id, message_id):
+        cur = yield get_db().execute('SELECT 1 FROM votes_history WHERE user_id = %s AND message_id = %s AND original_chat_id = %s',
+                                     (user_id, message_id, original_chat_id))
+
+        if cur.fetchone():
+            return True
+
+        return False
+
+    @coroutine
+    def __is_voting_opened(self, original_chat_id, message_id):
+        cur = yield get_db().execute('SELECT is_voting_fail, is_published FROM incoming_messages WHERE id = %s AND '
+                                     'original_chat_id = %s',
+                                     (message_id, original_chat_id))
+        row = cur.fetchone()
+        if not row or (row[0] != row[1]):
+            return False
+
+        return True
+
+    @coroutine
+    def __vote(self, user_id, message_id, original_chat_id, yes: bool):
+        voted = yield self.__is_user_voted(user_id, message_id, original_chat_id)
+        opened = yield self.__is_voting_opened(original_chat_id, message_id)
+
+        cur = yield get_db().execute('SELECT SUM(vote_yes::int) FROM votes_history WHERE message_id = %s AND original_chat_id = %s',
+                                     (message_id, original_chat_id))
+        current_yes = cur.fetchone()[0]
+        if not current_yes:
+            current_yes = 0
+
+        if not voted and opened:
+            current_yes += int(yes)
+
+            yield get_db().execute("""
+                                   INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes, created_at)
+                                   VALUES (%s, %s, %s, %s, NOW())
+                                   """, (user_id, message_id, original_chat_id, yes))
+
+            if current_yes >= self.settings.get('votes', 5):
+                yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
+                                       (message_id, original_chat_id))
+
+    @coroutine
+    def vote_yes(self, message):
+        match = self.RE_MATCH_YES.match(message['text'])
+        original_chat_id = match.group('chat_id')
+        message_id = match.group('message_id')
+        yield self.__vote(message['from']['id'], message_id, original_chat_id, True)
+
+    @coroutine
+    def vote_no(self, message):
+        match = self.RE_MATCH_YES.match(message['text'])
+        original_chat_id = match.group('chat_id')
+        message_id = match.group('message_id')
+        yield self.__vote(message['from']['id'], message_id, original_chat_id, False)
 
 
 class StagesStorage:

@@ -31,7 +31,7 @@ class Api:
     PARSE_MODE_MD = 'Markdown'
     PARSE_MODE_HTML = 'HTML'
 
-    def __init__(self, token, processing_threads_cnt=30):
+    def __init__(self, token, processing_threads_cnt=5):
         self.token = token
         self.callbacks = []
         self.consumption_state = self.STATE_STOPPED
@@ -40,7 +40,7 @@ class Api:
         self.processing_queue = Queue(processing_threads_cnt * 10)
         self.__me = None
 
-    def add_handler(self, handler, cmd: str=None, msg_type: str=MSG_TEXT):
+    def add_handler(self, handler, cmd=None, msg_type: str=MSG_TEXT):
         self.callbacks.append((msg_type, cmd, handler))
 
     @coroutine
@@ -198,7 +198,7 @@ class Api:
     def _execute_message_handler(self, message_type, cmd, message):
         handled = False
         for required_message_type, required_cmd, handler in self.callbacks:
-            if required_message_type == message_type and required_cmd == cmd:
+            if required_message_type == message_type and (required_cmd == cmd or (hasattr(required_cmd, 'match') and required_cmd.match(cmd))):
                 ret = handler(message)
                 if isinstance(ret, Future):
                     ret = yield ret
@@ -222,7 +222,7 @@ class Api:
                         if update['message']['text'].startswith('@' + bot_info['username']):
                             update['message']['text'] = update['message']['text'][len(bot_info['username'])+1:].strip()
                         elif update['message']['text'].endswith('@' + bot_info['username']):
-                            update['message']['text'] = update['message']['text'][:-len(bot_info['username'])+1.].strip()
+                            update['message']['text'] = update['message']['text'][:-len(bot_info['username'])-1].strip()
 
                         # Got bot command
                         if update['message']['text'][0] == '/':
