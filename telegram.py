@@ -18,6 +18,19 @@ class Api:
     MSG_NEW_CHAT_MEMBER = 'new_chat_member'
     MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
 
+    CHAT_ACTION_TYPING = 'typing'
+    CHAT_ACTION_UPLOAD_PHOTO = 'upload_photo'
+    CHAT_ACTION_RECORD_VIDEO = 'record_video'
+    CHAT_ACTION_UPLOAD_VIDEO = 'upload_video'
+    CHAT_ACTION_RECORD_AUDIO = 'record_audio'
+    CHAT_ACTION_UPLOAD_AUDIO = 'upload_audio'
+    CHAT_ACTION_UPLOAD_DOC = 'upload_document'
+    CHAT_ACTION_FIND_LOCATION = 'find_location'
+
+    PARSE_MODE_NONE = None
+    PARSE_MODE_MD = 'Markdown'
+    PARSE_MODE_HTML = 'HTML'
+
     def __init__(self, token, processing_threads_cnt=30):
         self.token = token
         self.callbacks = []
@@ -25,10 +38,17 @@ class Api:
         self.processing_threads = []
         self.processing_threads_cnt = processing_threads_cnt
         self.processing_queue = Queue(processing_threads_cnt * 10)
-        self.me = None
+        self.__me = None
 
     def add_handler(self, handler, cmd: str=None, msg_type: str=MSG_TEXT):
         self.callbacks.append((msg_type, cmd, handler))
+
+    @coroutine
+    def get_me(self):
+        if not self.__me:
+            self.__me = yield self.__request_api('getMe')
+
+        return self.__me
 
     @coroutine
     def stop(self):
@@ -106,8 +126,7 @@ class Api:
         if last_update_id is not None:
             last_update_id += 1
 
-        if not self.me:
-            self.me = yield self.__request_api('getMe')
+        yield self.get_me()
 
         while True and self.consumption_state == self.STATE_WORKING:
             get_updates_f = self.get_updates(last_update_id)
@@ -193,12 +212,16 @@ class Api:
 
     @coroutine
     def _process_update(self):
+        bot_info = yield self.get_me()
         while True:
             update = yield self.processing_queue.get()
 
             try:
                 if 'message' in update:
                     if 'text' in update['message']:
+                        if update['message']['text'].startswith('@' + bot_info['username']):
+                            update['message']['text'] = update['message']['text'][len(bot_info['username'])+1:].strip()
+
                         # Got bot command
                         if update['message']['text'][0] == '/':
                             if update['message']['text'].find(' ') > -1:
@@ -215,15 +238,32 @@ class Api:
                         yield self._execute_message_handler(self.MSG_NEW_CHAT_MEMBER, None, update['message'])
                     else:
                         logging.error('Unsupported message received: %s', update)
-
-                elif 'inline_query' in update:
-                    logging.error('Unsupported message received: inline query')
                 else:
                     logging.error('Unsupported message received: %s', update)
             except:
                 logging.exception('Error while processing message')
 
             self.processing_queue.task_done()
+
+
+class InlineKeyboardButton(dict):
+    def __init__(self, text: str, url: str=None, callback_data: str=None, switch_inline_query: str=None, **kwargs):
+        super().__init__(**kwargs)
+        self['text'] = text
+        if url is not None:
+            self['url'] = url
+        elif callback_data is not None:
+            self['callback_data'] = callback_data
+        elif switch_inline_query is not None:
+            self['switch_inline_query'] = switch_inline_query
+        else:
+            raise AttributeError('You must specify one of url, callback_data or switch_inline_query')
+
+
+class InlineKeyboardMarkup(dict):
+    def __init__(self, rows: list, **kwargs):
+        super().__init__(**kwargs)
+        self['inline_keyboard'] = rows
 
 
 class ApiError(Exception):
