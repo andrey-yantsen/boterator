@@ -14,6 +14,10 @@ def main():
         yield bot.forward_message(message['chat']['id'], message['chat']['id'], message['message_id'])
 
     @coroutine
+    def check_bot():
+        return True
+
+    @coroutine
     def parce_command(message):
         yield bot.parce_command(message['chat']['id'], message['text'])
 
@@ -23,7 +27,10 @@ def main():
             msg = 'Hi there, @%s, thank you!' % message['from']['username']
             yield bot.send_message(message['chat']['id'], msg)
         else:
-            return False
+            if bot.check_bot():
+                yield bot.send_message(message['chat']['id'], 'Good!')
+            else:
+                yield bot.send_message(message['chat']['id'], 'Hey! Please reg in @Boterator')
 
     @coroutine
     def left_chat(message):
