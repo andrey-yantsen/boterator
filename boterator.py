@@ -239,7 +239,7 @@ class Slave:
     @coroutine
     def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
-        cur = get_db().execute('SELECT owner_id, id, original_chat_id, (SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+        cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, (SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
                                'FROM incoming_messages im WHERE bot_id = %s AND '
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
 
