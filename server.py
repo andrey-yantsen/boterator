@@ -1,17 +1,15 @@
-import logging
-
 from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
 from globals import init_db
-from boterator import Moderator
+from boterator import BotMother
 
 
 @coroutine
 def main():
-    moderator = Moderator(options.token)
-    yield moderator.listen()
+    bm = BotMother(options.token)
+    yield bm.listen()
 
 
 if __name__ == '__main__':

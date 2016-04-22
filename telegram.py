@@ -221,6 +221,8 @@ class Api:
                     if 'text' in update['message']:
                         if update['message']['text'].startswith('@' + bot_info['username']):
                             update['message']['text'] = update['message']['text'][len(bot_info['username'])+1:].strip()
+                        elif update['message']['text'].endswith('@' + bot_info['username']):
+                            update['message']['text'] = update['message']['text'][:-len(bot_info['username'])+1.].strip()
 
                         # Got bot command
                         if update['message']['text'][0] == '/':
@@ -244,26 +246,6 @@ class Api:
                 logging.exception('Error while processing message')
 
             self.processing_queue.task_done()
-
-
-class InlineKeyboardButton(dict):
-    def __init__(self, text: str, url: str=None, callback_data: str=None, switch_inline_query: str=None, **kwargs):
-        super().__init__(**kwargs)
-        self['text'] = text
-        if url is not None:
-            self['url'] = url
-        elif callback_data is not None:
-            self['callback_data'] = callback_data
-        elif switch_inline_query is not None:
-            self['switch_inline_query'] = switch_inline_query
-        else:
-            raise AttributeError('You must specify one of url, callback_data or switch_inline_query')
-
-
-class InlineKeyboardMarkup(dict):
-    def __init__(self, rows: list, **kwargs):
-        super().__init__(**kwargs)
-        self['inline_keyboard'] = rows
 
 
 class ApiError(Exception):
