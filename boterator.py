@@ -2,6 +2,7 @@ import logging
 from time import time
 
 from tornado.gen import coroutine, sleep
+from tornado.ioloop import PeriodicCallback
 
 from globals import get_db
 from telegram import Api
@@ -22,31 +23,8 @@ class Moderator:
         bot.add_handler(self.new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.MSG_LEFT_CHAT_MEMBER)
         self.bot = bot
-        self.stages = {}
-
-    def set_stage(self, user_id, stage_id, **kwargs):
-        if user_id not in self.stages:
-            self.stages[user_id] = {'meta': {}, 'code': 0}
-
-        assert self.stages[user_id]['code'] == 0 or stage_id == self.stages[user_id]['code'] + 1
-
-        self.stages[user_id]['code'] = stage_id
-        self.stages[user_id]['meta'].update(kwargs)
-        self.stages[user_id]['timestamp'] = time()
-
-    def get_stage_info(self, user_id):
-        if user_id in self.stages:
-            return self.stages[user_id]['code'], self.stages[user_id]['meta'], self.stages[user_id]['timestamp']
-
-        return None, {}, 0
-
-    def get_stage_id(self, user_id):
-        return self.get_stage_info(user_id)[0]
-
-    def drop_stage(self, user_id):
-        ret = self.get_stage_info(user_id)
-        if ret[0] is not None:
-            del self.stages[user_id]
+        self.stages = StagesStorage()
+        self.slaves = {}
 
     @coroutine
     def start_command(self, message):
@@ -54,37 +32,40 @@ class Moderator:
 
     @coroutine
     def reg_command(self, message):
-        if self.get_stage_info(message['from']['id'])[0]:
-            yield self.bot.send_message(message['from']['id'], 'Another action is in progress, continue or /cancel')
+        user_id = message['from']['id']
+        if self.stages.get_id(user_id):
+            yield self.bot.send_message(user_id, 'Another action is in progress, continue or /cancel')
             return
 
         token = message['text'][5:].strip()
         if token == '':
-            yield self.bot.send_message(message['from']['id'], 'Start -> go @BotFather and create new bot')
+            yield self.bot.send_message(user_id, 'Start -> go @BotFather and create new bot')
         else:
-            yield self.bot.send_chat_action(message['from']['id'], self.bot.CHAT_ACTION_TYPING)
+            yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
             if len(token.split(':')) != 2:
-                yield self.bot.send_message(message['from']['id'], 'Incorrect token value')
+                yield self.bot.send_message(user_id, 'Incorrect token value')
                 return
 
             try:
                 new_bot = Api(token)
                 new_bot_me = yield new_bot.get_me()
+                if new_bot_me['id'] in self.slaves:
+                    yield self.bot.send_message(user_id, 'Bot is already registered, make another one')
+                    return
                 me = yield self.bot.get_me()
-                yield self.bot.send_message(message['from']['id'], 'Ok, I`ve stored basic info for %s' % new_bot_me['username'])
-                yield self.bot.send_message(message['from']['id'],
+                yield self.bot.send_message(user_id, 'Ok, I`ve stored basic info for %s' % new_bot_me['username'])
+                yield self.bot.send_message(user_id,
                                             'Now add me to a group (or paste `@%s /attach` in the group), where I should send articles for moderation, or type /cancel' % me['username'],
                                             parse_mode=Api.PARSE_MODE_MD)
-                self.set_stage(message['chat']['id'], self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me)
-                self.__wait_for_registration_complete(message['from']['id'])
+                self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me)
+                self.__wait_for_registration_complete(user_id)
             except Exception as e:
                 logging.exception(e)
-                yield self.bot.send_message(message['from']['id'], 'Unable to get bot info: %s' % str(e))
+                yield self.bot.send_message(user_id, 'Unable to get bot info: %s' % str(e))
 
     @coroutine
     def cancel_command(self, message):
-        if message['from']['id'] in self.stages:
-            del self.stages[message['from']['id']]
+        self.stages.drop(message['from']['id'])
         yield self.bot.send_message(message['from']['id'], 'Action cancelled')
 
     @coroutine
@@ -101,7 +82,7 @@ class Moderator:
             if known_chat:
                 yield self.bot.send_message(message['chat']['id'], 'Hi there, @%s!' % message['from']['username'])
             else:
-                if self.get_stage_id(message['from']['id']) == self.STAGE_MODERATION_GROUP:
+                if self.stages.get_id(message['from']['id']) == self.STAGE_MODERATION_GROUP:
                     yield self.attach_command(message)
                 else:
                     yield self.bot.send_message(message['from']['id'], 'This bot wasn`t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
@@ -111,24 +92,24 @@ class Moderator:
     @coroutine
     def attach_command(self, message):
         user_id = message['from']['id']
-        stage = self.get_stage_info(user_id)
+        stage = self.stages.get(user_id)
         if stage[0] == self.STAGE_MODERATION_GROUP:
             yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
             yield self.bot.send_message(user_id, 'Ok, I`ll be sending moderation requests to %s %s' % (message['chat']['type'], message['chat']['title']))
             yield self.bot.send_message(user_id, 'Now you need to add your bot (@%s) to a channel as admin and tell me the channel name (e.g. @mobilenewsru)' % (stage[1]['bot_info']['username'], ))
-            self.set_stage(user_id, self.STAGE_PUBLIC_CHANNEL, moderation=message['chat']['id'])
+            self.stages.set(user_id, self.STAGE_PUBLIC_CHANNEL, moderation=message['chat']['id'])
         else:
             yield self.bot.send_message(message['from']['id'], 'Incorrect command')
 
     @coroutine
     def plaintext_channel_name(self, message):
         user_id = message['from']['id']
-        if self.get_stage_id(user_id) == self.STAGE_PUBLIC_CHANNEL:
+        if self.stages.get_id(user_id) == self.STAGE_PUBLIC_CHANNEL:
             channel_name = message['text'].strip()
             if message['text'][0] != '@' or ' ' in channel_name:
                 yield self.bot.send_message(user_id, 'Invalid channel name. Try again on type /cancel')
             else:
-                self.set_stage(user_id, self.STAGE_REGISTERED, channel=channel_name)
+                self.stages.set(user_id, self.STAGE_REGISTERED, channel=channel_name)
         else:
             return False
 
@@ -142,19 +123,42 @@ class Moderator:
 
     @coroutine
     def listen(self):
+        logging.info('Initializing slaves')
+        self.slaves = dict()
+
+        cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel FROM registered_bots WHERE active = True')
+
+        for bot_id, token, owner_id, moderator_chat_id, target_channel in cur.fetchall():
+            slave = Slave(token, self, moderator_chat_id, target_channel)
+            try:
+                yield slave.bot.get_me()
+                slave.listen()
+                self.slaves[bot_id] = slave
+            except:
+                logging.exception('Bot #%s failed', bot_id)
+                yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
+                try:
+                    yield self.bot.send_message(owner_id, 'I`m failed to establish connection to your bot with token %s' % token)
+                except:
+                    pass
+
+        logging.info('Waiting for commands')
         yield self.bot.wait_commands()
 
     @coroutine
     def __wait_for_registration_complete(self, user_id, timeout=3600):
         while True:
-            stage_id, stage_meta, stage_begin = self.get_stage_info(user_id)
+            stage_id, stage_meta, stage_begin = self.stages.get(user_id)
 
             if stage_id == self.STAGE_REGISTERED:
                 yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
                 yield get_db().execute("""
-                                      INSERT INTO registered_bots (id, owner_id, moderator_chat_id, target_channel, active)
-                                      VALUES (%s, %s, %s, %s, True)
-                                      """, (stage_meta['bot_info']['id'], user_id, stage_meta['moderation'], stage_meta['channel']))
+                                      INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active)
+                                      VALUES (%s, %s, %s, %s, %s, True)
+                                      """, (stage_meta['bot_info']['id'], stage_meta['token'], user_id, stage_meta['moderation'], stage_meta['channel']))
+                slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'])
+                slave.listen()
+                self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, 'And we`re ready for some magic!')
                 break
             elif time() - stage_begin >= timeout:
@@ -169,18 +173,33 @@ class Moderator:
 
             yield sleep(0.05)
 
-        self.drop_stage(user_id)
+        self.stages.drop(user_id)
 
     @coroutine
     def complete_registration(self, user_id, chat: dict):
-        self.set_stage(user_id, self.STAGE_REGISTERED, chat_info=chat)
+        self.stages.set(user_id, self.STAGE_REGISTERED, chat_info=chat)
+
+    @coroutine
+    def stop(self):
+        for slave in self.slaves.values():
+            yield slave.stop()
+        yield self.bot.stop()
 
 
-class Terminator:
-    def __init__(self, token, m: Moderator):
+class Slave:
+    STAGE_ADDING_MESSAGE = 1
+
+    def __init__(self, token, m: Moderator, moderator_chat_id, channel_name):
         bot = Api(token)
+        bot.add_handler(self.confirm_command, '/confirm')
+        bot.add_handler(self.start_command, '/start')
+        bot.add_handler(self.cancel_command, '/cancel')
+        bot.add_handler(self.plaintext_handler)
         self.bot = bot
         self.moderator = m
+        self.moderator_chat_id = moderator_chat_id
+        self.channel_name = channel_name
+        self.stages = StagesStorage()
 
     @coroutine
     def listen(self):
@@ -190,3 +209,90 @@ class Terminator:
     @coroutine
     def stop(self):
         yield self.bot.stop()
+
+    @coroutine
+    def start_command(self, message):
+        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we`re ready')
+
+    @coroutine
+    def confirm_command(self, message):
+        user_id = message['from']['id']
+        stage = self.stages.get(user_id)
+        if stage[0] == self.STAGE_ADDING_MESSAGE:
+            self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
+            bot_info = yield self.bot.get_me()
+            yield get_db().execute("""
+            INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, is_voting_fail, is_published)
+            VALUES (%s, %s, %s, %s, NOW(), False, False)
+            """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id']))
+            yield self.bot.send_message(user_id, 'Okay, I`ve saved your message and soon it will be sent for moderation')
+        else:
+            yield self.bot.send_message(user_id, 'Invalid command')
+
+    @coroutine
+    def cancel_command(self, message):
+        self.stages.drop(message['from']['id'])
+        yield self.bot.send_message(message['from']['id'], 'Action cancelled')
+
+    @coroutine
+    def plaintext_handler(self, message):
+        user_id = message['from']['id']
+        if self.stages.get_id(user_id):
+            yield self.bot.send_message(user_id, 'You already doing some shit, maybe you would like to /cancel it?')
+            return
+
+        mes = message['text']
+        if mes.strip() != '':
+            if 120 < len(mes) < 1000:
+                yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your post one more time.')
+                yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
+                yield self.bot.send_message(message['from']['id'], 'If everything looks ok for you - type /confirm, otherwise - /cancel')
+                self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
+                                message_id=message['message_id'])
+            else:
+                yield self.bot.send_message(message['chat']['id'], 'Stop! Your post more 1000 or less 150')
+        else:
+            yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
+
+
+class StagesStorage:
+    def __init__(self, ttl=7200):
+        self.stages = {}
+        self.ttl = ttl
+        self.cleaner = PeriodicCallback(self.drop_expired, 600)
+        self.cleaner.start()
+
+    def set(self, user_id, stage_id, **kwargs):
+        if user_id not in self.stages:
+            self.stages[user_id] = {'meta': {}, 'code': 0}
+
+        assert self.stages[user_id]['code'] == 0 or stage_id == self.stages[user_id]['code'] + 1
+
+        self.stages[user_id]['code'] = stage_id
+        self.stages[user_id]['meta'].update(kwargs)
+        self.stages[user_id]['timestamp'] = time()
+
+    def get(self, user_id):
+        if user_id in self.stages:
+            return self.stages[user_id]['code'], self.stages[user_id]['meta'], self.stages[user_id]['timestamp']
+
+        return None, {}, 0
+
+    def get_id(self, user_id):
+        return self.get(user_id)[0]
+
+    def drop(self, user_id):
+        if self.get_id(user_id) is not None:
+            del self.stages[user_id]
+
+    def drop_expired(self):
+        drop_list = []
+        for user_id, stage_info in self.stages.items():
+            if time() - stage_info['timestamp'] > self.ttl:
+                drop_list.append(user_id)
+
+        for user_id in drop_list:
+            logging.info('Cancelling last action for user#%d', user_id)
+            del self.stages[user_id]
+
+        return len(drop_list)
