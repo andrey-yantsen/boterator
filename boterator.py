@@ -120,7 +120,7 @@ class Moderator:
     def left_chat(self, message):
         me = yield self.bot.get_me()
         if message['left_chat_member']['id'] == me['id']:
-            yield self.bot.send_message(message['from']['id'], 'Whyyyy?! :\'(')
+            yield self.bot.send_message(message['from']['id'], 'Whyyyy?! Remove bot ' + message['left_chat_member']['username'] + ' of ' + message['chat']['title'] + '  :\'(')
         else:
             return False
 
