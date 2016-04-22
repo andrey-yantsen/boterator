@@ -14,12 +14,22 @@ def main():
         yield bot.forward_message(message['chat']['id'], message['chat']['id'], message['message_id'])
 
     @coroutine
-    def check_bot():
-        return True
+    def start_command(message):
+        if message['text'] is not None:
+            yield bot.send_message(message['chat']['id'],'Hello,this is Boterator. Start -> go @BotFather and create new bot')
 
     @coroutine
-    def parce_command(message):
-        yield bot.parce_command(message['chat']['id'], message['text'])
+    def reg_command(message):
+        if message['text'] is not None:
+            mes = message['text'].split('/reg')[1].strip()
+            if mes == '':
+                yield bot.send_message(message['chat']['id'],'Start -> go @BotFather and create new bot')
+            else:
+                yield bot.send_message(message['chat']['id'],'Good! Your token ' + mes)
+
+    @coroutine
+    def check_bot():
+        return True
 
     @coroutine
     def new_chat(message):
@@ -40,8 +50,8 @@ def main():
             return False
 
     bot = get_telegram()
-    bot.add_handler(parce_command,'/start')
-    bot.add_handler(parce_command,'/reg')
+    bot.add_handler(start_command,'/start')
+    bot.add_handler(reg_command,'/reg')
     bot.add_handler(forward_message)
     bot.add_handler(partial(print, 'Non-command message'))
     bot.add_handler(new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)

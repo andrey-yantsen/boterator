@@ -5,7 +5,6 @@ from tornado.gen import coroutine, Task, Return, sleep
 from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.ioloop import IOLoop
 import ujson
-import re
 
 from tornado.queues import Queue
 
@@ -145,18 +144,6 @@ class Api:
     @coroutine
     def send_chat_action(self, chat_id, action: str):
         return (yield self.__request_api('sendChatAction', {'chat_id': chat_id, 'action': action}))
-
-    @coroutine
-    def parce_command(self,chat_id, text: str):
-        if text is not None:
-            if re.match('/start',text):
-                self.send_message(chat_id,'Hello,this is Boterator. Start -> go @BotFather and create new bot')
-            if re.match('/reg',text):
-                mes = text.split('/reg')[1].strip()
-                if mes == '':
-                    self.send_message(chat_id,'Start -> go @BotFather and create new bot')
-                else:
-                    self.send_message(chat_id,'Good! Your token ' + mes)
 
     @coroutine
     def send_message(self, chat_id, text: str, parse_mode: str=None, disable_web_page_preview: bool=False,
