@@ -32,7 +32,9 @@ class BotMother:
 
     @coroutine
     def start_command(self, message):
-        yield self.bot.send_message(message['from']['id'], 'Hello, this is Boterator. In order to start ask @BotFather to create a new bot. Then feel free to use `/reg` command to register new bot using token.')
+        yield self.bot.send_message(message['from']['id'],
+                                    'Hello, this is Boterator. In order to start ask @BotFather to create a new bot. '
+                                    'Then feel free to use /reg command to register new bot using token.')
 
     @coroutine
     def reg_command(self, message):
