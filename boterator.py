@@ -32,7 +32,7 @@ class BotMother:
 
     @coroutine
     def start_command(self, message):
-        yield self.bot.send_message(message['from']['id'], 'Hello, this is Boterator. Start -> go @BotFather and create new bot')
+        yield self.bot.send_message(message['from']['id'], 'Hello, this is Boterator. In order to start ask @BotFather to create a new bot. Then feel free to use `/reg` command to register new bot using token.')
 
     @coroutine
     def reg_command(self, message):
@@ -43,23 +43,23 @@ class BotMother:
 
         token = message['text'][5:].strip()
         if token == '':
-            yield self.bot.send_message(user_id, 'Start -> go @BotFather and create new bot')
+            yield self.bot.send_message(user_id, 'I guess you forgot to enter the token :)')
         else:
             yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
             if len(token.split(':')) != 2:
-                yield self.bot.send_message(user_id, 'Incorrect token value')
+                yield self.bot.send_message(user_id, 'Token is incorrect. And I can do nothing with that.')
                 return
 
             try:
                 new_bot = Api(token)
                 new_bot_me = yield new_bot.get_me()
                 if new_bot_me['id'] in self.slaves:
-                    yield self.bot.send_message(user_id, 'Bot is already registered, make another one')
+                    yield self.bot.send_message(user_id, 'It seems like this bot is already registered. Try to crete another one')
                     return
-                yield self.bot.send_message(user_id, 'Ok, I\'ve stored basic info for %s' % new_bot_me['username'])
+                yield self.bot.send_message(user_id, 'Ok, I\'ve got basic information for %s' % new_bot_me['username'])
                 yield self.bot.send_message(user_id,
-                                            'Now add him to a group (or paste `@%s /attach` in the group, in case of '
-                                            'it\'s already there), where I should send articles for moderation, or type '
+                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to the group, in  '
+                                            'case you’ve already added him), where I should send messages for verification, or type  '
                                             '/cancel' % new_bot_me['username'],
                                             parse_mode=Api.PARSE_MODE_MD)
                 self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me)
@@ -71,7 +71,7 @@ class BotMother:
     @coroutine
     def cancel_command(self, message):
         self.stages.drop(message['from']['id'])
-        yield self.bot.send_message(message['from']['id'], 'Action cancelled')
+        yield self.bot.send_message(message['from']['id'], 'Oka-a-a-a-a-ay.')
 
     @coroutine
     def plaintext_channel_name(self, message):
@@ -131,10 +131,10 @@ class BotMother:
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
-                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes for the article, '
-                                                     'perform 15 minutes delay between channel posts and wait 24 hours '
-                                                     'before close a voting. To modify this settings send /help in PM '
-                                                     'to @%s' % (stage_meta['bot_info']['username'], ))
+                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes to approve the message, perform 15 minutes delay  '
+                                                     'between channel posts and wait 24 hours before closing a voting for each message. To '
+                                                     'modify this settings send /help in PM to @%s . You’re '
+                                                     'the only user who can change these settings and use /help command' % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
@@ -240,7 +240,7 @@ class Slave:
 
         for owner_id, message_id, chat_id, votes in cur.fetchall():
             yield self.bot.send_message(owner_id,
-                                        'Unfortunately your message has failed moderation with %s votes out of required %s' % (votes, self.settings['votes']))
+                                        'Unfortunately your message got only %s votes out of required %s and won’t be published to the channel.' % (votes, self.settings['votes']))
 
         yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
@@ -253,8 +253,8 @@ class Slave:
 
     @coroutine
     def start_command(self, message):
-        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we\'re ready. '
-                                                           'Only text messages are supported for now.')
+        yield self.bot.send_message(message['from']['id'], 'Just enter your post, and we\'re ready.'
+                                                           'At this moment we do support only text messages.')
 
     @coroutine
     def is_moderators_chat(self, chat_id):
@@ -284,7 +284,7 @@ class Slave:
         if stage[0] == BotMother.STAGE_MODERATION_GROUP:
             yield self.mother.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
             yield self.mother.bot.send_message(user_id, 'Ok, I\'ll be sending moderation requests to %s %s' % (message['chat']['type'], message['chat']['title']))
-            yield self.mother.bot.send_message(user_id, 'Now you need to add your bot (@%s) to a channel as admin and tell me the channel name (e.g. @mobilenewsru)' % (stage[1]['bot_info']['username'], ))
+            yield self.mother.bot.send_message(user_id, 'Now you need to add your bot (@%s) to a channel as administrator and tell me the channel name (e.g. @mobilenewsru)' % (stage[1]['bot_info']['username'], ))
             self.mother.stages.set(user_id, BotMother.STAGE_PUBLIC_CHANNEL, moderation=message['chat']['id'])
         else:
             yield self.bot.send_message(message['chat']['id'], 'Incorrect command')
@@ -311,7 +311,7 @@ class Slave:
             INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, is_voting_fail, is_published)
             VALUES (%s, %s, %s, %s, NOW(), False, False)
             """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id']))
-            yield self.bot.send_message(user_id, 'Okay, I\'ve saved your message and soon it will be sent for moderation')
+            yield self.bot.send_message(user_id, 'Okay, I\'ve sent your message for verification. Fingers crossed!')
             yield self.post_new_moderation_request(stage[1]['message_id'], stage[1]['chat_id'], self.moderator_chat_id)
             self.stages.drop(user_id)
         else:
@@ -339,11 +339,11 @@ class Slave:
             if 120 < len(mes) < 1000:
                 yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your post one more time.')
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-                yield self.bot.send_message(message['from']['id'], 'If everything looks ok for you - type /confirm, otherwise - /cancel')
+                yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise - /cancel')
                 self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
                                 message_id=message['message_id'])
             else:
-                yield self.bot.send_message(message['chat']['id'], 'Stop! Your post more 1000 or less 150')
+                yield self.bot.send_message(message['chat']['id'], 'Sorry, but we can proceed only messages with length between 150 and 1 000 symbols.')
         else:
             yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
@@ -401,7 +401,7 @@ class Slave:
                 if not row[0]:
                     yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
                                            (message_id, original_chat_id))
-                    yield self.bot.send_message(row[1], 'Your message has successfully passed moderation and queued for publishing.')
+                    yield self.bot.send_message(row[1], 'Your message was verified and queued for publishing.')
                     yield self.bot.forward_message(row[1], original_chat_id, message_id)
 
     @coroutine
@@ -422,9 +422,9 @@ class Slave:
     def help_command(self, message):
         if message['chat']['id'] == self.owner_id:
             msg = """Bot owner's help:
-/setdelay - Change delay between messages (current: %s minutes)
-/setvotes - Change required yes-votes to publish a message (current: %s)
-/settimeout - Change poll timeout (current: %s hours)
+/setdelay — change the delay between messages (current: %s minutes)
+/setvotes — change required amount of :+1:-votes to publish a message (current: %s)
+/settimeout — change voting duration (current: %s hours")
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
                                                                       self.settings['vote_timeout']))
@@ -434,7 +434,7 @@ class Slave:
     @coroutine
     def setdelay_command(self, message):
         if message['chat']['id'] == self.owner_id:
-            yield self.bot.send_message(message['chat']['id'], 'Enter new messages interval value (in minutes, only a digits)')
+            yield self.bot.send_message(message['chat']['id'], 'Set new delay value for messages posting (in minutes)')
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_DELAY_VALUE)
         else:
             return False
@@ -456,7 +456,7 @@ class Slave:
     @coroutine
     def setvotes_command(self, message):
         if message['chat']['id'] == self.owner_id:
-            yield self.bot.send_message(message['chat']['id'], 'Enter new required votes value')
+            yield self.bot.send_message(message['chat']['id'], 'Set new amount of required votes.')
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTES_VALUE)
         else:
             return False
@@ -468,17 +468,17 @@ class Slave:
             if message['text'].isdigit():
                 self.settings['votes'] = int(message['text'])
                 yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Required votes count updated to %s' % self.settings['votes'])
+                yield self.bot.send_message(user_id, 'Required votes amount updated to %s' % self.settings['votes'])
                 self.stages.drop(user_id)
             else:
-                yield self.bot.send_message(user_id, 'Invalid votes count value. Try again or type /cancel')
+                yield self.bot.send_message(user_id, 'Invalid votes amount value. Try again or type /cancel')
         else:
             return False
 
     @coroutine
     def settimeout_command(self, message):
         if message['chat']['id'] == self.owner_id:
-            yield self.bot.send_message(message['chat']['id'], 'Enter new poll timeout value (in hours, only a digits)')
+            yield self.bot.send_message(message['chat']['id'], 'Set new voting duration value (in hours, only a digits)')
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
             return False
@@ -490,10 +490,10 @@ class Slave:
             if message['text'].isdigit():
                 self.settings['vote_timeout'] = int(message['text'])
                 yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Poll timeout updated to %s hours' % self.settings['vote_timeout'])
+                yield self.bot.send_message(user_id, 'Voting duration setting updated to %s hours' % self.settings['vote_timeout'])
                 self.stages.drop(user_id)
             else:
-                yield self.bot.send_message(user_id, 'Invalid poll timeout value. Try again or type /cancel')
+                yield self.bot.send_message(user_id, 'Invalid voting duration value. Try again or type /cancel')
         else:
             return False
 
