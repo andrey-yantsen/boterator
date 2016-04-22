@@ -355,7 +355,7 @@ class Slave:
     @coroutine
     def post_new_moderation_request(self, message_id, original_chat_id, target_chat_id):
         yield self.bot.forward_message(target_chat_id, original_chat_id, message_id)
-        yield self.bot.send_message(target_chat_id, 'Type /vote_%s_%s_yes or /vote_%s_%s_no to vote for or against this message' % (original_chat_id, message_id, original_chat_id, message_id))
+        yield self.bot.send_message(target_chat_id, 'Say YES (/vote_%s_%s_yes) or NO (/vote_%s_%s_no) to this amazing message.' % (original_chat_id, message_id, original_chat_id, message_id))
         bot_info = yield self.bot.get_me()
         yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
 
