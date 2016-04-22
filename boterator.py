@@ -1,10 +1,11 @@
+from contextlib import closing
 from functools import partial
 
 from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
-from globals import get_db, get_telegram
+from globals import get_db, get_telegram, init_db
 
 
 @coroutine
@@ -16,28 +17,36 @@ def main():
     @coroutine
     def start_command(message):
         if message['text'] is not None:
-            yield bot.send_message(message['chat']['id'],'Hello,this is Boterator. Start -> go @BotFather and create new bot')
+            yield bot.send_message(message['chat']['id'], 'Hello,this is Boterator. Start -> go @BotFather and create new bot')
 
     @coroutine
     def reg_command(message):
         if message['text'] is not None:
-            mes = message['text'].split('/reg')[1].strip()
+            mes = message['text'][5:]
             if mes == '':
-                yield bot.send_message(message['chat']['id'],'Start -> go @BotFather and create new bot')
+                yield bot.send_message(message['chat']['id'], 'Start -> go @BotFather and create new bot')
             else:
-                yield bot.send_message(message['chat']['id'],'Good! Your token ' + mes)
+                yield bot.send_message(message['chat']['id'], 'Good! Your token ' + mes)
 
+    @coroutine
+    def get_chat_type(chat_id):
+        ret = yield get_db().execute("""
+                    SELECT id, 'moderator' FROM registered_bots WHERE moderator_chat_id = %s
+                    UNION SELECT id, 'public' FROM registered_bots WHERE public_chat_id = %s
+                    """, (chat_id, chat_id))
 
-    def check_bot():
-        return False
+        return ret.fetchone()
 
     @coroutine
     def new_chat(message):
         if message['new_chat_member']['id'] == bot.me['id']:
-            if check_bot():
-                yield bot.send_message(message['chat']['id'], 'Hi there, @%s, thank you!' % message['from']['username'])
-            else:
-                yield bot.send_message(message['chat']['id'], 'Hey! Please reg me in @BoteratorBot')
+            chat_type = yield get_chat_type(message['chat']['id'])
+            if not chat_type:
+                yield bot.send_message(message['from']['id'], 'This bot wasn`t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
+            elif chat_type[1] == 'public':
+                yield bot.send_message(message['from']['id'], 'Hey man, you`ve added wrong bot to public chat, it should be @%s' % chat_type[0])
+            elif chat_type[1] == 'moderator':
+                yield bot.send_message(message['chat']['id'], 'Hi there, @%s!' % message['from']['username'])
         else:
             return False
 
@@ -70,5 +79,5 @@ if __name__ == '__main__':
 
     ioloop = IOLoop.instance()
 
-    ioloop.run_sync(get_db)
+    ioloop.run_sync(init_db)
     ioloop.run_sync(main)
