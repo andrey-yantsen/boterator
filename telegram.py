@@ -14,6 +14,10 @@ class Api:
     STATE_STOP_PENDING = 1
     STATE_STOPPED = 2
 
+    MSG_TEXT = 'message_text'
+    MSG_NEW_CHAT_MEMBER = 'new_chat_member'
+    MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
+
     def __init__(self, token, processing_threads_cnt=30):
         self.token = token
         self.callbacks = []
@@ -21,9 +25,10 @@ class Api:
         self.processing_threads = []
         self.processing_threads_cnt = processing_threads_cnt
         self.processing_queue = Queue(processing_threads_cnt * 10)
+        self.me = None
 
-    def add_handler(self, handler, cmd: str=None):
-        self.callbacks.append((cmd, handler))
+    def add_handler(self, handler, cmd: str=None, msg_type: str=MSG_TEXT):
+        self.callbacks.append((msg_type, cmd, handler))
 
     @coroutine
     def stop(self):
@@ -69,7 +74,6 @@ class Api:
     def get_updates(self, offset: int=None, limit: int=100, timeout: int=5):
         assert 1 <= limit <= 100
         assert 0 <= timeout
-        assert offset is None or offset > 0
 
         request = {
             'limit': limit,
@@ -99,11 +103,14 @@ class Api:
 
         self.consumption_state = self.STATE_WORKING
 
-        if last_update_id is None:
-            last_update_id = 0
+        if last_update_id is not None:
+            last_update_id += 1
+
+        if not self.me:
+            self.me = yield self.__request_api('getMe')
 
         while True and self.consumption_state == self.STATE_WORKING:
-            get_updates_f = self.get_updates(last_update_id + 1)
+            get_updates_f = self.get_updates(last_update_id)
             # Actually default tornado's futures doesn't support cancellation, so let's make some magic
             cancelled = False
 
@@ -130,6 +137,9 @@ class Api:
             for update in updates:
                 yield self.processing_queue.put(update)
                 last_update_id = update['update_id']
+
+            if len(updates):
+                last_update_id += 1
 
     @coroutine
     def send_chat_action(self, chat_id, action: str):
@@ -166,6 +176,22 @@ class Api:
         }))
 
     @coroutine
+    def _execute_message_handler(self, message_type, cmd, message):
+        handled = False
+        for required_message_type, required_cmd, handler in self.callbacks:
+            if required_message_type == message_type and required_cmd == cmd:
+                ret = handler(message)
+                if isinstance(ret, Future):
+                    ret = yield ret
+
+                if ret is None or ret is True:
+                    handled = True
+                    break
+
+        if not handled:
+            logging.error('Handler not found: %s', message)
+
+    @coroutine
     def _process_update(self):
         while True:
             update = yield self.processing_queue.get()
@@ -182,26 +208,18 @@ class Api:
                         else:
                             cmd = None
 
-                        handled = False
-                        for required_cmd, handler in self.callbacks:
-                            if required_cmd == cmd:
-                                ret = handler(update['message'])
-                                if isinstance(ret, Future):
-                                    ret = yield ret
-
-                                if ret is None or ret is True:
-                                    handled = True
-                                    break
-
-                        if not handled:
-                            logging.error('Handler not found: %s', update)
+                        yield self._execute_message_handler(self.MSG_TEXT, cmd, update['message'])
+                    elif 'left_chat_member' in update['message']:
+                        yield self._execute_message_handler(self.MSG_LEFT_CHAT_MEMBER, None, update['message'])
+                    elif 'new_chat_member' in update['message']:
+                        yield self._execute_message_handler(self.MSG_NEW_CHAT_MEMBER, None, update['message'])
                     else:
-                        logging.error('Unsupported message received')
+                        logging.error('Unsupported message received: %s', update)
 
                 elif 'inline_query' in update:
-                    logging.error('Unsupported message received')
+                    logging.error('Unsupported message received: inline query')
                 else:
-                    logging.error('Unsupported message received')
+                    logging.error('Unsupported message received: %s', update)
             except:
                 logging.exception('Error while processing message')
 

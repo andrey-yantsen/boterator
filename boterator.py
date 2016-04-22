@@ -13,10 +13,27 @@ def main():
     def forward_message(message):
         yield bot.forward_message(message['chat']['id'], message['chat']['id'], message['message_id'])
 
+    @coroutine
+    def new_chat(message):
+        if message['new_chat_member']['id'] == bot.me['id']:
+            msg = 'Hi there, @%s, thank you!' % message['from']['username']
+            yield bot.send_message(message['chat']['id'], msg)
+        else:
+            return False
+
+    @coroutine
+    def left_chat(message):
+        if message['left_chat_member']['id'] == bot.me['id']:
+            yield bot.send_message(message['from']['id'], 'Whyyyy?! :\'(')
+        else:
+            return False
+
     bot = get_telegram()
     bot.add_handler(print, '/start')
     bot.add_handler(forward_message)
     bot.add_handler(partial(print, 'Non-command message'))
+    bot.add_handler(new_chat, msg_type=bot.MSG_NEW_CHAT_MEMBER)
+    bot.add_handler(left_chat, msg_type=bot.MSG_LEFT_CHAT_MEMBER)
     yield bot.wait_commands()
 
 
