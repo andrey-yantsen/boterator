@@ -4,7 +4,7 @@ from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
-from globals import get_db, get_telegram, init_db
+from globals import init_db
 from boterator import Moderator
 
 

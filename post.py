@@ -5,7 +5,7 @@ from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 
-from globals import get_db, get_telegram, init_db
+from globals import get_db, init_db
 
 
 @coroutine
@@ -32,7 +32,6 @@ def main():
         else:
             yield bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
-    bot = get_telegram()
     bot.add_handler(post_message)
     yield bot.wait_commands()
 
