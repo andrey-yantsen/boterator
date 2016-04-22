@@ -27,20 +27,19 @@ def main():
             else:
                 yield bot.send_message(message['chat']['id'],'Good! Your token ' + mes)
 
-    @coroutine
+
     def check_bot():
-        return True
+        return False
 
     @coroutine
     def new_chat(message):
         if message['new_chat_member']['id'] == bot.me['id']:
-            msg = 'Hi there, @%s, thank you!' % message['from']['username']
-            yield bot.send_message(message['chat']['id'], msg)
-        else:
-            if bot.check_bot():
-                yield bot.send_message(message['chat']['id'], 'Good!')
+            if check_bot():
+                yield bot.send_message(message['chat']['id'], 'Hi there, @%s, thank you!' % message['from']['username'])
             else:
-                yield bot.send_message(message['chat']['id'], 'Hey! Please reg in @Boterator')
+                yield bot.send_message(message['chat']['id'], 'Hey! Please reg me in @BoteratorBot')
+        else:
+            return False
 
     @coroutine
     def left_chat(message):
