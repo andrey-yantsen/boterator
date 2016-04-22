@@ -5,6 +5,7 @@ from tornado.gen import coroutine, Task, Return, sleep
 from tornado.httpclient import AsyncHTTPClient, HTTPError
 from tornado.ioloop import IOLoop
 import ujson
+import re
 
 from tornado.queues import Queue
 
