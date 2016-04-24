@@ -1,9 +1,8 @@
 import logging
 
 from tornado.concurrent import Future
-from tornado.gen import coroutine, Task, Return, sleep
+from tornado.gen import coroutine, Return, sleep
 from tornado.httpclient import AsyncHTTPClient, HTTPError
-from tornado.ioloop import IOLoop
 import ujson
 
 from tornado.queues import Queue
@@ -14,9 +13,24 @@ class Api:
     STATE_STOP_PENDING = 1
     STATE_STOPPED = 2
 
-    MSG_TEXT = 'message_text'
-    MSG_NEW_CHAT_MEMBER = 'new_chat_member'
-    MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
+    UPDATE_TYPE_MSG_ANY = 'message_any'
+    UPDATE_TYPE_MSG_TEXT = 'message_text'
+    UPDATE_TYPE_MSG_AUDIO = 'message_audio'
+    UPDATE_TYPE_MSG_PHOTO = 'message_photo'
+    UPDATE_TYPE_MSG_DOC = 'message_document'
+    UPDATE_TYPE_MSG_STICKER = 'message_sticker'
+    UPDATE_TYPE_MSG_VIDEO = 'message_video'
+    UPDATE_TYPE_MSG_VOICE = 'message_voice'
+    UPDATE_TYPE_MSG_CONTACT = 'message_contact'
+    UPDATE_TYPE_MSG_LOCATION = 'message_location'
+    UPDATE_TYPE_MSG_VENUE = 'message_venue'
+    UPDATE_TYPE_MSG_NEW_CHAT_MEMBER = 'new_chat_member'
+    UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
+    UPDATE_TYPE_MSG_UNKNOWN = 'message_unknown'
+
+    UPDATE_TYPE_INLINE_QUERY = 'inline_query'
+    UPDATE_TYPE_CHOSEN_INLINE_RESULT = 'chosen_inline_result'
+    UPDATE_TYPE_CALLBACK_QUERY = 'callback_query'
 
     CHAT_ACTION_TYPING = 'typing'
     CHAT_ACTION_UPLOAD_PHOTO = 'upload_photo'
@@ -40,7 +54,7 @@ class Api:
         self.processing_queue = Queue(processing_threads_cnt * 10)
         self.__me = None
 
-    def add_handler(self, handler, cmd=None, msg_type: str=MSG_TEXT):
+    def add_handler(self, handler, cmd=None, msg_type: str=UPDATE_TYPE_MSG_TEXT):
         self.callbacks.append((msg_type, cmd, handler))
 
     @coroutine
@@ -128,7 +142,7 @@ class Api:
 
         yield self.get_me()
 
-        while True and self.consumption_state == self.STATE_WORKING:
+        while self.consumption_state == self.STATE_WORKING:
             get_updates_f = self.get_updates(last_update_id)
             # Actually default tornado's futures doesn't support cancellation, so let's make some magic
             cancelled = False
@@ -195,11 +209,11 @@ class Api:
         }))
 
     @coroutine
-    def _execute_message_handler(self, message_type, cmd, message):
+    def __execute_update_handler(self, handler_filter: callable, update):
         handled = False
         for required_message_type, required_cmd, handler in self.callbacks:
-            if required_message_type == message_type and (required_cmd == cmd or (cmd and hasattr(required_cmd, 'match') and required_cmd.match(cmd))):
-                ret = handler(message)
+            if handler_filter(required_message_type, required_cmd):
+                ret = handler(update)
                 if isinstance(ret, Future):
                     ret = yield ret
 
@@ -208,10 +222,20 @@ class Api:
                     break
 
         if not handled:
-            logging.error('Handler not found: %s', message)
+            logging.error('Handler not found: %s', update)
 
     @coroutine
     def _process_update(self):
+        def default_filter_text_msg(cmd):
+            return lambda r, c: (r == self.UPDATE_TYPE_MSG_TEXT or r == self.UPDATE_TYPE_MSG_ANY) \
+                                and (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)))
+
+        def default_filter_msg(msg_type):
+            return lambda r, c: (r == msg_type or r == self.UPDATE_TYPE_MSG_ANY) and c is None
+
+        def default_filter(msg_type):
+            return lambda r, _: r == msg_type
+
         bot_info = yield self.get_me()
         while True:
             update = yield self.processing_queue.get()
@@ -233,13 +257,36 @@ class Api:
                         else:
                             cmd = None
 
-                        yield self._execute_message_handler(self.MSG_TEXT, cmd, update['message'])
+                        yield self.__execute_update_handler(default_filter_text_msg(cmd), update['message'])
                     elif 'left_chat_member' in update['message']:
-                        yield self._execute_message_handler(self.MSG_LEFT_CHAT_MEMBER, None, update['message'])
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER), update['message'])
                     elif 'new_chat_member' in update['message']:
-                        yield self._execute_message_handler(self.MSG_NEW_CHAT_MEMBER, None, update['message'])
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER), update['message'])
+                    elif 'audio' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_AUDIO), update['message'])
+                    elif 'document' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_DOC), update['message'])
+                    elif 'photo' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_PHOTO), update['message'])
+                    elif 'sticker' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_STICKER), update['message'])
+                    elif 'video' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_VIDEO), update['message'])
+                    elif 'voice' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_VOICE), update['message'])
+                    elif 'location' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_LOCATION), update['message'])
+                    elif 'venue' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER), update['message'])
                     else:
                         logging.error('Unsupported message received: %s', update)
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_UNKNOWN), update['message'])
+                elif 'inline_query' in update:
+                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_INLINE_QUERY), update['inline_query'])
+                elif 'chosen_inline_result' in update:
+                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CHOSEN_INLINE_RESULT), update['chosen_inline_result'])
+                elif 'callback_query' in update:
+                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CALLBACK_QUERY), update['callback_query'])
                 else:
                     logging.error('Unsupported message received: %s', update)
             except:
