@@ -158,11 +158,13 @@ class BotMother:
                               default_settings, user_id, stage_meta['bot_info']['id'])
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
-                yield self.bot.send_message(user_id, 'And we\'re ready for some magic!')
-                yield self.bot.send_message(user_id, 'By default the bot will wait for 5 votes to approve the message, perform 15 minutes delay '
-                                                     'between channel messages and wait 24 hours before closing a voting for each message. To '
-                                                     'modify this settings send /help in PM to @%s. You’re '
-                                                     'the only user who can change these settings and use /help command' % (stage_meta['bot_info']['username'], ))
+                yield self.bot.send_message(user_id, "And we're ready for some magic!\n"
+                                                     'By default the bot will wait for 5 votes to approve the message, '
+                                                     'perform 15 minutes delay between channel messages and wait 24 '
+                                                     'hours before closing a voting for each message. To modify this '
+                                                     'settings send /help in PM to @%s. You’re the only user who can '
+                                                     'change these settings and use /help command'
+                                            % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
@@ -194,12 +196,13 @@ class BotMother:
     def set_slave_attached(self, user_id, chat):
         stage = self.stages.get(user_id)
         yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
-        yield self.bot.send_message(user_id, 'Ok, I\'ll be sending moderation requests to %s %s' % (chat['type'], chat['title']))
-        yield self.bot.send_message(user_id, 'Now you need to add your bot (@%s) to a channel as administrator and '
-                                             'tell me the channel name (e.g. @mobilenewsru)' % (stage[1]['bot_info']['username'], ))
-        yield self.bot.send_message(user_id, "As soon as I will receive the channel name I'll send a message with "
-                                             "following text:\n> %s" % stage[1]['hello'])
-        yield self.bot.send_message(user_id, 'You can change the message, if you mind, just send me /change_hello')
+        yield self.bot.send_message(user_id, "Ok, I'll be sending moderation requests to %s %s\n"
+                                             "Now you need to add your bot (@%s) to a channel as administrator and "
+                                             "tell me the channel name (e.g. @mobilenewsru)\n"
+                                             "As soon as I will receive the channel name I'll send a message with "
+                                             "following text:\n> %s\n"
+                                             "You can change the message, if you mind, just send me /change_hello"
+                                    % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello']))
         self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, moderation=chat['id'])
 
     @coroutine
