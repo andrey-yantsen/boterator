@@ -382,9 +382,9 @@ class Slave:
             self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
             bot_info = yield self.bot.get_me()
             yield get_db().execute("""
-            INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, is_voting_fail, is_published)
-            VALUES (%s, %s, %s, %s, NOW(), False, False)
-            """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id']))
+            INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
+            VALUES (%s, %s, %s, %s, NOW(), %s)
+            """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id'], dumps(stage[1]['message'])))
             yield self.bot.send_message(user_id, 'Okay, I\'ve sent your message for verification. Fingers crossed!')
             yield self.post_new_moderation_request(stage[1]['message_id'], stage[1]['chat_id'], self.moderator_chat_id)
             self.stages.drop(user_id)
@@ -415,7 +415,7 @@ class Slave:
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
                 yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise — /cancel')
                 self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
-                                message_id=message['message_id'])
+                                message_id=message['message_id'], message=message)
             else:
                 yield self.bot.send_message(message['chat']['id'], 'Sorry, but we can proceed only messages with length between 50 and 1 000 symbols.')
         else:
@@ -434,7 +434,7 @@ class Slave:
         yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
         yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise — /cancel')
         self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
-                        message_id=message['message_id'])
+                        message_id=message['message_id'], message=message)
 
     @coroutine
     def post_new_moderation_request(self, message_id, original_chat_id, target_chat_id):
