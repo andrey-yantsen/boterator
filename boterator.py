@@ -211,7 +211,7 @@ class BotMother:
         if self.stages.get_id(user_id) != self.STAGE_WAITING_PUBLIC_CHANNEL:
             yield self.bot.send_message(user_id, 'It\'s not possible to change hello message on current step, sorry')
         else:
-            yield self.bot.send_message(user_id, 'Ok, I\'m listening to you. How I should say hello to you subscribers?')
+            yield self.bot.send_message(user_id, 'Ok, I\'m listening to you. How I should say hello to your subscribers?')
             self.stages.set(user_id, self.STAGE_WAITING_HELLO, do_not_validate=True)
 
     @coroutine
