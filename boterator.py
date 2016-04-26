@@ -560,7 +560,7 @@ class Slave:
 
     @coroutine
     def vote_no(self, message):
-        report_botan(message, 'slave_no')
+        report_botan(message, 'slave_vote_no')
         match = self.RE_MATCH_NO.match(message['text'])
         original_chat_id = match.group('chat_id')
         message_id = match.group('message_id')
