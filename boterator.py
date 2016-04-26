@@ -328,37 +328,40 @@ class Slave:
             allowed_time = datetime.now()
 
         if datetime.now() >= allowed_time:
-            cur = yield get_db().execute('SELECT id, original_chat_id FROM incoming_messages WHERE bot_id = %s '
+            cur = yield get_db().execute('SELECT message FROM incoming_messages WHERE bot_id = %s '
                                          'AND is_voting_success = True and is_published = False '
                                          'ORDER BY created_at LIMIT 1', (self.bot_id, ))
 
             row = cur.fetchone()
 
             if row:
-                yield self.publish_message(row[0], row[1])
+                yield self.publish_message(row[0])
 
         if self.bot.consumption_state == Api.STATE_WORKING:
             IOLoop.current().add_timeout(timedelta(minutes=1), self.check_votes_success)
 
     @coroutine
-    def publish_message(self, id, original_chat_id):
+    def publish_message(self, message):
+        report_botan(message, 'slave_publish')
         try:
-            yield self.bot.forward_message(self.channel_name, original_chat_id, id)
+            yield self.bot.forward_message(self.channel_name, message['chat']['id'], message['message_id'])
             yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
-                                   (id, original_chat_id))
+                                   (message['message_id'], message['chat']['id']))
             yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
                                    (self.bot_id, ))
         except:
-            logging.exception('Message forwarding failed (#%s from %s)', id, original_chat_id)
+            logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
     @coroutine
     def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
-        cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, (SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+        cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, message,'
+                                     '(SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
                                'FROM incoming_messages im WHERE bot_id = %s AND '
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
 
-        for owner_id, message_id, chat_id, votes in cur.fetchall():
+        for owner_id, message_id, chat_id, message, votes in cur.fetchall():
+            report_botan(message, 'slave_validation_failed')
             yield self.bot.send_message(owner_id,
                                         'Unfortunately your message got only %s votes out of required %s and won’t be published to the channel.' % (votes, self.settings['votes']))
 
@@ -537,14 +540,15 @@ class Slave:
                                    """, (user_id, message_id, original_chat_id, yes))
 
             if current_yes >= self.settings.get('votes', 5):
-                cur = yield get_db().execute('SELECT is_voting_success, owner_id FROM incoming_messages WHERE id = %s AND original_chat_id = %s',
+                cur = yield get_db().execute('SELECT is_voting_success, message FROM incoming_messages WHERE id = %s AND original_chat_id = %s',
                                        (message_id, original_chat_id))
                 row = cur.fetchone()
                 if not row[0]:
                     yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
                                            (message_id, original_chat_id))
-                    yield self.bot.send_message(row[1], 'Your message was verified and queued for publishing.')
-                    yield self.bot.forward_message(row[1], original_chat_id, message_id)
+                    yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for publishing.')
+                    yield self.bot.forward_message(row[1]['from']['id'], original_chat_id, message_id)
+                    report_botan(row[1], 'slave_validation_success')
 
     @coroutine
     def vote_yes(self, message):
