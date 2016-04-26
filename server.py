@@ -8,6 +8,7 @@ from boterator import BotMother
 
 if __name__ == '__main__':
     define('token', type=str, help='TelegramBot\'s token')
+    define('botan_token', type=str, help='Bot\'s botan.io token')
     define('db', type=str, help='DB connection DSN, e.g. "dbname=boterator user=boterator host=localhost port=5432"')
 
     parse_command_line()
