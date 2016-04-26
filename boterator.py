@@ -429,7 +429,7 @@ class Slave:
         stage = self.stages.get(user_id)
         if stage[0] == self.STAGE_ADDING_MESSAGE:
             report_botan(message, 'slave_confirm')
-            self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
+            yield self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
             bot_info = yield self.bot.get_me()
             yield get_db().execute("""
             INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
