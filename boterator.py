@@ -296,17 +296,21 @@ class Slave:
             row = cur.fetchone()
 
             if row:
-                try:
-                    yield self.bot.forward_message(self.channel_name, row[1], row[0])
-                    yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
-                                           (row[0], row[1]))
-                    yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
-                                           (self.bot_id, ))
-                except:
-                    logging.exception('Message forwarding failed (#%s from %s)', row[0], row[1])
+                yield self.publish_message(row[0], row[1])
 
         if self.bot.consumption_state == Api.STATE_WORKING:
             IOLoop.current().add_timeout(timedelta(minutes=1), self.check_votes_success)
+
+    @coroutine
+    def publish_message(self, id, original_chat_id):
+        try:
+            yield self.bot.forward_message(self.channel_name, original_chat_id, id)
+            yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
+                                   (id, original_chat_id))
+            yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
+                                   (self.bot_id, ))
+        except:
+            logging.exception('Message forwarding failed (#%s from %s)', id, original_chat_id)
 
     @coroutine
     def check_votes_failures(self):
