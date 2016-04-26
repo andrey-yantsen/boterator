@@ -40,6 +40,7 @@ class BotMother:
     STAGE_WAITING_PUBLIC_CHANNEL = 3
     STAGE_REGISTERED = 4
     STAGE_WAITING_HELLO = 6
+    STAGE_WAITING_START_MESSAGE = 8
 
     def __init__(self, token):
         bot = Api(token)
@@ -49,6 +50,8 @@ class BotMother:
         bot.add_handler(self.cancel_command, '/cancel')
         bot.add_handler(self.change_hello_command, '/change_hello')
         bot.add_handler(self.plaintext_set_hello)
+        bot.add_handler(self.change_start_command, '/change_start')
+        bot.add_handler(self.plaintext_set_start_message)
         bot.add_handler(self.plaintext_channel_name)
         self.bot = bot
         self.stages = StagesStorage()
@@ -109,7 +112,11 @@ class BotMother:
                                 'you. All you need to do — is to write a message to me (bot named @%s), and it will ' \
                                 'be published after verification by our team.' % new_bot_me['username']
 
-                self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me, hello=hello_message)
+                start_message = "Just enter your message, and we're ready."
+
+                self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
+                                hello=hello_message, start_message=start_message)
+
                 self.__wait_for_registration_complete(user_id)
                 report_botan(message, 'boterator_token')
             except Exception as e:
@@ -137,7 +144,6 @@ class BotMother:
                     new_bot = Api(stage[1]['token'])
                     yield new_bot.send_message(channel_name, stage[1]['hello'])
                     self.stages.set(user_id, self.STAGE_REGISTERED, channel=channel_name)
-                    report_botan(message, 'boterator_channel')
                     report_botan(message, 'boterator_registered')
                 except Exception as e:
                     report_botan(message, 'boterator_channel_failure')
@@ -181,8 +187,7 @@ class BotMother:
             stage_id, stage_meta, stage_begin = self.stages.get(user_id)
 
             if stage_id == self.STAGE_REGISTERED:
-                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24, "start": "Just enter your message, "
-                                                                                          "and we're ready."}
+                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24, "start": stage_meta['start_message']}
                 yield slave.stop()
 
                 yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
@@ -238,8 +243,11 @@ class BotMother:
                                              "tell me the channel name (e.g. @mobilenewsru)\n"
                                              "As soon as I will receive the channel name I'll send a message with "
                                              "following text:\n> %s\n"
-                                             "You can change the message, if you mind, just send me /change_hello"
-                                    % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello']))
+                                             "You can change the message, if you mind, just send me /change_hello.\n"
+                                             "Also there is 'start' message for your new bot:\n> %s\n"
+                                             "You can change it with /change_start"
+                                    % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
+                                       stage[1]['start_message']))
         self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, moderation=chat['id'])
 
     @coroutine
@@ -262,9 +270,34 @@ class BotMother:
             if len(text) >= 10:
                 report_botan(message, 'boterator_change_hello_success')
                 yield self.bot.send_message(user_id, 'Ok, noted, now tell me the channel name')
-                self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, hello=message['text'])
+                self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, hello=text)
             else:
                 report_botan(message, 'boterator_change_hello_short')
+                yield self.bot.send_message(user_id, 'Hey, you should write at least 10 symbols')
+
+    @coroutine
+    def change_start_command(self, message):
+        user_id = message['from']['id']
+        if self.stages.get_id(user_id) != self.STAGE_WAITING_PUBLIC_CHANNEL:
+            yield self.bot.send_message(user_id, 'It\'s not possible to change start message on current step, sorry')
+        else:
+            report_botan(message, 'boterator_change_start_cmd')
+            yield self.bot.send_message(user_id, 'Ok, I\'m listening to you. How I should say hello to your authors?')
+            self.stages.set(user_id, self.STAGE_WAITING_START_MESSAGE, do_not_validate=True)
+
+    @coroutine
+    def plaintext_set_start_message(self, message):
+        user_id = message['from']['id']
+        if self.stages.get_id(user_id) != self.STAGE_WAITING_START_MESSAGE:
+            return False
+        else:
+            text = message['text'].strip()
+            if len(text) >= 10:
+                report_botan(message, 'boterator_change_start_success')
+                yield self.bot.send_message(user_id, 'Ok, noted, now tell me the channel name')
+                self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, start_message=text)
+            else:
+                report_botan(message, 'boterator_change_start_short')
                 yield self.bot.send_message(user_id, 'Hey, you should write at least 10 symbols')
 
 
