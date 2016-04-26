@@ -181,7 +181,8 @@ class BotMother:
             stage_id, stage_meta, stage_begin = self.stages.get(user_id)
 
             if stage_id == self.STAGE_REGISTERED:
-                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24}
+                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24, "start": "Just enter your message, "
+                                                                                          "and we're ready."}
                 yield slave.stop()
 
                 yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
@@ -276,6 +277,8 @@ class Slave:
 
     STAGE_WAIT_VOTE_TIMEOUT_VALUE = 7
 
+    STAGE_WAIT_START_MESSAGE_VALUE = 9
+
     RE_MATCH_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_MATCH_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
 
@@ -288,6 +291,7 @@ class Slave:
         bot.add_handler(self.setdelay_command, '/setdelay')
         bot.add_handler(self.setvotes_command, '/setvotes')
         bot.add_handler(self.settimeout_command, '/settimeout')
+        bot.add_handler(self.setstartmessage_command, '/setstartmessage')
         bot.add_handler(self.attach_command, '/attach')
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
@@ -298,6 +302,7 @@ class Slave:
         bot.add_handler(self.plaintext_delay_handler)
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
+        bot.add_handler(self.plaintext_startmessage_handler)
         bot.add_handler(self.vote_yes, self.RE_MATCH_YES)
         bot.add_handler(self.vote_no, self.RE_MATCH_NO)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
@@ -377,8 +382,7 @@ class Slave:
     @coroutine
     def start_command(self, message):
         report_botan(message, 'slave_start')
-        yield self.bot.send_message(message['from']['id'], 'Just enter your message, and we\'re ready. '
-                                                           'At this moment we do support only text messages.')
+        yield self.bot.send_message(message['from']['id'], self.settings['start'])
 
     @coroutine
     def is_moderators_chat(self, chat_id, bot_id):
@@ -574,9 +578,11 @@ class Slave:
 /setdelay — change the delay between messages (current: %s minutes)
 /setvotes — change required amount of yes-votes to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
+/setstartmessage — change start message (current: `%s`)
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
-                                                                      self.settings['vote_timeout']))
+                                                                      self.settings['vote_timeout'], self.settings['start']),
+                                        parse_mode=Api.PARSE_MODE_MD)
         else:
             return False
 
@@ -652,6 +658,33 @@ class Slave:
             else:
                 report_botan(message, 'slave_settimeout_invalid')
                 yield self.bot.send_message(user_id, 'Invalid voting duration value. Try again or type /cancel')
+        else:
+            return False
+
+    @coroutine
+    def setstartmessage_command(self, message):
+        if message['chat']['id'] == self.owner_id:
+            report_botan(message, 'slave_setstartmessage_cmd')
+            yield self.bot.send_message(message['chat']['id'], 'Set new start message')
+            self.stages.set(message['chat']['id'], self.STAGE_WAIT_START_MESSAGE_VALUE)
+        else:
+            return False
+
+    @coroutine
+    def plaintext_startmessage_handler(self, message):
+        user_id = message['chat']['id']
+        if self.stages.get_id(user_id) == self.STAGE_WAIT_START_MESSAGE_VALUE:
+            if message['text'] and len(message['text'].strip()) > 10:
+                report_botan(message, 'slave_setstartmessage')
+                self.settings['start'] = message['text'].strip()
+                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
+                yield self.bot.send_message(user_id, 'Start message changed to `%s`' % self.settings['start'],
+                                            parse_mode=Api.PARSE_MODE_MD)
+                self.stages.drop(user_id)
+            else:
+                report_botan(message, 'slave_setstartmessage_invalid')
+                yield self.bot.send_message(user_id, 'Invalid start message, you should write at least 10 symbols. Try '
+                                                     'again or type /cancel')
         else:
             return False
 
