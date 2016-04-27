@@ -304,11 +304,12 @@ class Slave:
 
     STAGE_WAIT_START_MESSAGE_VALUE = 9
 
-    STAGE_WAIT_BAN_MESSAGE = 10
+    STAGE_WAIT_BAN_MESSAGE = 11
 
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
+    RE_UNBAN = re.compile(r'/unban_(?P<user_id>\d+)')
 
     def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
@@ -324,6 +325,7 @@ class Slave:
         bot.add_handler(self.attach_command, '/attach')
         bot.add_handler(self.togglepower_command, '/togglepower')
         bot.add_handler(self.stats_command, '/stats')
+        bot.add_handler(self.ban_list_command, '/ban_list')
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VIDEO)
@@ -337,6 +339,7 @@ class Slave:
         bot.add_handler(self.vote_yes, self.RE_VOTE_YES)
         bot.add_handler(self.vote_no, self.RE_VOTE_NO)
         bot.add_handler(self.ban_command, self.RE_BAN)
+        bot.add_handler(self.unban_command, self.RE_UNBAN)
         bot.add_handler(self.plaintext_ban_handler)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
@@ -411,8 +414,12 @@ class Slave:
 
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
             report_botan(message, 'slave_validation_failed')
-            yield self.bot.send_message(owner_id,
-                                        'Unfortunately your message got only %s votes out of required %s and won’t be published to the channel.' % (votes, self.settings['votes']))
+            try:
+                yield self.bot.send_message(owner_id, 'Unfortunately your message got only %s votes out of required %s '
+                                                      'and won’t be published to the channel.'
+                                            % (votes, self.settings['votes']))
+            except:
+                pass
 
         yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
@@ -603,8 +610,11 @@ class Slave:
                 if not row[0]:
                     yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
                                            (message_id, original_chat_id))
-                    yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for publishing.')
-                    yield self.bot.forward_message(row[1]['from']['id'], original_chat_id, message_id)
+                    try:
+                        yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for publishing.')
+                        yield self.bot.forward_message(row[1]['from']['id'], original_chat_id, message_id)
+                    except:
+                        pass
                     report_botan(row[1], 'slave_validation_success')
 
     @coroutine
@@ -626,7 +636,7 @@ class Slave:
     @coroutine
     def help_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_help')
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
@@ -638,6 +648,7 @@ class Slave:
    - `/stats 5` for last 5 days,
    - `/stats 2016-01-13` for one day (13th january in example)
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
+/ban_list — list currently banned users
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], Emoji.THUMBS_UP_SIGN,
                                                                       self.settings['votes'],
@@ -650,7 +661,7 @@ class Slave:
     @coroutine
     def setdelay_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setdelay_cmd')
             yield self.bot.send_message(message['chat']['id'], 'Set new delay value for messages posting (in minutes)',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
@@ -676,7 +687,7 @@ class Slave:
     @coroutine
     def setvotes_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setvotes_cmd')
             yield self.bot.send_message(message['chat']['id'], 'Set new amount of required votes',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
@@ -702,7 +713,7 @@ class Slave:
     @coroutine
     def settimeout_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_settimeout_cmd')
             yield self.bot.send_message(message['chat']['id'], 'Set new voting duration value (in hours, only a digits)',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
@@ -728,7 +739,7 @@ class Slave:
     @coroutine
     def setstartmessage_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setstartmessage_cmd')
             yield self.bot.send_message(chat_id, 'Set new start message', reply_to_message_id=message['message_id'],
                                         reply_markup=ForceReply(True))
@@ -760,7 +771,7 @@ class Slave:
     @coroutine
     def togglepower_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_togglepower_cmd')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             if self.settings.get('power'):
@@ -912,12 +923,12 @@ class Slave:
     @coroutine
     def ban_command(self, message):
         chat_id = message['chat']['id']
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             match = self.RE_BAN.match(message['text'])
             user_id = match.group('user_id')
             yield self.bot.send_message(chat_id, 'Please enter a ban reason for the user',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
-            self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, user_id=user_id)
+            self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, ban_user_id=user_id)
         else:
             return False
 
@@ -930,16 +941,64 @@ class Slave:
         if stage[0] != self.STAGE_WAIT_BAN_MESSAGE:
             return False
 
-        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             msg = message['text'].strip()
             if len(msg) < 5:
                 yield self.bot.send_message(chat_id, 'Reason is too short (5 symbols required), try again or send '
                                                      '/cancel', reply_to_message_id=message['message_id'],
                                             reply_markup=ForceReply(True))
             else:
-                yield self.bot.send_message(stage[1]['user_id'], "You've been banned from further communication with "
-                                                                 "this bot. Reason:\n> %s" % msg)
-                yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s', (msg, stage[1]['user_id'], ))
-                yield self.bot.send_message(chat_id, 'User banned', reply_to_message_id=message['messge_id'])
+                try:
+                    yield self.bot.send_message(stage[1]['ban_user_id'], "You've been banned from further "
+                                                                         "communication with this bot. Reason:\n> %s" % msg)
+                except:
+                    pass
+                yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
+                                       'owner_id = %s AND is_voting_success = False', (self.bot_id, stage[1]['ban_user_id'], ))
+                yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s', (msg, stage[1]['ban_user_id'], ))
+                yield self.bot.send_message(chat_id, 'User banned', reply_to_message_id=message['message_id'])
+        else:
+            return False
+
+    @coroutine
+    def ban_list_command(self, message):
+        chat_id = message['chat']['id']
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
+            cur = yield get_db().execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
+                                         'FROM users WHERE bot_id = %s AND '
+                                         'banned_at IS NOT NULL ORDER BY banned_at DESC', (self.bot_id, ))
+
+            msg = ''
+
+            for row_id, (user_id, first_name, last_name, username, banned_at, ban_reason) in enumerate(cur.fetchall()):
+                if first_name and last_name:
+                    user = first_name + ' ' + last_name
+                elif first_name:
+                    user = first_name
+                else:
+                    user = 'userid %s' % user_id
+
+                msg += "%d. %s — %s (banned %s) /unban_%d\n" % (row_id + 1, user, ban_reason,
+                                                                banned_at.strftime('%Y-%m-%d'), user_id)
+
+            if msg:
+                yield self.bot.send_message(chat_id, msg)
+            else:
+                yield self.bot.send_message(chat_id, 'No banned users yet')
+        else:
+            return False
+
+    @coroutine
+    def unban_command(self, message):
+        chat_id = message['chat']['id']
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            match = self.RE_UNBAN.match(message['text'])
+            user_id = match.group('user_id')
+            yield self.bot.send_message(chat_id, 'User unbanned', reply_to_message_id=message['message_id'])
+            try:
+                yield self.bot.send_message(user_id, 'Access restored')
+            except:
+                pass
         else:
             return False

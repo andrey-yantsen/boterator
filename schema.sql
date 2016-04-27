@@ -195,6 +195,13 @@ CREATE INDEX rb_moderator_chat_idx ON registered_bots USING btree (moderator_cha
 
 
 --
+-- Name: users_banned_idx; Type: INDEX; Schema: public; Owner: boterator
+--
+
+CREATE INDEX users_banned_idx ON users USING btree (bot_id, banned_at);
+
+
+--
 -- Name: votes_history_mo_idx; Type: INDEX; Schema: public; Owner: boterator
 --
 
