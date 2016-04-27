@@ -537,7 +537,7 @@ class Slave:
             yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
     @coroutine
-    def plaintext_post_handler(self, message):
+    def ignore_post_handler(self, message):
         if message['chat']['type'] != 'private':
             return False  # Allow only in private
 
