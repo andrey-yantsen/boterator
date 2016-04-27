@@ -332,6 +332,7 @@ class Slave:
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_PHOTO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VOICE)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_DOC)
+        bot.add_handler(self.ignore_post_handler, msg_type=Api.UPDATE_TYPE_MSG_STICKER)
         bot.add_handler(self.plaintext_delay_handler)
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
@@ -534,6 +535,19 @@ class Slave:
         else:
             report_botan(message, 'slave_message_empty')
             yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
+
+    @coroutine
+    def plaintext_post_handler(self, message):
+        if message['chat']['type'] != 'private':
+            return False  # Allow only in private
+
+        user_id = message['from']['id']
+        if self.stages.get_id(user_id) or self.stages.get_id(message['chat']['id']):
+            return False
+
+        report_botan(message, 'slave_message_unsupported')
+
+        yield self.bot.send_message(message['chat']['id'], 'No way')
 
     @coroutine
     def multimedia_post_handler(self, message):
