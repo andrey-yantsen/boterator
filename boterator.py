@@ -542,7 +542,7 @@ class Slave:
             return False  # Allow only in private
 
         user_id = message['from']['id']
-        if self.stages.get_id(user_id):
+        if self.stages.get_id(user_id) or self.stages.get_id(message['chat']['id']):
             return False
 
         mes = message['text']
@@ -567,7 +567,7 @@ class Slave:
             return False  # Allow only in private
 
         user_id = message['from']['id']
-        if self.stages.get_id(user_id):
+        if self.stages.get_id(user_id) or self.stages.get_id(message['chat']['id']):
             return False
 
         report_botan(message, 'slave_message_multimedia')
