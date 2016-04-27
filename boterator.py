@@ -10,6 +10,7 @@ from tornado.httpclient import AsyncHTTPClient
 from tornado.ioloop import PeriodicCallback, IOLoop
 from tornado.options import options
 
+from emoji import Emoji
 from globals import get_db
 from telegram import Api, ForceReply
 
@@ -360,6 +361,7 @@ class Slave:
         bot.add_handler(self.setstartmessage_command, '/setstartmessage')
         bot.add_handler(self.attach_command, '/attach')
         bot.add_handler(self.togglepower_command, '/togglepower')
+        bot.add_handler(self.stats_command, '/stats')
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VIDEO)
@@ -660,12 +662,17 @@ class Slave:
             report_botan(message, 'slave_help')
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
-/setvotes — change required amount of yes-votes to publish a message (current: %s)
+/setvotes — change required amount of %s to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
 /setstartmessage — change start message (current: %s)
 /togglepower — toggle moderators ability to modify settings (current: %s)
+/stats — display some stats for last 7 days. You can customize period by calling:
+   - `/stats 5` for last 5 days,
+   - `/stats 2016-01-13` for one day (13th january in example)
+   - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
 """
-            yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
+            yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], Emoji.THUMBS_UP_SIGN,
+                                                                      self.settings['votes'],
                                                                       self.settings['vote_timeout'],
                                                                       self.settings['start'],
                                                                       'yes' if self.settings.get('power') else 'no'))
@@ -795,6 +802,142 @@ class Slave:
                 yield self.__update_settings(power=True)
                 yield self.bot.send_message(chat_id, 'From now other chat users can modify bot settings (only inside '
                                                      'moderators chat)')
+        else:
+            return False
+
+    @coroutine
+    def stats_command(self, message):
+        def format_top(rows, f: callable):
+            ret = ''
+            for row_id, row in enumerate(rows):
+                user_id, first_name, last_name = row[:3]
+                row = row[3:]
+                if first_name and last_name:
+                    user = first_name + ' ' + last_name
+                elif first_name:
+                    user = first_name
+                else:
+                    user = 'userid %s' % user_id
+
+                ret += "%d. %s — %s\n" % (row_id + 1, user, f(row))
+
+            if not ret:
+                ret = "%s no data\n" % Emoji.CROSS_MARK
+
+            return ret
+
+        if message['from']['id'] == self.owner_id or message['chat']['id'] == self.moderator_chat_id:
+            report_botan(message, 'slave_stats')
+
+            period = message['text'][6:].strip()
+            if period:
+                if period.isdigit():
+                    period_end = datetime.now()
+                    period_begin = period_end - timedelta(days=int(period) - 1)
+                elif ' ' in period and '-' in period:
+                    period = period.split(' ')
+                    try:
+                        period_begin = datetime.strptime(period[0], '%Y-%m-%d')
+                        period_end = datetime.strptime(period[1], '%Y-%m-%d')
+                    except:
+                        yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct value: '
+                                                                           '`/stats 2016-01-01 2016-01-13`',
+                                                    parse_mode=Api.PARSE_MODE_MD)
+                        return
+                elif '-' in period:
+                    try:
+                        period_begin = datetime.strptime(period, '%Y-%m-%d')
+                        period_end = datetime.strptime(period, '%Y-%m-%d')
+                    except:
+                        yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct value: '
+                                                                           '`/stats 2016-01-01`',
+                                                    parse_mode=Api.PARSE_MODE_MD)
+                        return
+                else:
+                    yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct values: '
+                                                                       '`/stats 2016-01-01 2016-01-13`, `/stats 5` for '
+                                                                       'last 5 days or `/stats 2016-01-01`',
+                                                parse_mode=Api.PARSE_MODE_MD)
+                    return
+            else:
+                period_end = datetime.now()
+                period_begin = period_end - timedelta(days=6)
+
+            period_begin = period_begin.replace(hour=0, minute=0, second=0)
+            period_end = period_end.replace(hour=23, minute=59, second=59)
+
+            yield self.bot.send_chat_action(message['chat']['id'], Api.CHAT_ACTION_TYPING)
+
+            period_str = period_begin.strftime('%Y-%m-%d') \
+                if period_begin.strftime('%Y-%m-%d') == period_end.strftime('%Y-%m-%d') \
+                else '%s - %s' % (period_begin.strftime('%Y-%m-%d'), period_end.strftime('%Y-%m-%d'))
+
+            msg = "Stats for %s\n\nTop5 voters:\n" % (period_str, )
+
+            query = """
+            SELECT vh.user_id, u.first_name, u.last_name, count(*), SUM(vote_yes::int) FROM votes_history vh
+            JOIN incoming_messages im ON im.id = vh.message_id AND im.original_chat_id = vh.original_chat_id
+            LEFT JOIN users u ON u.user_id = vh.user_id AND u.bot_id = im.bot_id
+            WHERE im.bot_id = %s AND vh.created_at BETWEEN %s AND %s
+            GROUP BY vh.user_id, u.first_name, u.last_name
+            ORDER BY COUNT(*) DESC
+            LIMIT 5
+            """
+
+            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                                 period_end.strftime('%Y-%m-%d')))
+
+            msg += format_top(cur.fetchall(), lambda row: '%d votes (with %d %s)' % (row[0], row[1], Emoji.THUMBS_UP_SIGN))
+
+            msg += "\nTop5 users by messages count:\n"
+
+            query = """
+            SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
+            LEFT JOIN users u ON u.user_id = im.owner_id AND u.bot_id = im.bot_id
+            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s
+            GROUP BY im.owner_id, u.first_name, u.last_name
+            ORDER BY COUNT(*) DESC
+            LIMIT 5
+            """
+
+            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                                 period_end.strftime('%Y-%m-%d')))
+
+            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
+
+            msg += "\nTop5 users by published messages count:\n"
+
+            query = """
+            SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
+            LEFT JOIN users u ON u.user_id = im.owner_id AND u.bot_id = im.bot_id
+            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND im.is_published = True
+            GROUP BY im.owner_id, u.first_name, u.last_name
+            ORDER BY COUNT(*) DESC
+            LIMIT 5
+            """
+
+            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                                 period_end.strftime('%Y-%m-%d')))
+
+            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0]))
+
+            msg += "\nTop5 users by declined messages count:\n"
+
+            query = """
+            SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
+            LEFT JOIN users u ON u.user_id = im.owner_id AND u.bot_id = im.bot_id
+            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND is_voting_fail = True
+            GROUP BY im.owner_id, u.first_name, u.last_name
+            ORDER BY COUNT(*) DESC
+            LIMIT 5
+            """
+
+            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                                 period_end.strftime('%Y-%m-%d')))
+
+            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
+
+            yield self.bot.send_message(message['chat']['id'], msg)
         else:
             return False
 
