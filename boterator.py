@@ -158,7 +158,8 @@ class BotMother:
     def cancel_command(self, message):
         report_botan(message, 'boterator_cancel')
         self.stages.drop(message['from']['id'])
-        yield self.bot.send_message(message['from']['id'], 'Oka-a-a-a-a-ay.')
+        self.stages.drop(message['chat']['id'])
+        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.')
 
     @coroutine
     def plaintext_channel_name(self, message):
@@ -530,12 +531,10 @@ class Slave:
 
     @coroutine
     def cancel_command(self, message):
-        if message['from']['id'] != message['chat']['id']:
-            return False  # Allow only in private
-
         report_botan(message, 'slave_cancel')
         self.stages.drop(message['from']['id'])
-        yield self.bot.send_message(message['from']['id'], 'Oka-a-a-a-a-ay.')
+        self.stages.drop(message['chat']['id'])
+        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.')
 
     @coroutine
     def plaintext_post_handler(self, message):
