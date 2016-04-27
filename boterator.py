@@ -359,6 +359,7 @@ class Slave:
         bot.add_handler(self.settimeout_command, '/settimeout')
         bot.add_handler(self.setstartmessage_command, '/setstartmessage')
         bot.add_handler(self.attach_command, '/attach')
+        bot.add_handler(self.togglepower_command, '/togglepower')
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VIDEO)
