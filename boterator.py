@@ -662,14 +662,13 @@ class Slave:
 /setdelay — change the delay between messages (current: %s minutes)
 /setvotes — change required amount of yes-votes to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
-/setstartmessage — change start message (current: `%s`)
+/setstartmessage — change start message (current: %s)
 /togglepower — toggle moderators ability to modify settings (current: %s)
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
                                                                       self.settings['vote_timeout'],
                                                                       self.settings['start'],
-                                                                      'yes' if self.settings.get('power') else 'no'),
-                                        parse_mode=Api.PARSE_MODE_MD)
+                                                                      'yes' if self.settings.get('power') else 'no'))
         else:
             return False
 
@@ -769,8 +768,7 @@ class Slave:
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
-                yield self.bot.send_message(chat_id, 'Start message changed to `%s`' % self.settings['start'],
-                                            parse_mode=Api.PARSE_MODE_MD)
+                yield self.bot.send_message(chat_id, 'Start message changed to "%s"' % self.settings['start'])
                 self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setstartmessage_invalid')
