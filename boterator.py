@@ -11,7 +11,7 @@ from tornado.ioloop import PeriodicCallback, IOLoop
 from tornado.options import options
 
 from globals import get_db
-from telegram import Api
+from telegram import Api, ForceReply
 
 
 @coroutine
@@ -234,8 +234,9 @@ class BotMother:
                                                      'By default the bot will wait for 5 votes to approve the message, '
                                                      'perform 15 minutes delay between channel messages and wait 24 '
                                                      'hours before closing a voting for each message. To modify this '
-                                                     'settings send /help in PM to @%s. You’re the only user who can '
-                                                     'change these settings and use /help command'
+                                                     '(and few other) settings send /help in PM to @%s. By default '
+                                                     'you’re the only user who can change these settings and use /help '
+                                                     'command'
                                             % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
@@ -538,7 +539,7 @@ class Slave:
 
     @coroutine
     def plaintext_post_handler(self, message):
-        if message['from']['id'] != message['chat']['id']:
+        if message['chat']['type'] == 'private':
             return False  # Allow only in private
 
         user_id = message['from']['id']
@@ -563,7 +564,7 @@ class Slave:
 
     @coroutine
     def multimedia_post_handler(self, message):
-        if message['from']['id'] != message['chat']['id']:
+        if message['chat']['type'] == 'private':
             return False  # Allow only in private
 
         user_id = message['from']['id']
@@ -654,119 +655,148 @@ class Slave:
 
     @coroutine
     def help_command(self, message):
-        if message['chat']['id'] == self.owner_id:
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             report_botan(message, 'slave_help')
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
 /setvotes — change required amount of yes-votes to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
 /setstartmessage — change start message (current: `%s`)
+/togglepower — toggle moderators ability to modify settings (current: %s)
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], self.settings['votes'],
-                                                                      self.settings['vote_timeout'], self.settings['start']),
+                                                                      self.settings['vote_timeout'],
+                                                                      self.settings['start'],
+                                                                      'yes' if self.settings.get('power') else 'no'),
                                         parse_mode=Api.PARSE_MODE_MD)
         else:
             return False
 
     @coroutine
     def setdelay_command(self, message):
-        if message['chat']['id'] == self.owner_id:
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             report_botan(message, 'slave_setdelay_cmd')
-            yield self.bot.send_message(message['chat']['id'], 'Set new delay value for messages posting (in minutes)')
+            yield self.bot.send_message(message['chat']['id'], 'Set new delay value for messages posting (in minutes)',
+                                        reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_DELAY_VALUE)
         else:
             return False
 
     @coroutine
     def plaintext_delay_handler(self, message):
-        user_id = message['chat']['id']
-        if self.stages.get_id(user_id) == self.STAGE_WAIT_DELAY_VALUE:
+        chat_id = message['chat']['id']
+        if self.stages.get_id(chat_id) == self.STAGE_WAIT_DELAY_VALUE and (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             if message['text'].isdigit():
                 report_botan(message, 'slave_setdelay')
-                self.settings['delay'] = int(message['text'])
-                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Delay value updated to %s minutes' % self.settings['delay'])
-                self.stages.drop(user_id)
+                yield self.__update_settings(delay=int(message['text']))
+                yield self.bot.send_message(chat_id, 'Delay value updated to %s minutes' % self.settings['delay'])
+                self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setdelay_invalid')
-                yield self.bot.send_message(user_id, 'Invalid delay value. Try again or type /cancel')
+                yield self.bot.send_message(chat_id, 'Invalid delay value. Try again or type /cancel')
         else:
             return False
 
     @coroutine
     def setvotes_command(self, message):
-        if message['chat']['id'] == self.owner_id:
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             report_botan(message, 'slave_setvotes_cmd')
-            yield self.bot.send_message(message['chat']['id'], 'Set new amount of required votes.')
+            yield self.bot.send_message(message['chat']['id'], 'Set new amount of required votes',
+                                        reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTES_VALUE)
         else:
             return False
 
     @coroutine
     def plaintext_votes_handler(self, message):
-        user_id = message['chat']['id']
-        if self.stages.get_id(user_id) == self.STAGE_WAIT_VOTES_VALUE:
+        chat_id = message['chat']['id']
+        if self.stages.get_id(chat_id) == self.STAGE_WAIT_VOTES_VALUE and (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             if message['text'].isdigit():
                 report_botan(message, 'slave_setvotes')
-                self.settings['votes'] = int(message['text'])
-                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Required votes amount updated to %s' % self.settings['votes'])
-                self.stages.drop(user_id)
+                yield self.__update_settings(votes=int(message['text']))
+                yield self.bot.send_message(chat_id, 'Required votes amount updated to %s' % self.settings['votes'])
+                self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setvotes_invalid')
-                yield self.bot.send_message(user_id, 'Invalid votes amount value. Try again or type /cancel')
+                yield self.bot.send_message(chat_id, 'Invalid votes amount value. Try again or type /cancel')
         else:
             return False
 
     @coroutine
     def settimeout_command(self, message):
-        if message['chat']['id'] == self.owner_id:
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             report_botan(message, 'slave_settimeout_cmd')
-            yield self.bot.send_message(message['chat']['id'], 'Set new voting duration value (in hours, only a digits)')
+            yield self.bot.send_message(message['chat']['id'], 'Set new voting duration value (in hours, only a digits)',
+                                        reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
             return False
 
     @coroutine
     def plaintext_timeout_handler(self, message):
-        user_id = message['chat']['id']
-        if self.stages.get_id(user_id) == self.STAGE_WAIT_VOTE_TIMEOUT_VALUE:
+        chat_id = message['chat']['id']
+        if self.stages.get_id(chat_id) == self.STAGE_WAIT_VOTE_TIMEOUT_VALUE and (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             if message['text'].isdigit():
                 report_botan(message, 'slave_settimeout')
-                self.settings['vote_timeout'] = int(message['text'])
-                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Voting duration setting updated to %s hours' % self.settings['vote_timeout'])
-                self.stages.drop(user_id)
+                yield self.__update_settings(vote_timeout=int(message['text']))
+                yield self.bot.send_message(chat_id, 'Voting duration setting updated to %s hours' % self.settings['vote_timeout'])
+                self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_settimeout_invalid')
-                yield self.bot.send_message(user_id, 'Invalid voting duration value. Try again or type /cancel')
+                yield self.bot.send_message(chat_id, 'Invalid voting duration value. Try again or type /cancel')
         else:
             return False
 
     @coroutine
     def setstartmessage_command(self, message):
-        if message['chat']['id'] == self.owner_id:
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             report_botan(message, 'slave_setstartmessage_cmd')
-            yield self.bot.send_message(message['chat']['id'], 'Set new start message')
-            self.stages.set(message['chat']['id'], self.STAGE_WAIT_START_MESSAGE_VALUE)
+            yield self.bot.send_message(chat_id, 'Set new start message', reply_to_message_id=message['message_id'],
+                                        reply_markup=ForceReply(True))
+            self.stages.set(chat_id, self.STAGE_WAIT_START_MESSAGE_VALUE)
         else:
             return False
 
     @coroutine
     def plaintext_startmessage_handler(self, message):
-        user_id = message['chat']['id']
-        if self.stages.get_id(user_id) == self.STAGE_WAIT_START_MESSAGE_VALUE:
+        chat_id = message['chat']['id']
+        if self.stages.get_id(chat_id) == self.STAGE_WAIT_START_MESSAGE_VALUE and (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
-                self.settings['start'] = message['text'].strip()
-                yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
-                yield self.bot.send_message(user_id, 'Start message changed to `%s`' % self.settings['start'],
+                yield self.__update_settings(start=message['text'].strip())
+                yield self.bot.send_message(chat_id, 'Start message changed to `%s`' % self.settings['start'],
                                             parse_mode=Api.PARSE_MODE_MD)
-                self.stages.drop(user_id)
+                self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setstartmessage_invalid')
-                yield self.bot.send_message(user_id, 'Invalid start message, you should write at least 10 symbols. Try '
+                yield self.bot.send_message(chat_id, 'Invalid start message, you should write at least 10 symbols. Try '
                                                      'again or type /cancel')
+        else:
+            return False
+
+    @coroutine
+    def __update_settings(self, **kwargs):
+        self.settings.update(kwargs)
+        yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings), self.bot_id))
+
+    @coroutine
+    def togglepower_command(self, message):
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+            report_botan(message, 'slave_togglepower_cmd')
+            yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
+            if self.settings.get('power'):
+                yield self.__update_settings(power=False)
+                yield self.bot.send_message(chat_id, 'From now other chat users can not modify bot settings')
+            else:
+                yield self.__update_settings(power=True)
+                yield self.bot.send_message(chat_id, 'From now other chat users can modify bot settings (only inside '
+                                                     'moderators chat)')
         else:
             return False
 
