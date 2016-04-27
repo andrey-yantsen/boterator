@@ -1063,7 +1063,7 @@ class Slave:
                                             reply_markup=ForceReply(True))
             else:
                 try:
-                    yield self.bot.send_message(stage[1]['msg_chat_id'], msg, reply_to_message_id=stage[1]['message_id'])
+                    yield self.bot.send_message(stage[1]['msg_chat_id'], msg, reply_to_message_id=stage[1]['msg_id'])
                 except Exception as e:
                     yield self.bot.send_message(chat_id, 'Failed: %s' % e, reply_to_message_id=message['message_id'])
         else:
