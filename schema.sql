@@ -72,6 +72,24 @@ CREATE TABLE registered_bots (
 ALTER TABLE registered_bots OWNER TO boterator;
 
 --
+-- Name: users; Type: TABLE; Schema: public; Owner: boterator
+--
+
+CREATE TABLE users (
+    bot_id integer NOT NULL,
+    user_id integer NOT NULL,
+    first_name character varying NOT NULL,
+    last_name character varying,
+    username character varying,
+    created_at timestamp without time zone NOT NULL,
+    updated_at timestamp without time zone NOT NULL,
+    banned_at timestamp without time zone
+);
+
+
+ALTER TABLE users OWNER TO boterator;
+
+--
 -- Name: votes_history; Type: TABLE; Schema: public; Owner: boterator
 --
 
@@ -129,6 +147,14 @@ ALTER TABLE ONLY incoming_messages
 
 ALTER TABLE ONLY registered_bots
     ADD CONSTRAINT registered_bots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+--
+
+ALTER TABLE ONLY users
+    ADD CONSTRAINT users_pkey PRIMARY KEY (bot_id, user_id);
 
 
 --

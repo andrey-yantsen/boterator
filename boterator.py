@@ -34,6 +34,26 @@ def report_botan(message, event_name):
     return loads(resp.body.decode('utf-8'))
 
 
+@coroutine
+def is_allowed_user(user, bot_id):
+    query = """
+        INSERT INTO users (bot_id, user_id, first_name, last_name, username, created_at, updated_at)
+        VALUES (%s, %s, %s, %s, %s, NOW(), NOW())
+        ON CONFLICT ON CONSTRAINT users_pkey
+        DO UPDATE SET first_name = EXCLUDED.first_name, last_name = COALESCE(EXCLUDED.last_name, users.last_name),
+         username = COALESCE(EXCLUDED.username, users.username), updated_at = EXCLUDED.updated_at
+    """
+
+    yield get_db().execute(query, (bot_id, user['id'], user['first_name'], user.get('last_name'), user.get('username')))
+
+    cur = yield get_db().execute('SELECT banned_at FROM users WHERE bot_id = %s AND user_id = %s', (bot_id, user['id']))
+    row = cur.fetchone()
+    if row and row[0]:
+        return False
+
+    return True
+
+
 class BotMother:
     STAGE_WAITING_TOKEN = 1
     STAGE_MODERATION_GROUP = 2
@@ -44,6 +64,7 @@ class BotMother:
 
     def __init__(self, token):
         bot = Api(token)
+        bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
         bot.add_handler(self.start_command, '/start')
         bot.add_handler(self.reg_command, '/reg')
         bot.add_handler(self.plaintext_token)
@@ -56,6 +77,15 @@ class BotMother:
         self.bot = bot
         self.stages = StagesStorage()
         self.slaves = {}
+
+    @coroutine
+    def validate_user(self, message):
+        bot_info = yield self.bot.get_me()
+        allowed = is_allowed_user(message['from'], bot_info['id'])
+        if allowed:
+            return False
+
+        yield self.bot.send_message(message['from']['id'], 'Access denied')
 
     @coroutine
     def start_command(self, message):
@@ -317,6 +347,7 @@ class Slave:
 
     def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
+        bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
         bot.add_handler(self.confirm_command, '/confirm')
         bot.add_handler(self.start_command, '/start')
         bot.add_handler(self.cancel_command, '/cancel')
@@ -350,6 +381,15 @@ class Slave:
         self.settings = settings
         self.owner_id = owner_id
         self.bot_id = bot_id
+
+    @coroutine
+    def validate_user(self, message):
+        bot_info = yield self.bot.get_me()
+        allowed = yield is_allowed_user(message['from'], bot_info['id'])
+        if allowed:
+            return False
+
+        yield self.bot.send_message(message['from']['id'], 'Access denied')
 
     @coroutine
     def listen(self):

@@ -299,7 +299,7 @@ class Api:
     def _process_update(self):
         def default_filter_text_msg(cmd):
             return lambda r, c: (r == self.UPDATE_TYPE_MSG_TEXT or r == self.UPDATE_TYPE_MSG_ANY) \
-                                and (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)))
+                                and (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)) or c is False)
 
         def default_filter_msg(msg_type):
             return lambda r, c: (r == msg_type or r == self.UPDATE_TYPE_MSG_ANY) and c is None
