@@ -657,7 +657,7 @@ class Slave:
     @coroutine
     def help_command(self, message):
         chat_id = message['chat']['id']
-        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+        if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_help')
             msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
@@ -688,7 +688,7 @@ class Slave:
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_DELAY_VALUE)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_delay_handler(self, message):
@@ -714,7 +714,7 @@ class Slave:
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTES_VALUE)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_votes_handler(self, message):
@@ -740,7 +740,7 @@ class Slave:
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_timeout_handler(self, message):
@@ -766,7 +766,7 @@ class Slave:
                                         reply_markup=ForceReply(True))
             self.stages.set(chat_id, self.STAGE_WAIT_START_MESSAGE_VALUE)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_startmessage_handler(self, message):
@@ -803,7 +803,7 @@ class Slave:
                 yield self.bot.send_message(chat_id, 'From now other chat users can modify bot settings (only inside '
                                                      'moderators chat)')
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def stats_command(self, message):
@@ -939,7 +939,7 @@ class Slave:
 
             yield self.bot.send_message(message['chat']['id'], msg)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def ban_command(self, message):
@@ -952,7 +952,7 @@ class Slave:
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, ban_user_id=user_id)
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_ban_handler(self, message):
@@ -1014,7 +1014,7 @@ class Slave:
             else:
                 yield self.bot.send_message(chat_id, 'No banned users yet')
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def unban_command(self, message):
@@ -1032,7 +1032,7 @@ class Slave:
             except:
                 pass
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def reply_command(self, message):
@@ -1045,7 +1045,7 @@ class Slave:
             self.stages.set(message['from']['id'], self.STAGE_WAIT_REPLY_MESSAGE, msg_id=match.group('message_id'),
                             msg_chat_id=match.group('chat_id'))
         else:
-            return False
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_reply_handler(self, message):
