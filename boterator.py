@@ -418,7 +418,7 @@ class Slave:
             try:
                 yield self.bot.send_message(owner_id, 'Unfortunately your message got only %s votes out of required %s '
                                                       'and won’t be published to the channel.'
-                                            % (votes, self.settings['votes']))
+                                            % (votes, self.settings['votes']), reply_to_message_id=message_id)
             except:
                 pass
 
@@ -569,10 +569,11 @@ class Slave:
     @coroutine
     def post_new_moderation_request(self, message):
         yield self.bot.forward_message(self.moderator_chat_id, message['chat']['id'], message['message_id'])
-        yield self.bot.send_message(self.moderator_chat_id, 'Say YES (/vote_%s_%s_yes) or NO (/vote_%s_%s_no) to this '
+        yield self.bot.send_message(self.moderator_chat_id, 'Say %s (/vote_%s_%s_yes) or %s (/vote_%s_%s_no) to this '
                                                             'amazing message. Or you can BAN this user (/ban_%s).'
-                                    % (message['chat']['id'], message['message_id'], message['chat']['id'],
-                                       message['message_id'], message['from']['id']))
+                                    % (Emoji.THUMBS_UP_SIGN, message['chat']['id'], message['message_id'],
+                                       Emoji.THUMBS_DOWN_SIGN, message['chat']['id'], message['message_id'],
+                                       message['from']['id']))
 
         bot_info = yield self.bot.get_me()
         yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
@@ -625,8 +626,8 @@ class Slave:
                     yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
                                            (message_id, original_chat_id))
                     try:
-                        yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for publishing.')
-                        yield self.bot.forward_message(row[1]['from']['id'], original_chat_id, message_id)
+                        yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for '
+                                                                          'publishing.', reply_to_message_id=message_id)
                     except:
                         pass
                     report_botan(row[1], 'slave_validation_success')
@@ -940,6 +941,7 @@ class Slave:
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             match = self.RE_BAN.match(message['text'])
             user_id = match.group('user_id')
+            report_botan(message, 'slave_ban_cmd')
             yield self.bot.send_message(chat_id, 'Please enter a ban reason for the user',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, ban_user_id=user_id)
@@ -958,10 +960,12 @@ class Slave:
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             msg = message['text'].strip()
             if len(msg) < 5:
+                report_botan(message, 'slave_ban_short_msg')
                 yield self.bot.send_message(chat_id, 'Reason is too short (5 symbols required), try again or send '
                                                      '/cancel', reply_to_message_id=message['message_id'],
                                             reply_markup=ForceReply(True))
             else:
+                report_botan(message, 'slave_ban_success')
                 yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
                 try:
                     yield self.bot.send_message(stage[1]['ban_user_id'], "You've been banned from further "
@@ -980,6 +984,7 @@ class Slave:
     def ban_list_command(self, message):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            report_botan(message, 'slave_ban_list_cmd')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             cur = yield get_db().execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
                                          'FROM users WHERE bot_id = %s AND '
@@ -1009,6 +1014,7 @@ class Slave:
     def unban_command(self, message):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            report_botan(message, 'slave_unban_cmd')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             match = self.RE_UNBAN.match(message['text'])
             user_id = match.group('user_id')
