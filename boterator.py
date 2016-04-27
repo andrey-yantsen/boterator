@@ -539,7 +539,7 @@ class Slave:
 
     @coroutine
     def plaintext_post_handler(self, message):
-        if message['chat']['type'] == 'private':
+        if message['chat']['type'] != 'private':
             return False  # Allow only in private
 
         user_id = message['from']['id']
@@ -564,7 +564,7 @@ class Slave:
 
     @coroutine
     def multimedia_post_handler(self, message):
-        if message['chat']['type'] == 'private':
+        if message['chat']['type'] != 'private':
             return False  # Allow only in private
 
         user_id = message['from']['id']
