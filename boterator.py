@@ -306,10 +306,13 @@ class Slave:
 
     STAGE_WAIT_BAN_MESSAGE = 11
 
+    STAGE_WAIT_REPLY_MESSAGE = 13
+
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
     RE_UNBAN = re.compile(r'/unban_(?P<user_id>\d+)')
+    RE_REPLY = re.compile(r'/reply_(?P<chat_id>\d+)_(?P<message_id>\d+)')
 
     def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
@@ -342,6 +345,8 @@ class Slave:
         bot.add_handler(self.ban_command, self.RE_BAN)
         bot.add_handler(self.unban_command, self.RE_UNBAN)
         bot.add_handler(self.plaintext_ban_handler)
+        bot.add_handler(self.reply_command, self.RE_REPLY)
+        bot.add_handler(self.plaintext_reply_handler)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
         bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED)
@@ -570,10 +575,11 @@ class Slave:
     def post_new_moderation_request(self, message):
         yield self.bot.forward_message(self.moderator_chat_id, message['chat']['id'], message['message_id'])
         yield self.bot.send_message(self.moderator_chat_id, 'Say %s (/vote_%s_%s_yes) or %s (/vote_%s_%s_no) to this '
-                                                            'amazing message. Or you can BAN this user (/ban_%s).'
+                                                            'amazing message. Also you can just send a message to the '
+                                                            'user (/reply_%s_%s). Or even can BAN him (/ban_%s).'
                                     % (Emoji.THUMBS_UP_SIGN, message['chat']['id'], message['message_id'],
                                        Emoji.THUMBS_DOWN_SIGN, message['chat']['id'], message['message_id'],
-                                       message['from']['id']))
+                                       message['chat']['id'], message['message_id'], message['from']['id']))
 
         bot_info = yield self.bot.get_me()
         yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
@@ -1025,5 +1031,40 @@ class Slave:
                 yield self.bot.send_message(user_id, 'Access restored')
             except:
                 pass
+        else:
+            return False
+
+    @coroutine
+    def reply_command(self, message):
+        chat_id = message['chat']['id']
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            report_botan(message, 'slave_reply_cmd')
+            match = self.RE_REPLY.match(message['text'])
+            yield self.bot.send_message(chat_id, 'What message should I send to user?',
+                                        reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
+            self.stages.set(message['from']['id'], self.STAGE_WAIT_REPLY_MESSAGE, msg_id=match.group('message_id'),
+                            msg_chat_id=match.group('chat_id'))
+        else:
+            return False
+
+    @coroutine
+    def plaintext_reply_handler(self, message):
+        chat_id = message['chat']['id']
+        user_id = message['from']['id']
+
+        stage = self.stages.get(user_id)
+
+        if stage[0] == self.STAGE_WAIT_REPLY_MESSAGE:
+            msg = message['text'].strip()
+            if len(msg) < 10:
+                report_botan(message, 'slave_reply_short_msg')
+                yield self.bot.send_message(chat_id, 'Message is too short (10 symbols required), try again or send '
+                                                     '/cancel', reply_to_message_id=message['message_id'],
+                                            reply_markup=ForceReply(True))
+            else:
+                try:
+                    yield self.bot.send_message(stage[1]['msg_chat_id'], msg, reply_to_message_id=stage[1]['message_id'])
+                except Exception as e:
+                    yield self.bot.send_message(chat_id, 'Failed: %s' % e, reply_to_message_id=message['message_id'])
         else:
             return False
