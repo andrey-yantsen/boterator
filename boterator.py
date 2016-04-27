@@ -864,7 +864,7 @@ class Slave:
             """
 
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d')))
+                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), lambda row: '%d votes (with %d %s)' % (row[0], row[1], Emoji.THUMBS_UP_SIGN))
 
@@ -880,7 +880,7 @@ class Slave:
             """
 
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d')))
+                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
 
@@ -896,7 +896,7 @@ class Slave:
             """
 
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d')))
+                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0]))
 
@@ -912,7 +912,7 @@ class Slave:
             """
 
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d')))
+                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
 
