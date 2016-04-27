@@ -83,7 +83,8 @@ CREATE TABLE users (
     username character varying,
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
-    banned_at timestamp without time zone
+    banned_at timestamp without time zone,
+    ban_reason character varying
 );
 
 

@@ -345,8 +345,11 @@ class Slave:
 
     STAGE_WAIT_START_MESSAGE_VALUE = 9
 
-    RE_MATCH_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
-    RE_MATCH_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
+    STAGE_WAIT_BAN_MESSAGE = 10
+
+    RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
+    RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
+    RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
 
     def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
@@ -372,8 +375,10 @@ class Slave:
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
         bot.add_handler(self.plaintext_startmessage_handler)
-        bot.add_handler(self.vote_yes, self.RE_MATCH_YES)
-        bot.add_handler(self.vote_no, self.RE_MATCH_NO)
+        bot.add_handler(self.vote_yes, self.RE_VOTE_YES)
+        bot.add_handler(self.vote_no, self.RE_VOTE_NO)
+        bot.add_handler(self.ban_command, self.RE_BAN)
+        bot.add_handler(self.plaintext_ban_handler)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
         bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED)
@@ -527,7 +532,7 @@ class Slave:
             VALUES (%s, %s, %s, %s, NOW(), %s)
             """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id'], dumps(stage[1]['message'])))
             yield self.bot.send_message(user_id, 'Okay, I\'ve sent your message for verification. Fingers crossed!')
-            yield self.post_new_moderation_request(stage[1]['message_id'], stage[1]['chat_id'], self.moderator_chat_id)
+            yield self.post_new_moderation_request(stage[1]['message'])
             self.stages.drop(user_id)
         else:
             yield self.bot.send_message(user_id, 'Invalid command')
@@ -582,9 +587,13 @@ class Slave:
                         message_id=message['message_id'], message=message)
 
     @coroutine
-    def post_new_moderation_request(self, message_id, original_chat_id, target_chat_id):
-        yield self.bot.forward_message(target_chat_id, original_chat_id, message_id)
-        yield self.bot.send_message(target_chat_id, 'Say YES (/vote_%s_%s_yes) or NO (/vote_%s_%s_no) to this amazing message.' % (original_chat_id, message_id, original_chat_id, message_id))
+    def post_new_moderation_request(self, message):
+        yield self.bot.forward_message(self.moderator_chat_id, message['chat']['id'], message['message_id'])
+        yield self.bot.send_message(self.moderator_chat_id, 'Say YES (/vote_%s_%s_yes) or NO (/vote_%s_%s_no) to this '
+                                                            'amazing message. Or you can BAN this user (/ban_%s).'
+                                    % (message['chat']['id'], message['message_id'], message['chat']['id'],
+                                       message['message_id'], message['from']['id']))
+
         bot_info = yield self.bot.get_me()
         yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
 
@@ -642,7 +651,7 @@ class Slave:
     @coroutine
     def vote_yes(self, message):
         report_botan(message, 'slave_vote_yes')
-        match = self.RE_MATCH_YES.match(message['text'])
+        match = self.RE_VOTE_YES.match(message['text'])
         original_chat_id = match.group('chat_id')
         message_id = match.group('message_id')
         yield self.__vote(message['from']['id'], message_id, original_chat_id, True)
@@ -650,7 +659,7 @@ class Slave:
     @coroutine
     def vote_no(self, message):
         report_botan(message, 'slave_vote_no')
-        match = self.RE_MATCH_NO.match(message['text'])
+        match = self.RE_VOTE_NO.match(message['text'])
         original_chat_id = match.group('chat_id')
         message_id = match.group('message_id')
         yield self.__vote(message['from']['id'], message_id, original_chat_id, False)
@@ -938,6 +947,41 @@ class Slave:
             msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
 
             yield self.bot.send_message(message['chat']['id'], msg)
+        else:
+            return False
+
+    @coroutine
+    def ban_command(self, message):
+        chat_id = message['chat']['id']
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+            match = self.RE_BAN.match(message['text'])
+            user_id = match.group('user_id')
+            yield self.bot.send_message(chat_id, 'Please enter a ban reason for the user',
+                                        reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
+            self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, user_id=user_id)
+        else:
+            return False
+
+    @coroutine
+    def plaintext_ban_handler(self, message):
+        chat_id = message['chat']['id']
+
+        stage = self.stages.get(chat_id)
+
+        if stage[0] != self.STAGE_WAIT_BAN_MESSAGE:
+            return False
+
+        if (message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id)):
+            msg = message['text'].strip()
+            if len(msg) < 5:
+                yield self.bot.send_message(chat_id, 'Reason is too short (5 symbols required), try again or send '
+                                                     '/cancel', reply_to_message_id=message['message_id'],
+                                            reply_markup=ForceReply(True))
+            else:
+                yield self.bot.send_message(stage[1]['user_id'], "You've been banned from further communication with "
+                                                                 "this bot. Reason:\n> %s" % msg)
+                yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s', (msg, stage[1]['user_id'], ))
+                yield self.bot.send_message(chat_id, 'User banned', reply_to_message_id=message['messge_id'])
         else:
             return False
 
