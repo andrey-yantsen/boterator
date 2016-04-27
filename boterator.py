@@ -419,7 +419,7 @@ class Slave:
                                'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
 
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
-            report_botan(message, 'slave_validation_failed')
+            report_botan(message, 'slave_verification_failed')
             try:
                 yield self.bot.send_message(owner_id, 'Unfortunately your message got only %s votes out of required %s '
                                                       'and won’t be published to the channel.'
@@ -636,7 +636,7 @@ class Slave:
                                                                           'publishing.', reply_to_message_id=message_id)
                     except:
                         pass
-                    report_botan(row[1], 'slave_validation_success')
+                    report_botan(row[1], 'slave_verification_success')
 
     @coroutine
     def vote_yes(self, message):
