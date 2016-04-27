@@ -89,13 +89,14 @@ class BotMother:
                 new_bot_me = yield new_bot.get_me()
                 if new_bot_me['id'] in self.slaves:
                     report_botan(message, 'boterator_token_duplicate')
-                    yield self.bot.send_message(user_id, 'It seems like this bot is already registered. Try to crete another one')
+                    yield self.bot.send_message(user_id, 'It seems like this bot is already registered. Try to crete '
+                                                         'another one')
                     return
                 yield self.bot.send_message(user_id, 'Ok, I\'ve got basic information for @%s' % new_bot_me['username'])
                 yield self.bot.send_message(user_id,
-                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to the group, in '
-                                            'case you’ve already added him), where I should send messages for verification, or type '
-                                            '/cancel' % new_bot_me['username'],
+                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to '
+                                            'the group, in case you’ve already added him), where I should send '
+                                            'messages for verification, or type /cancel' % new_bot_me['username'],
                                             parse_mode=Api.PARSE_MODE_MD)
 
                 hello_message = 'Hi there, guys! Now it is possible to publish messages in this channel by any of ' \
@@ -133,7 +134,10 @@ class BotMother:
             else:
                 try:
                     new_bot = Api(stage[1]['token'])
-                    yield new_bot.send_message(channel_name, stage[1]['hello'])
+                    try:
+                        yield new_bot.send_message(channel_name, stage[1]['hello'], parse_mode=Api.PARSE_MODE_MD)
+                    except:
+                        yield new_bot.send_message(channel_name, stage[1]['hello'])
                     self.stages.set(user_id, self.STAGE_REGISTERED, channel=channel_name)
                     report_botan(message, 'boterator_registered')
                 except Exception as e:
@@ -230,16 +234,22 @@ class BotMother:
     def set_slave_attached(self, user_id, chat):
         stage = self.stages.get(user_id)
         yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
-        yield self.bot.send_message(user_id, "Ok, I'll be sending moderation requests to %s %s\n"
-                                             "Now you need to add your bot (@%s) to a channel as administrator and "
-                                             "tell me the channel name (e.g. @mobilenewsru)\n"
-                                             "As soon as I will receive the channel name I'll send a message with "
-                                             "following text:\n> %s\n"
-                                             "You can change the message, if you mind, just send me /change_hello.\n"
-                                             "Also there is 'start' message for your new bot:\n> %s\n"
-                                             "You can change it with /change_start"
-                                    % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
-                                       stage[1]['start_message']))
+        message = "Ok, I'll be sending moderation requests to %s %s\n" \
+                  "Now you need to add your bot (@%s) to a channel as administrator and " \
+                  "tell me the channel name (e.g. @mobilenewsru)\n" \
+                  "As soon as I will receive the channel name I'll send a message with " \
+                  "following text:\n> %s\n" \
+                  "You can change the message, if you mind, just send me /change_hello.\n" \
+                  "Also there is 'start' message for your new bot:\n> %s\n" \
+                  "You can change it with /change_start" \
+                  % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
+                     stage[1]['start_message'])
+
+        try:
+            yield self.bot.send_message(user_id, message, parse_mode=Api.PARSE_MODE_MD)
+        except:
+            yield self.bot.send_message(user_id, message)
+
         self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, moderation=chat['id'])
 
     @coroutine
@@ -439,7 +449,10 @@ class Slave:
     @coroutine
     def start_command(self, message):
         report_botan(message, 'slave_start')
-        yield self.bot.send_message(message['from']['id'], self.settings['start'])
+        try:
+            yield self.bot.send_message(message['from']['id'], self.settings['start'], parse_mode=Api.PARSE_MODE_MD)
+        except:
+            yield self.bot.send_message(message['from']['id'], self.settings['start'])
 
     @coroutine
     def is_moderators_chat(self, chat_id, bot_id):
