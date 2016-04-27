@@ -12,11 +12,6 @@ from globals import get_db
 from telegram import Api, ForceReply
 
 from helpers import report_botan, is_allowed_user, StagesStorage
-import gettext
-
-gettext.bindtextdomain('boterator', './locale')
-gettext.textdomain('boterator')
-_ = gettext.gettext
 
 
 class BotMother:
@@ -50,25 +45,25 @@ class BotMother:
         if allowed:
             return False
 
-        yield self.bot.send_message(message['from']['id'], _('Access denied'))
+        yield self.bot.send_message(message['from']['id'], 'Access denied')
 
     @coroutine
     def start_command(self, message):
         report_botan(message, 'boterator_start')
         yield self.bot.send_message(message['from']['id'],
-                                    _('Hello, this is Boterator. In order to start ask @BotFather to create a new bot. '
-                                      'Then feel free to use /reg command to register new bot using token.'))
+                                    'Hello, this is Boterator. In order to start ask @BotFather to create a new bot. '
+                                    'Then feel free to use /reg command to register new bot using token.')
 
     @coroutine
     def reg_command(self, message):
         user_id = message['from']['id']
         if self.stages.get_id(user_id):
-            yield self.bot.send_message(user_id, _('Another action is in progress, continue or /cancel'))
+            yield self.bot.send_message(user_id, 'Another action is in progress, continue or /cancel')
             return
 
         report_botan(message, 'boterator_reg')
 
-        yield self.bot.send_message(user_id, _('Ok, please tell me the token, which you\'ve received from @BotFather'))
+        yield self.bot.send_message(user_id, 'Ok, please tell me the token, which you\'ve received from @BotFather')
         self.stages.set(user_id, self.STAGE_WAITING_TOKEN)
 
     @coroutine
@@ -81,12 +76,12 @@ class BotMother:
         token = message['text'].strip()
         if token == '':
             report_botan(message, 'boterator_token_empty')
-            yield self.bot.send_message(user_id, _('I guess you forgot to enter the token :)'))
+            yield self.bot.send_message(user_id, 'I guess you forgot to enter the token :)')
         else:
             yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
             if len(token.split(':')) != 2:
                 report_botan(message, 'boterator_token_invalid')
-                yield self.bot.send_message(user_id, _('Token is incorrect. And I can do nothing with that.'))
+                yield self.bot.send_message(user_id, 'Token is incorrect. And I can do nothing with that.')
                 return
 
             try:
@@ -94,22 +89,21 @@ class BotMother:
                 new_bot_me = yield new_bot.get_me()
                 if new_bot_me['id'] in self.slaves:
                     report_botan(message, 'boterator_token_duplicate')
-                    yield self.bot.send_message(user_id, _('It seems like this bot is already registered. Try to crete '
-                                                           'another one'))
+                    yield self.bot.send_message(user_id, 'It seems like this bot is already registered. Try to crete '
+                                                         'another one')
                     return
-                yield self.bot.send_message(user_id, _("Ok, I've got basic information for @{bot_username}\n"
-                                                       'Now add him to a group of moderators (or copy and paste `@'
-                                                       '{bot_username} /attach` to the group, in case you’ve already '
-                                                       'added him), where I should send messages for verification, or '
-                                                       'type /cancel').format(bot_username=new_bot_me['username']),
+                yield self.bot.send_message(user_id, 'Ok, I\'ve got basic information for @%s' % new_bot_me['username'])
+                yield self.bot.send_message(user_id,
+                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to '
+                                            'the group, in case you’ve already added him), where I should send '
+                                            'messages for verification, or type /cancel' % new_bot_me['username'],
                                             parse_mode=Api.PARSE_MODE_MD)
 
-                hello_message = _('Hi there, guys! Now it is possible to publish messages in this channel by any of ' \
-                                  'you. All you need to do — is to write a message to me (bot named @{bot_username),'
-                                  'and it will be published after verification by our team.')\
-                    .format(bot_username=new_bot_me['username'])
+                hello_message = 'Hi there, guys! Now it is possible to publish messages in this channel by any of ' \
+                                'you. All you need to do — is to write a message to me (bot named @%s), and it will ' \
+                                'be published after verification by our team.' % new_bot_me['username']
 
-                start_message = _("Just enter your message, and we're ready.")
+                start_message = "Just enter your message, and we're ready."
 
                 self.stages.set(user_id, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
                                 hello=hello_message, start_message=start_message)
@@ -119,14 +113,14 @@ class BotMother:
             except Exception as e:
                 report_botan(message, 'boterator_token_failure')
                 logging.exception(e)
-                yield self.bot.send_message(user_id, _('Unable to get bot info: {exception}').format(exception=str(e)))
+                yield self.bot.send_message(user_id, 'Unable to get bot info: %s' % str(e))
 
     @coroutine
     def cancel_command(self, message):
         report_botan(message, 'boterator_cancel')
         self.stages.drop(message['from']['id'])
         self.stages.drop(message['chat']['id'])
-        yield self.bot.send_message(message['chat']['id'], _('Oka-a-a-a-a-ay.'))
+        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.')
 
     @coroutine
     def plaintext_channel_name(self, message):
@@ -136,7 +130,7 @@ class BotMother:
             channel_name = message['text'].strip()
             if message['text'][0] != '@' or ' ' in channel_name:
                 report_botan(message, 'boterator_channel_invalid')
-                yield self.bot.send_message(user_id, _('Invalid channel name. Try again or type /cancel'))
+                yield self.bot.send_message(user_id, 'Invalid channel name. Try again or type /cancel')
             else:
                 try:
                     new_bot = Api(stage[1]['token'])
@@ -148,9 +142,8 @@ class BotMother:
                     report_botan(message, 'boterator_registered')
                 except Exception as e:
                     report_botan(message, 'boterator_channel_failure')
-                    yield self.bot.send_message(user_id, _('Hey, I\'m unable to send hello message, is everything '
-                                                           'ready for me? Here is an error from Telegram api: '
-                                                           '{exception}').format(exception=str(e)))
+                    yield self.bot.send_message(user_id, 'Hey, I\'m unable to send hello message, is everything ready '
+                                                         'for me? Here is an error from Telegram api: %s' % str(e))
         else:
             return False
 
@@ -172,8 +165,7 @@ class BotMother:
                 logging.exception('Bot #%s failed', bot_id)
                 yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
                 try:
-                    yield self.bot.send_message(owner_id, _("I'm failed to establish connection to your bot with token "
-                                                            "{token}").format(token=token))
+                    yield self.bot.send_message(owner_id, 'I\'m failed to establish connection to your bot with token %s' % token)
                 except:
                     pass
 
@@ -203,20 +195,19 @@ class BotMother:
                               default_settings, user_id, stage_meta['bot_info']['id'])
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
-                yield self.bot.send_message(user_id, _("And we're ready for some magic!\n"
-                                                       'By default the bot will wait for 5 votes to approve the '
-                                                       'message, perform 15 minutes delay between channel messages '
-                                                       'and wait 24 hours before closing a voting for each message. '
-                                                       'To modify this (and few other) settings send /help in PM to '
-                                                       '@{bot_username}. By default you’re the only user who can '
-                                                       'change these settings and use /help command')\
-                                            .format(bot_username=stage_meta['bot_info']['username']))
+                yield self.bot.send_message(user_id, "And we're ready for some magic!\n"
+                                                     'By default the bot will wait for 5 votes to approve the message, '
+                                                     'perform 15 minutes delay between channel messages and wait 24 '
+                                                     'hours before closing a voting for each message. To modify this '
+                                                     '(and few other) settings send /help in PM to @%s. By default '
+                                                     'you’re the only user who can change these settings and use /help '
+                                                     'command'
+                                            % (stage_meta['bot_info']['username'], ))
                 break
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
                 try:
-                    yield self.bot.send_message(user_id, _('@{bot_username} registration aborted due to timeout')\
-                                                .format(bot_username=stage_meta['bot_info']['username']))
+                    yield self.bot.send_message(user_id, '@%s registration aborted due to timeout' % stage_meta['bot_info']['username'])
                 except:
                     pass
                 break
@@ -243,17 +234,16 @@ class BotMother:
     def set_slave_attached(self, user_id, chat):
         stage = self.stages.get(user_id)
         yield self.bot.send_chat_action(user_id, self.bot.CHAT_ACTION_TYPING)
-        message = _("Ok, I'll be sending moderation requests to {chat_type} {chat_name}\n"
-                    "Now you need to add your bot (@{bot_username}) to a channel as administrator and tell me the "
-                    "channel name (e.g. @mobilenewsru)\n"
-                    "As soon as I will receive the channel name I'll send a message with following text:\n"
-                    "> {hello_message}\n"
-                    "You can change the message, if you mind, just send me /change_hello.\n"
-                    "Also there is 'start' message for your new bot:\n> {start_message}\n"
-                    "You can change it with /change_start").format(chat_type=chat['type'], chat_name=chat['title'],
-                                                                   bot_username=stage[1]['bot_info']['username'],
-                                                                   hello_message=stage[1]['hello'],
-                                                                   start_message=stage[1]['start_message'])
+        message = "Ok, I'll be sending moderation requests to %s %s\n" \
+                  "Now you need to add your bot (@%s) to a channel as administrator and " \
+                  "tell me the channel name (e.g. @mobilenewsru)\n" \
+                  "As soon as I will receive the channel name I'll send a message with " \
+                  "following text:\n> %s\n" \
+                  "You can change the message, if you mind, just send me /change_hello.\n" \
+                  "Also there is 'start' message for your new bot:\n> %s\n" \
+                  "You can change it with /change_start" \
+                  % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
+                     stage[1]['start_message'])
 
         try:
             yield self.bot.send_message(user_id, message, parse_mode=Api.PARSE_MODE_MD)
@@ -266,11 +256,10 @@ class BotMother:
     def change_hello_command(self, message):
         user_id = message['from']['id']
         if self.stages.get_id(user_id) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            yield self.bot.send_message(user_id, _('It\'s not possible to change hello message on current step, sorry'))
+            yield self.bot.send_message(user_id, 'It\'s not possible to change hello message on current step, sorry')
         else:
             report_botan(message, 'boterator_change_hello_cmd')
-            yield self.bot.send_message(user_id, _('Ok, I\'m listening to you. How I should say hello to your '
-                                                   'subscribers?'))
+            yield self.bot.send_message(user_id, 'Ok, I\'m listening to you. How I should say hello to your subscribers?')
             self.stages.set(user_id, self.STAGE_WAITING_HELLO, do_not_validate=True)
 
     @coroutine
@@ -282,20 +271,20 @@ class BotMother:
             text = message['text'].strip()
             if len(text) >= 10:
                 report_botan(message, 'boterator_change_hello_success')
-                yield self.bot.send_message(user_id, _('Ok, noted, now tell me the channel name'))
+                yield self.bot.send_message(user_id, 'Ok, noted, now tell me the channel name')
                 self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, hello=text)
             else:
                 report_botan(message, 'boterator_change_hello_short')
-                yield self.bot.send_message(user_id, _('Hey, you should write at least 10 symbols'))
+                yield self.bot.send_message(user_id, 'Hey, you should write at least 10 symbols')
 
     @coroutine
     def change_start_command(self, message):
         user_id = message['from']['id']
         if self.stages.get_id(user_id) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            yield self.bot.send_message(user_id, _('It\'s not possible to change start message on current step, sorry'))
+            yield self.bot.send_message(user_id, 'It\'s not possible to change start message on current step, sorry')
         else:
             report_botan(message, 'boterator_change_start_cmd')
-            yield self.bot.send_message(user_id, _('Ok, I\'m listening to you. How I should say hello to your authors?'))
+            yield self.bot.send_message(user_id, 'Ok, I\'m listening to you. How I should say hello to your authors?')
             self.stages.set(user_id, self.STAGE_WAITING_START_MESSAGE, do_not_validate=True)
 
     @coroutine
@@ -307,11 +296,11 @@ class BotMother:
             text = message['text'].strip()
             if len(text) >= 10:
                 report_botan(message, 'boterator_change_start_success')
-                yield self.bot.send_message(user_id, _('Ok, noted, now tell me the channel name'))
+                yield self.bot.send_message(user_id, 'Ok, noted, now tell me the channel name')
                 self.stages.set(user_id, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, start_message=text)
             else:
                 report_botan(message, 'boterator_change_start_short')
-                yield self.bot.send_message(user_id, _('Hey, you should write at least 10 symbols'))
+                yield self.bot.send_message(user_id, 'Hey, you should write at least 10 symbols')
 
 
 class Slave:
@@ -388,7 +377,7 @@ class Slave:
         if allowed:
             return False
 
-        yield self.bot.send_message(message['from']['id'], _('Access denied'))
+        yield self.bot.send_message(message['from']['id'], 'Access denied')
 
     @coroutine
     def listen(self):
@@ -442,12 +431,9 @@ class Slave:
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                yield self.bot.send_message(owner_id, _('Unfortunately your message got {votes_string} out of required '
-                                                        '{required_votes_count} and won’t be published to the'
-                                                        'channel.').format(votes_string=gettext.ngettext('only {got_votes} vote',
-                                                                                                         '{got_votes} votes', votes).format(got_vote=votes),
-                                                                           required_votes_count=self.settings['votes']),
-                                            reply_to_message_id=message_id)
+                yield self.bot.send_message(owner_id, 'Unfortunately your message got only %s votes out of required %s '
+                                                      'and won’t be published to the channel.'
+                                            % (votes, self.settings['votes']), reply_to_message_id=message_id)
             except:
                 pass
 
@@ -485,10 +471,7 @@ class Slave:
                 if self.mother.stages.get_id(message['from']['id']) == BotMother.STAGE_MODERATION_GROUP:
                     yield self.attach_command(message)
                 else:
-                    yield self.bot.send_message(message['from']['id'], _('This bot wasn\'t registered for {chat_type} '
-                                                                         '{chat_title}, type /start for more info')\
-                                                .format(chat_type=message['chat']['type'],
-                                                        chat_title=message['chat']['title']))
+                    yield self.bot.send_message(message['from']['id'], 'This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
         else:
             return False
 
@@ -497,10 +480,7 @@ class Slave:
         if self.mother.stages.get_id(message['from']['id']) == BotMother.STAGE_MODERATION_GROUP:
             yield self.attach_command(message)
         else:
-            yield self.bot.send_message(message['from']['id'], _('This bot wasn\'t registered for {chat_type} '
-                                                                 '{chat_title}, type /start for more info') \
-                                        .format(chat_type=message['chat']['type'],
-                                                chat_title=message['chat']['title']))
+            yield self.bot.send_message(message['from']['id'], 'This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
 
     @coroutine
     def attach_command(self, message):
@@ -510,16 +490,14 @@ class Slave:
         if stage[0] == BotMother.STAGE_MODERATION_GROUP:
             yield self.mother.set_slave_attached(user_id, message['chat'])
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Incorrect command'))
+            yield self.bot.send_message(message['chat']['id'], 'Incorrect command')
 
     @coroutine
     def left_chat(self, message):
         me = yield self.bot.get_me()
         if message['left_chat_member']['id'] == me['id']:
             report_botan(message, 'slave_left_chat')
-            yield self.bot.send_message(message['from']['id'], _("Whyyyy?! Remove bot {bot_username} from {chat_name} "
-                                                                 ":\'(").format(bot_username=message['left_chat_member']['username'],
-                                                                                chat_name=message['chat']['title']))
+            yield self.bot.send_message(message['from']['id'], 'Whyyyy?! Remove bot ' + message['left_chat_member']['username'] + ' of ' + message['chat']['title'] + '  :\'(')
         else:
             return False
 
@@ -538,18 +516,18 @@ class Slave:
             INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
             VALUES (%s, %s, %s, %s, NOW(), %s)
             """, (stage[1]['message_id'], stage[1]['chat_id'], user_id, bot_info['id'], dumps(stage[1]['message'])))
-            yield self.bot.send_message(user_id, _('Okay, I\'ve sent your message for verification. Fingers crossed!'))
+            yield self.bot.send_message(user_id, 'Okay, I\'ve sent your message for verification. Fingers crossed!')
             yield self.post_new_moderation_request(stage[1]['message'])
             self.stages.drop(user_id)
         else:
-            yield self.bot.send_message(user_id, _('Invalid command'))
+            yield self.bot.send_message(user_id, 'Invalid command')
 
     @coroutine
     def cancel_command(self, message):
         report_botan(message, 'slave_cancel')
         self.stages.drop(message['from']['id'])
         self.stages.drop(message['chat']['id'])
-        yield self.bot.send_message(message['chat']['id'], _('Oka-a-a-a-a-ay.'))
+        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.')
 
     @coroutine
     def plaintext_post_handler(self, message):
@@ -563,21 +541,18 @@ class Slave:
         mes = message['text']
         if mes.strip() != '':
             if 50 < len(mes) < 1000:
-                yield self.bot.send_message(message['from']['id'], _('Looks good for me. Please, take a look on your '
-                                                                     'message one more time.'))
+                yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your message one more time.')
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-                yield self.bot.send_message(message['from']['id'], _('If everything is correct, send /confirm, '
-                                                                     'otherwise — /cancel'))
+                yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise — /cancel')
                 self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
                                 message_id=message['message_id'], message=message)
                 report_botan(message, 'slave_message')
             else:
                 report_botan(message, 'slave_message_invalid')
-                yield self.bot.send_message(message['chat']['id'], _('Sorry, but we can proceed only messages with '
-                                                                     'length between 50 and 1 000 symbols.'))
+                yield self.bot.send_message(message['chat']['id'], 'Sorry, but we can proceed only messages with length between 50 and 1 000 symbols.')
         else:
             report_botan(message, 'slave_message_empty')
-            yield self.bot.send_message(message['chat']['id'], _('Seriously??? 8===3'))
+            yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
     @coroutine
     def ignore_post_handler(self, message):
@@ -590,7 +565,7 @@ class Slave:
 
         report_botan(message, 'slave_message_unsupported')
 
-        yield self.bot.send_message(message['chat']['id'], _('No way'))
+        yield self.bot.send_message(message['chat']['id'], 'No way')
 
     @coroutine
     def multimedia_post_handler(self, message):
@@ -603,11 +578,9 @@ class Slave:
 
         report_botan(message, 'slave_message_multimedia')
 
-        yield self.bot.send_message(message['from']['id'], _('Looks good for me. Please, take a look on your '
-                                                             'message one more time.'))
+        yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your message one more time.')
         yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-        yield self.bot.send_message(message['from']['id'], _('If everything is correct, send /confirm, '
-                                                             'otherwise — /cancel'))
+        yield self.bot.send_message(message['from']['id'], 'If everything is correct, type /confirm, otherwise — /cancel')
         self.stages.set(message['from']['id'], self.STAGE_ADDING_MESSAGE, chat_id=message['chat']['id'],
                         message_id=message['message_id'], message=message)
 
@@ -672,9 +645,8 @@ class Slave:
                     yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND original_chat_id = %s',
                                            (message_id, original_chat_id))
                     try:
-                        yield self.bot.send_message(row[1]['from']['id'], _('Your message was verified and queued for '
-                                                                            'publishing.'),
-                                                    reply_to_message_id=message_id)
+                        yield self.bot.send_message(row[1]['from']['id'], 'Your message was verified and queued for '
+                                                                          'publishing.', reply_to_message_id=message_id)
                     except:
                         pass
                     report_botan(row[1], 'slave_verification_success')
@@ -700,7 +672,7 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_help')
-            msg = _("""Bot owner's help:
+            msg = """Bot owner's help:
 /setdelay — change the delay between messages (current: %s minutes)
 /setvotes — change required amount of %s to publish a message (current: %s)
 /settimeout — change voting duration (current: %s hours)
@@ -711,7 +683,7 @@ class Slave:
    - `/stats 2016-01-13` for one day (13th january in example)
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
 /ban_list — list currently banned users
-""")
+"""
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], Emoji.THUMBS_UP_SIGN,
                                                                       self.settings['votes'],
                                                                       self.settings['vote_timeout'],
@@ -725,11 +697,11 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setdelay_cmd')
-            yield self.bot.send_message(message['chat']['id'], _('Set new delay value for messages posting (in minutes)'),
+            yield self.bot.send_message(message['chat']['id'], 'Set new delay value for messages posting (in minutes)',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_DELAY_VALUE)
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_delay_handler(self, message):
@@ -738,11 +710,11 @@ class Slave:
             if message['text'].isdigit():
                 report_botan(message, 'slave_setdelay')
                 yield self.__update_settings(delay=int(message['text']))
-                yield self.bot.send_message(chat_id, _('Delay value updated to %s minutes') % self.settings['delay'])
+                yield self.bot.send_message(chat_id, 'Delay value updated to %s minutes' % self.settings['delay'])
                 self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setdelay_invalid')
-                yield self.bot.send_message(chat_id, _('Invalid delay value. Try again or type /cancel'))
+                yield self.bot.send_message(chat_id, 'Invalid delay value. Try again or type /cancel')
         else:
             return False
 
@@ -751,11 +723,11 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setvotes_cmd')
-            yield self.bot.send_message(message['chat']['id'], _('Set new amount of required votes'),
+            yield self.bot.send_message(message['chat']['id'], 'Set new amount of required votes',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTES_VALUE)
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_votes_handler(self, message):
@@ -764,11 +736,11 @@ class Slave:
             if message['text'].isdigit():
                 report_botan(message, 'slave_setvotes')
                 yield self.__update_settings(votes=int(message['text']))
-                yield self.bot.send_message(chat_id, _('Required votes amount updated to %s') % self.settings['votes'])
+                yield self.bot.send_message(chat_id, 'Required votes amount updated to %s' % self.settings['votes'])
                 self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setvotes_invalid')
-                yield self.bot.send_message(chat_id, _('Invalid votes amount value. Try again or type /cancel'))
+                yield self.bot.send_message(chat_id, 'Invalid votes amount value. Try again or type /cancel')
         else:
             return False
 
@@ -777,11 +749,11 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_settimeout_cmd')
-            yield self.bot.send_message(message['chat']['id'], _('Set new voting duration value (in hours, only a digits)'),
+            yield self.bot.send_message(message['chat']['id'], 'Set new voting duration value (in hours, only a digits)',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['chat']['id'], self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_timeout_handler(self, message):
@@ -790,11 +762,11 @@ class Slave:
             if message['text'].isdigit():
                 report_botan(message, 'slave_settimeout')
                 yield self.__update_settings(vote_timeout=int(message['text']))
-                yield self.bot.send_message(chat_id, _('Voting duration setting updated to %s hours') % self.settings['vote_timeout'])
+                yield self.bot.send_message(chat_id, 'Voting duration setting updated to %s hours' % self.settings['vote_timeout'])
                 self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_settimeout_invalid')
-                yield self.bot.send_message(chat_id, _('Invalid voting duration value. Try again or type /cancel'))
+                yield self.bot.send_message(chat_id, 'Invalid voting duration value. Try again or type /cancel')
         else:
             return False
 
@@ -807,7 +779,7 @@ class Slave:
                                         reply_markup=ForceReply(True))
             self.stages.set(chat_id, self.STAGE_WAIT_START_MESSAGE_VALUE)
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_startmessage_handler(self, message):
@@ -816,16 +788,12 @@ class Slave:
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
-                try:
-                    yield self.bot.send_message(chat_id, _('Start message changed to "%s"') % self.settings['start'],
-                                                parse_mode=Api.PARSE_MODE_MD)
-                except:
-                    yield self.bot.send_message(chat_id, _('Start message changed to "%s"') % self.settings['start'])
+                yield self.bot.send_message(chat_id, 'Start message changed to "%s"' % self.settings['start'])
                 self.stages.drop(chat_id)
             else:
                 report_botan(message, 'slave_setstartmessage_invalid')
-                yield self.bot.send_message(chat_id, _('Invalid start message, you should write at least 10 symbols. Try '
-                                                       'again or type /cancel'))
+                yield self.bot.send_message(chat_id, 'Invalid start message, you should write at least 10 symbols. Try '
+                                                     'again or type /cancel')
         else:
             return False
 
@@ -842,13 +810,13 @@ class Slave:
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             if self.settings.get('power'):
                 yield self.__update_settings(power=False)
-                yield self.bot.send_message(chat_id, _('From now other chat users can not modify bot settings'))
+                yield self.bot.send_message(chat_id, 'From now other chat users can not modify bot settings')
             else:
                 yield self.__update_settings(power=True)
-                yield self.bot.send_message(chat_id, _('From now other chat users can modify bot settings (only inside '
-                                                       'moderators chat)'))
+                yield self.bot.send_message(chat_id, 'From now other chat users can modify bot settings (only inside '
+                                                     'moderators chat)')
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def stats_command(self, message):
@@ -885,8 +853,8 @@ class Slave:
                         period_begin = datetime.strptime(period[0], '%Y-%m-%d')
                         period_end = datetime.strptime(period[1], '%Y-%m-%d')
                     except:
-                        yield self.bot.send_message(message['chat']['id'], _('Invalid period provided, correct value: '
-                                                                             '`/stats 2016-01-01 2016-01-13`'),
+                        yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct value: '
+                                                                           '`/stats 2016-01-01 2016-01-13`',
                                                     parse_mode=Api.PARSE_MODE_MD)
                         return
                 elif '-' in period:
@@ -894,14 +862,14 @@ class Slave:
                         period_begin = datetime.strptime(period, '%Y-%m-%d')
                         period_end = datetime.strptime(period, '%Y-%m-%d')
                     except:
-                        yield self.bot.send_message(message['chat']['id'], _('Invalid period provided, correct value: '
-                                                                             '`/stats 2016-01-01`'),
+                        yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct value: '
+                                                                           '`/stats 2016-01-01`',
                                                     parse_mode=Api.PARSE_MODE_MD)
                         return
                 else:
-                    yield self.bot.send_message(message['chat']['id'], _('Invalid period provided, correct values: '
-                                                                         '`/stats 2016-01-01 2016-01-13`, `/stats 5` '
-                                                                         'for last 5 days or `/stats 2016-01-01`'),
+                    yield self.bot.send_message(message['chat']['id'], 'Invalid period provided, correct values: '
+                                                                       '`/stats 2016-01-01 2016-01-13`, `/stats 5` for '
+                                                                       'last 5 days or `/stats 2016-01-01`',
                                                 parse_mode=Api.PARSE_MODE_MD)
                     return
             else:
@@ -993,11 +961,11 @@ class Slave:
             match = self.RE_BAN.match(message['text'])
             user_id = match.group('user_id')
             report_botan(message, 'slave_ban_cmd')
-            yield self.bot.send_message(chat_id, _('Please enter a ban reason for the user'),
+            yield self.bot.send_message(chat_id, 'Please enter a ban reason for the user',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(chat_id, self.STAGE_WAIT_BAN_MESSAGE, ban_user_id=user_id)
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_ban_handler(self, message):
@@ -1012,22 +980,22 @@ class Slave:
             msg = message['text'].strip()
             if len(msg) < 5:
                 report_botan(message, 'slave_ban_short_msg')
-                yield self.bot.send_message(chat_id, _('Reason is too short (5 symbols required), try again or send '
-                                                       '/cancel'), reply_to_message_id=message['message_id'],
+                yield self.bot.send_message(chat_id, 'Reason is too short (5 symbols required), try again or send '
+                                                     '/cancel', reply_to_message_id=message['message_id'],
                                             reply_markup=ForceReply(True))
             else:
                 report_botan(message, 'slave_ban_success')
                 yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
                 try:
-                    yield self.bot.send_message(stage[1]['ban_user_id'], _("You've been banned from further "
-                                                                           "communication with this bot. Reason:\n> %s") % msg)
+                    yield self.bot.send_message(stage[1]['ban_user_id'], "You've been banned from further "
+                                                                         "communication with this bot. Reason:\n> %s" % msg)
                 except:
                     pass
                 yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                        'owner_id = %s AND is_voting_success = False', (self.bot_id, stage[1]['ban_user_id'], ))
                 yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
                                        'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
-                yield self.bot.send_message(chat_id, _('User banned'), reply_to_message_id=message['message_id'])
+                yield self.bot.send_message(chat_id, 'User banned', reply_to_message_id=message['message_id'])
         else:
             return False
 
@@ -1057,9 +1025,9 @@ class Slave:
             if msg:
                 yield self.bot.send_message(chat_id, msg)
             else:
-                yield self.bot.send_message(chat_id, _('No banned users yet'))
+                yield self.bot.send_message(chat_id, 'No banned users yet')
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def unban_command(self, message):
@@ -1071,13 +1039,13 @@ class Slave:
             user_id = match.group('user_id')
             yield get_db().execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
                                    'bot_id = %s', (user_id, self.bot_id))
-            yield self.bot.send_message(chat_id, _('User unbanned'), reply_to_message_id=message['message_id'])
+            yield self.bot.send_message(chat_id, 'User unbanned', reply_to_message_id=message['message_id'])
             try:
-                yield self.bot.send_message(user_id, _('Access restored'))
+                yield self.bot.send_message(user_id, 'Access restored')
             except:
                 pass
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def reply_command(self, message):
@@ -1085,12 +1053,12 @@ class Slave:
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_reply_cmd')
             match = self.RE_REPLY.match(message['text'])
-            yield self.bot.send_message(chat_id, _('What message should I send to user?'),
+            yield self.bot.send_message(chat_id, 'What message should I send to user?',
                                         reply_to_message_id=message['message_id'], reply_markup=ForceReply(True))
             self.stages.set(message['from']['id'], self.STAGE_WAIT_REPLY_MESSAGE, msg_id=match.group('message_id'),
                             msg_chat_id=match.group('chat_id'))
         else:
-            yield self.bot.send_message(message['chat']['id'], _('Access denied'))
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
 
     @coroutine
     def plaintext_reply_handler(self, message):
@@ -1103,14 +1071,14 @@ class Slave:
             msg = message['text'].strip()
             if len(msg) < 10:
                 report_botan(message, 'slave_reply_short_msg')
-                yield self.bot.send_message(chat_id, _('Message is too short (10 symbols required), try again or send '
-                                                       '/cancel'), reply_to_message_id=message['message_id'],
+                yield self.bot.send_message(chat_id, 'Message is too short (10 symbols required), try again or send '
+                                                     '/cancel', reply_to_message_id=message['message_id'],
                                             reply_markup=ForceReply(True))
             else:
                 try:
                     yield self.bot.send_message(stage[1]['msg_chat_id'], msg, reply_to_message_id=stage[1]['msg_id'])
-                    yield self.bot.send_message(chat_id, _('Message sent'), reply_to_message_id=message['message_id'])
+                    yield self.bot.send_message(chat_id, 'Message sent', reply_to_message_id=message['message_id'])
                 except Exception as e:
-                    yield self.bot.send_message(chat_id, _('Failed: %s') % e, reply_to_message_id=message['message_id'])
+                    yield self.bot.send_message(chat_id, 'Failed: %s' % e, reply_to_message_id=message['message_id'])
         else:
             return False
