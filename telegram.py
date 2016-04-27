@@ -29,6 +29,8 @@ class Api:
     UPDATE_TYPE_MSG_VENUE = 'message_venue'
     UPDATE_TYPE_MSG_NEW_CHAT_MEMBER = 'new_chat_member'
     UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
+    UPDATE_TYPE_MSG_GROUP_CHAT_CREATED = 'group_chat_created'
+    UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED = 'supergroup_chat_created'
     UPDATE_TYPE_MSG_UNKNOWN = 'message_unknown'
 
     UPDATE_TYPE_INLINE_QUERY = 'inline_query'
@@ -347,6 +349,10 @@ class Api:
                         yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_LOCATION), update['message'])
                     elif 'venue' in update['message']:
                         yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER), update['message'])
+                    elif 'group_chat_created' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED), update['message'])
+                    elif 'supergroup_chat_created' in update['message']:
+                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED), update['message'])
                     else:
                         logging.error('Unsupported message received: %s', update)
                         yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_UNKNOWN), update['message'])

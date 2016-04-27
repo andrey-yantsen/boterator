@@ -340,6 +340,8 @@ class Slave:
         bot.add_handler(self.vote_no, self.RE_MATCH_NO)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
+        bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED)
+        bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED)
         self.bot = bot
         self.mother = m
         self.moderator_chat_id = moderator_chat_id
@@ -437,6 +439,13 @@ class Slave:
                     yield self.bot.send_message(message['from']['id'], 'This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
         else:
             return False
+
+    @coroutine
+    def group_created(self, message):
+        if self.mother.stages.get_id(message['from']['id']) == BotMother.STAGE_MODERATION_GROUP:
+            yield self.attach_command(message)
+        else:
+            yield self.bot.send_message(message['from']['id'], 'This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']))
 
     @coroutine
     def attach_command(self, message):
