@@ -586,7 +586,7 @@ class Slave:
 
     @coroutine
     def __vote(self, user_id, message_id, original_chat_id, yes: bool):
-        voted = yield self.__is_user_voted(user_id, message_id, original_chat_id)
+        voted = yield self.__is_user_voted(user_id, original_chat_id, message_id)
         opened = yield self.__is_voting_opened(original_chat_id, message_id)
 
         cur = yield get_db().execute('SELECT SUM(vote_yes::int) FROM votes_history WHERE message_id = %s AND original_chat_id = %s',
