@@ -948,6 +948,7 @@ class Slave:
                                                      '/cancel', reply_to_message_id=message['message_id'],
                                             reply_markup=ForceReply(True))
             else:
+                yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
                 try:
                     yield self.bot.send_message(stage[1]['ban_user_id'], "You've been banned from further "
                                                                          "communication with this bot. Reason:\n> %s" % msg)
@@ -955,7 +956,8 @@ class Slave:
                     pass
                 yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                        'owner_id = %s AND is_voting_success = False', (self.bot_id, stage[1]['ban_user_id'], ))
-                yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s', (msg, stage[1]['ban_user_id'], ))
+                yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
+                                       'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
                 yield self.bot.send_message(chat_id, 'User banned', reply_to_message_id=message['message_id'])
         else:
             return False
@@ -993,8 +995,11 @@ class Slave:
     def unban_command(self, message):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             match = self.RE_UNBAN.match(message['text'])
             user_id = match.group('user_id')
+            yield get_db().execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
+                                   'bot_id = %s', (user_id, self.bot_id))
             yield self.bot.send_message(chat_id, 'User unbanned', reply_to_message_id=message['message_id'])
             try:
                 yield self.bot.send_message(user_id, 'Access restored')
