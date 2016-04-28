@@ -197,10 +197,11 @@ class BotMother:
                 self.slaves[stage_meta['bot_info']['id']] = slave
                 yield self.bot.send_message(user_id, "And we're ready for some magic!\n"
                                                      'By default the bot will wait for 5 votes to approve the message, '
-                                                     'perform 15 minutes delay between channel messages and wait 24 '
-                                                     'hours before closing a voting for each message. To modify this '
+                                                     'perform 15 minutes delay between channel messages, wait 24 '
+                                                     'hours before closing a voting for each message and allow only '
+                                                     'text messages (no multimedia content at all). To modify this '
                                                      '(and few other) settings send /help in PM to @%s. By default '
-                                                     'you’re the only user who can change these settings and use /help '
+                                                     'you\'re the only user who can change these settings and use /help '
                                                      'command'
                                             % (stage_meta['bot_info']['username'], ))
                 break
@@ -577,19 +578,19 @@ class Slave:
         if 'sticker' in message and self.settings.get('content_status', {}).get('sticker', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting stickers is disabled')
             return
-        elif 'audio' in message and self.settings.get('content_status', {}).get('audio', True) is False:
+        elif 'audio' in message and self.settings.get('content_status', {}).get('audio', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting audios is disabled')
             return
-        elif 'voice' in message and self.settings.get('content_status', {}).get('voice', True) is False:
+        elif 'voice' in message and self.settings.get('content_status', {}).get('voice', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting voice is disabled')
             return
-        elif 'video' in message and self.settings.get('content_status', {}).get('video', True) is False:
+        elif 'video' in message and self.settings.get('content_status', {}).get('video', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting videos is disabled')
             return
-        elif 'photo' in message and self.settings.get('content_status', {}).get('photo', True) is False:
+        elif 'photo' in message and self.settings.get('content_status', {}).get('photo', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting photos is disabled')
             return
-        elif 'document' in message and self.settings.get('content_status', {}).get('document', True) is False:
+        elif 'document' in message and self.settings.get('content_status', {}).get('document', False) is False:
             yield self.bot.send_message(message['chat']['id'], 'Accepting documents is disabled')
             return
 
@@ -1102,11 +1103,11 @@ class Slave:
     def build_contenttype_keyboard(self):
         content_status = self.settings.get('content_status', {})
         text_enabled = content_status.get('text', True)
-        photo_enabled = content_status.get('photo', True)
-        video_enabled = content_status.get('video', True)
-        voice_enabled = content_status.get('voice', True)
-        audio_enabled = content_status.get('audio', True)
-        doc_enabled = content_status.get('document', True)
+        photo_enabled = content_status.get('photo', False)
+        video_enabled = content_status.get('video', False)
+        voice_enabled = content_status.get('voice', False)
+        audio_enabled = content_status.get('audio', False)
+        doc_enabled = content_status.get('document', False)
         sticker_enabled = content_status.get('sticker', False)
         marks = {
             True: Emoji.CIRCLED_BULLET,
