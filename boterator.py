@@ -12,6 +12,7 @@ from globals import get_db
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton
 
 from helpers import report_botan, is_allowed_user, StagesStorage
+from telegram_log_handler import TelegramHandler
 
 
 class BotMother:
@@ -22,7 +23,7 @@ class BotMother:
     STAGE_WAITING_HELLO = 6
     STAGE_WAITING_START_MESSAGE = 8
 
-    def __init__(self, token):
+    def __init__(self, token, logging_user_id):
         bot = Api(token)
         bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
         bot.add_handler(self.start_command, '/start')
@@ -37,6 +38,9 @@ class BotMother:
         self.bot = bot
         self.stages = StagesStorage()
         self.slaves = {}
+
+        logger = logging.getLogger()
+        logger.addHandler(TelegramHandler(bot, logging_user_id, level=logging.WARNING))
 
     @coroutine
     def validate_user(self, message):

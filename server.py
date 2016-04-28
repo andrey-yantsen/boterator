@@ -9,6 +9,7 @@ from boterator import BotMother
 if __name__ == '__main__':
     define('token', type=str, help='TelegramBot\'s token')
     define('botan_token', type=str, help='Bot\'s botan.io token')
+    define('logging_user_id', type=int, help='User which will receive all sensitive logs')
     define('db', type=str, help='DB connection DSN, e.g. "dbname=boterator user=boterator host=localhost port=5432"')
 
     parse_command_line()
@@ -21,7 +22,7 @@ if __name__ == '__main__':
 
     ioloop.run_sync(init_db)
 
-    bm = BotMother(options.token)
+    bm = BotMother(options.token, options.logging_user_id)
     ioloop.run_sync(bm.listen)
 
     signal.signal(signal.SIGTERM, bm.stop)
