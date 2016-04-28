@@ -230,8 +230,9 @@ class Api:
         return (yield self.__request_api('sendChatAction', {'chat_id': chat_id, 'action': action}))
 
     @coroutine
-    def send_message(self, chat_id, text: str, parse_mode: str=None, disable_web_page_preview: bool=False,
-                     disable_notification: bool=False, reply_to_message_id: int=None, reply_markup=None):
+    def send_message(self, text: str, chat_id=None, reply_to_message: dict=None, parse_mode: str=None,
+                     disable_web_page_preview: bool=False, disable_notification: bool=False,
+                     reply_to_message_id: int=None, reply_markup=None):
         request = {
             'chat_id': chat_id,
             'text': text,
@@ -244,6 +245,16 @@ class Api:
 
         if reply_to_message_id is not None:
             request['reply_to_message_id'] = reply_to_message_id
+
+        if reply_to_message:
+            if chat_id is None:
+                request['chat_id'] = reply_to_message['chat']['id']
+                if reply_to_message['chat']['id'] != reply_to_message['from']['id']:
+                    request['reply_to_message_id'] = reply_to_message['message_id']
+            else:
+                request['reply_to_message_id'] = reply_to_message['message_id']
+        else:
+            assert chat_id is not None
 
         if reply_markup is not None:
             request['reply_markup'] = reply_markup

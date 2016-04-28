@@ -51,6 +51,20 @@ def is_allowed_user(user, bot_id):
     return True
 
 
+def append_stage_key(f):
+    def wrapper(self, message=None, *args, user_id=None, chat_id=None, **kwargs):
+        if message:
+            user_id = message['from']['id']
+            chat_id = message['chat']['id']
+        else:
+            assert user_id and chat_id
+
+        stage_key = '%s-%s' % (chat_id, user_id)
+        return f(self, message, *args, stage_key=stage_key, **kwargs)
+
+    return wrapper
+
+
 class StagesStorage:
     def __init__(self, ttl=7200):
         self.stages = {}
@@ -58,37 +72,47 @@ class StagesStorage:
         self.cleaner = PeriodicCallback(self.drop_expired, 600)
         self.cleaner.start()
 
-    def set(self, user_id, stage_id, do_not_validate=False, **kwargs):
-        if user_id not in self.stages:
-            self.stages[user_id] = {'meta': {}, 'code': 0}
+    @append_stage_key
+    def set(self, message, stage_id, stage_key=None, do_not_validate=False, **kwargs):
+        if stage_key not in self.stages:
+            self.stages[stage_key] = {'meta': {}, 'code': 0}
 
-        assert do_not_validate or self.stages[user_id]['code'] == 0 or stage_id == self.stages[user_id]['code'] + 1
+        assert do_not_validate or self.stages[stage_key]['code'] == 0 or stage_id == self.stages[stage_key]['code'] + 1
 
-        self.stages[user_id]['code'] = stage_id
-        self.stages[user_id]['meta'].update(kwargs)
-        self.stages[user_id]['timestamp'] = time()
+        self.stages[stage_key]['code'] = stage_id
+        self.stages[stage_key]['meta'].update(kwargs)
+        self.stages[stage_key]['timestamp'] = time()
 
-    def get(self, user_id):
-        if user_id in self.stages:
-            return self.stages[user_id]['code'], self.stages[user_id]['meta'], self.stages[user_id]['timestamp']
+        if message is not None:
+            self.stages[stage_key]['meta']['last_message'] = message
+
+    @append_stage_key
+    def get(self, message, stage_key=None):
+        if stage_key in self.stages:
+            return self.stages[stage_key]['code'], self.stages[stage_key]['meta'], self.stages[stage_key]['timestamp']
 
         return None, {}, 0
 
-    def get_id(self, user_id):
-        return self.get(user_id)[0]
+    def get_id(self, message):
+        return self.get(message)[0]
 
-    def drop(self, user_id):
-        if self.get_id(user_id) is not None:
-            del self.stages[user_id]
+    @append_stage_key
+    def drop(self, message, stage_key=None):
+        if self.get_id(message) is not None:
+            del self.stages[stage_key]
 
     def drop_expired(self):
         drop_list = []
-        for user_id, stage_info in self.stages.items():
+        for stage_key, stage_info in self.stages.items():
             if time() - stage_info['timestamp'] > self.ttl:
-                drop_list.append(user_id)
+                drop_list.append(stage_key)
 
-        for user_id in drop_list:
-            logging.info('Cancelling last action for user#%d', user_id)
-            del self.stages[user_id]
+        for stage_key in drop_list:
+            logging.info('Cancelling last action for #%s', stage_key)
+            del self.stages[stage_key]
 
         return len(drop_list)
+
+    @staticmethod
+    def __key(chat_id, user_id):
+        return '%s-%s' % (chat_id, user_id)
