@@ -1120,7 +1120,7 @@ class Slave:
         ], [KeyboardButton('%s Audio' % marks[audio_enabled]),
             KeyboardButton('%s Document' % marks[doc_enabled]),
             KeyboardButton('%s Sticker' % marks[sticker_enabled]),
-        ], [KeyboardButton(Emoji.BACK_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
+        ], [KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
 
     @coroutine
     def change_allowed_command(self, message):
@@ -1136,7 +1136,7 @@ class Slave:
 
     @coroutine
     def plaintext_cancel_emoji_handler(self, message):
-        if message['text'] == Emoji.BACK_WITH_LEFTWARDS_ARROW_ABOVE:
+        if message['text'] in Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE:
             yield self.cancel_command(message)
             return
 
