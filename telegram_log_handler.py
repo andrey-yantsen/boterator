@@ -13,4 +13,4 @@ class TelegramHandler(Handler):
         if not self.user_id:
             return
 
-        self.bot.send_message(self.user_id, record)
+        self.bot.send_message(self.user_id, self.format(record))
