@@ -146,7 +146,7 @@ class Api:
                 else:
                     raise ApiError(response['error_code'], response['description'])
         except HTTPError as e:
-            # raise any
+            # raise any user-specific errors
             if 400 <= e.code <= 499:
                 response = ujson.loads(e.response.body.decode('utf-8'))
                 raise ApiError(response['error_code'], response['description'])
@@ -293,7 +293,7 @@ class Api:
                     break
 
         if not handled:
-            logging.error('Handler not found: %s', update)
+            logging.info('Handler not found: %s', update)
 
     @coroutine
     def _process_update(self):
@@ -354,7 +354,7 @@ class Api:
                     elif 'supergroup_chat_created' in update['message']:
                         yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED), update['message'])
                     else:
-                        logging.error('Unsupported message received: %s', update)
+                        logging.info('Unsupported message received: %s', update)
                         yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_UNKNOWN), update['message'])
                 elif 'inline_query' in update:
                     yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_INLINE_QUERY), update['inline_query'])
@@ -363,7 +363,7 @@ class Api:
                 elif 'callback_query' in update:
                     yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CALLBACK_QUERY), update['callback_query'])
                 else:
-                    logging.error('Unsupported message received: %s', update)
+                    logging.info('Unsupported message received: %s', update)
             except:
                 logging.exception('Error while processing message')
 
