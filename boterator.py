@@ -700,12 +700,13 @@ class Slave:
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
 /ban_list — list currently banned users
 /change_allowed — change list of allowed content
-"""
-            yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], Emoji.THUMBS_UP_SIGN,
-                                                                      self.settings['votes'],
-                                                                      self.settings['vote_timeout'],
-                                                                      self.settings['start'],
-                                                                      'yes' if self.settings.get('power') else 'no'))
+""" % (self.settings['delay'], Emoji.THUMBS_UP_SIGN, self.settings['votes'], self.settings['vote_timeout'],
+       self.settings['start'], 'yes' if self.settings.get('power') else 'no')
+
+            try:
+                yield self.bot.send_message(message['chat']['id'], msg, parse_mode=Api.PARSE_MODE_MD)
+            except:
+                yield self.bot.send_message(message['chat']['id'], msg)
         else:
             return False
 
