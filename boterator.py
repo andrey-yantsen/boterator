@@ -1125,7 +1125,7 @@ class Slave:
     @coroutine
     def change_allowed_command(self, message):
         chat_id = message['chat']['id']
-        if True or message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_change_allowed_cmd')
             yield self.bot.send_message(chat_id, "You can see current status on keyboard, just click on content type "
                                                  "to change it's status", reply_to_message_id=message['message_id'],
