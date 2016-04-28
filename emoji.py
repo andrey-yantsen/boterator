@@ -879,3 +879,5 @@ class Emoji(object):
     CLOCK_FACE_TEN_THIRTY = n(b'\xF0\x9F\x95\xA5')
     CLOCK_FACE_ELEVEN_THIRTY = n(b'\xF0\x9F\x95\xA6')
     CLOCK_FACE_TWELVE_THIRTY = n(b'\xF0\x9F\x95\xA7')
+    CIRCLED_BULLET = n(b'\xE2\xA6\xBF')
+    MEDIUM_SMALL_WHITE_CIRCLE = n(b'\xE2\x9A\xAC')

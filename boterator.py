@@ -9,7 +9,7 @@ from tornado.ioloop import IOLoop
 
 from emoji import Emoji
 from globals import get_db
-from telegram import Api, ForceReply
+from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton
 
 from helpers import report_botan, is_allowed_user, StagesStorage
 
@@ -318,6 +318,8 @@ class Slave:
 
     STAGE_WAIT_REPLY_MESSAGE = 13
 
+    STAGE_WAIT_CONTENT_TYPE = 15
+
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
@@ -339,13 +341,15 @@ class Slave:
         bot.add_handler(self.togglepower_command, '/togglepower')
         bot.add_handler(self.stats_command, '/stats')
         bot.add_handler(self.ban_list_command, '/ban_list')
+        bot.add_handler(self.change_allowed_command, '/change_allowed')
+        bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VIDEO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_PHOTO)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VOICE)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_DOC)
-        bot.add_handler(self.ignore_post_handler, msg_type=Api.UPDATE_TYPE_MSG_STICKER)
+        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_STICKER)
         bot.add_handler(self.plaintext_delay_handler)
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
@@ -357,6 +361,7 @@ class Slave:
         bot.add_handler(self.plaintext_ban_handler)
         bot.add_handler(self.reply_command, self.RE_REPLY)
         bot.add_handler(self.plaintext_reply_handler)
+        bot.add_handler(self.plaintext_contenttype_handler)
         bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
         bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
         bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED)
@@ -527,7 +532,7 @@ class Slave:
         report_botan(message, 'slave_cancel')
         self.stages.drop(message['from']['id'])
         self.stages.drop(message['chat']['id'])
-        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.')
+        yield self.bot.send_message(message['chat']['id'], 'Oka-a-a-a-a-ay.', reply_markup=ReplyKeyboardHide())
 
     @coroutine
     def plaintext_post_handler(self, message):
@@ -537,6 +542,10 @@ class Slave:
         user_id = message['from']['id']
         if self.stages.get_id(user_id) or self.stages.get_id(message['chat']['id']):
             return False
+
+        if self.settings.get('content_status', {}).get('text', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting text messages is disabled')
+            return
 
         mes = message['text']
         if mes.strip() != '':
@@ -555,19 +564,6 @@ class Slave:
             yield self.bot.send_message(message['chat']['id'], 'Seriously??? 8===3')
 
     @coroutine
-    def ignore_post_handler(self, message):
-        if message['chat']['type'] != 'private':
-            return False  # Allow only in private
-
-        user_id = message['from']['id']
-        if self.stages.get_id(user_id) or self.stages.get_id(message['chat']['id']):
-            return False
-
-        report_botan(message, 'slave_message_unsupported')
-
-        yield self.bot.send_message(message['chat']['id'], 'No way')
-
-    @coroutine
     def multimedia_post_handler(self, message):
         if message['chat']['type'] != 'private':
             return False  # Allow only in private
@@ -577,6 +573,25 @@ class Slave:
             return False
 
         report_botan(message, 'slave_message_multimedia')
+
+        if 'sticker' in message and self.settings.get('content_status', {}).get('sticker', False) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting stickers is disabled')
+            return
+        elif 'audio' in message and self.settings.get('content_status', {}).get('audio', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting audios is disabled')
+            return
+        elif 'voice' in message and self.settings.get('content_status', {}).get('voice', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting voice is disabled')
+            return
+        elif 'video' in message and self.settings.get('content_status', {}).get('video', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting videos is disabled')
+            return
+        elif 'photo' in message and self.settings.get('content_status', {}).get('photo', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting photos is disabled')
+            return
+        elif 'document' in message and self.settings.get('content_status', {}).get('document', True) is False:
+            yield self.bot.send_message(message['chat']['id'], 'Accepting documents is disabled')
+            return
 
         yield self.bot.send_message(message['from']['id'], 'Looks good for me. Please, take a look on your message one more time.')
         yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
@@ -683,6 +698,7 @@ class Slave:
    - `/stats 2016-01-13` for one day (13th january in example)
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
 /ban_list — list currently banned users
+/change_allowed — change list of allowed content
 """
             yield self.bot.send_message(message['chat']['id'], msg % (self.settings['delay'], Emoji.THUMBS_UP_SIGN,
                                                                       self.settings['votes'],
@@ -1080,5 +1096,84 @@ class Slave:
                     yield self.bot.send_message(chat_id, 'Message sent', reply_to_message_id=message['message_id'])
                 except Exception as e:
                     yield self.bot.send_message(chat_id, 'Failed: %s' % e, reply_to_message_id=message['message_id'])
+        else:
+            return False
+
+    def build_contenttype_keyboard(self):
+        content_status = self.settings.get('content_status', {})
+        text_enabled = content_status.get('text', True)
+        photo_enabled = content_status.get('photo', True)
+        video_enabled = content_status.get('video', True)
+        voice_enabled = content_status.get('voice', True)
+        audio_enabled = content_status.get('audio', True)
+        doc_enabled = content_status.get('document', True)
+        sticker_enabled = content_status.get('sticker', False)
+        marks = {
+            True: Emoji.CIRCLED_BULLET,
+            False: Emoji.MEDIUM_SMALL_WHITE_CIRCLE,
+        }
+        return ReplyKeyboardMarkup([[
+            KeyboardButton('%s Text' % marks[text_enabled]),
+            KeyboardButton('%s Photo' % marks[photo_enabled]),
+            KeyboardButton('%s Video' % marks[video_enabled]),
+            KeyboardButton('%s Voice' % marks[voice_enabled]),
+        ], [KeyboardButton('%s Audio' % marks[audio_enabled]),
+            KeyboardButton('%s Document' % marks[doc_enabled]),
+            KeyboardButton('%s Sticker' % marks[sticker_enabled]),
+        ], [KeyboardButton(Emoji.BACK_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
+
+    @coroutine
+    def change_allowed_command(self, message):
+        chat_id = message['chat']['id']
+        if True or message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            report_botan(message, 'slave_change_allowed_cmd')
+            yield self.bot.send_message(chat_id, "You can see current status on keyboard, just click on content type "
+                                                 "to change it's status", reply_to_message_id=message['message_id'],
+                                        reply_markup=self.build_contenttype_keyboard())
+            self.stages.set(message['from']['id'], self.STAGE_WAIT_CONTENT_TYPE)
+        else:
+            yield self.bot.send_message(message['chat']['id'], 'Access denied')
+
+    @coroutine
+    def plaintext_cancel_emoji_handler(self, message):
+        if message['text'] == Emoji.BACK_WITH_LEFTWARDS_ARROW_ABOVE:
+            yield self.cancel_command(message)
+            return
+
+        return False
+
+    @coroutine
+    def plaintext_contenttype_handler(self, message):
+        if self.stages.get_id(message['from']['id']) == self.STAGE_WAIT_CONTENT_TYPE:
+            try:
+                action_type, content_type = message['text'].split(' ')
+                if action_type == Emoji.MEDIUM_SMALL_WHITE_CIRCLE:
+                    action_type = True
+                elif action_type == Emoji.CIRCLED_BULLET:
+                    action_type = False
+                else:
+                    raise ValueError()
+
+                content_type = content_type.lower()
+
+                content_status = self.settings.get('content_status', {})
+
+                if content_type in ('text', 'photo', 'video', 'audio', 'voice', 'sticker', 'document'):
+                    content_status[content_type] = action_type
+                    yield self.__update_settings(content_status=content_status)
+                else:
+                    raise ValueError
+
+                action_text = 'enable' if action_type else 'disable'
+
+                report_botan(message, 'slave_content_' + content_type + '_' + action_text)
+
+                msg = content_type[0].upper() + content_type[1:] + 's ' + action_text + 'd'
+
+                yield self.bot.send_message(message['chat']['id'], msg, reply_to_message_id=message['message_id'],
+                                            reply_markup=self.build_contenttype_keyboard())
+            except:
+                yield self.bot.send_message(message['chat']['id'], 'Wrong input')
+                return
         else:
             return False
