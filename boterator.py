@@ -30,9 +30,9 @@ class BotMother:
         bot.add_handler(self.reg_command, '/reg')
         bot.add_handler(self.plaintext_token)
         bot.add_handler(self.cancel_command, '/cancel')
-        bot.add_handler(self.change_hello_command, '/change_hello')
+        bot.add_handler(self.change_hello_command, '/changehello')
         bot.add_handler(self.plaintext_set_hello)
-        bot.add_handler(self.change_start_command, '/change_start')
+        bot.add_handler(self.change_start_command, '/changestart')
         bot.add_handler(self.plaintext_set_start_message)
         bot.add_handler(self.plaintext_channel_name)
         self.bot = bot
@@ -180,7 +180,7 @@ class BotMother:
     @coroutine
     def __wait_for_registration_complete(self, original_message, timeout=3600):
         stage = self.stages.get(original_message)
-        slave = Slave(stage[1]['token'], self, stage[1]['moderation'], None, {}, None, None)
+        slave = Slave(stage[1]['token'], self, None, None, {}, original_message['from']['id'], None)
         slave.listen()
         while True:
             stage_id, stage_meta, stage_begin = self.stages.get(original_message)
@@ -249,9 +249,9 @@ class BotMother:
               "tell me the channel name (e.g. @mobilenewsru)\n" \
               "As soon as I will receive the channel name I'll send a message with " \
               "following text:\n> %s\n" \
-              "You can change the message, if you mind, just send me /change_hello.\n" \
+              "You can change the message, if you mind, just send me /changehello.\n" \
               "Also there is 'start' message for your new bot:\n> %s\n" \
-              "You can change it with /change_start" \
+              "You can change it with /changestart" \
               % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
                  stage[1]['start_message'])
 
@@ -1076,12 +1076,11 @@ class Slave:
 
             if msg:
                 yield self.bot.send_message(msg, reply_to_message=message)
+                if chat_id == self.owner_id:
+                    yield self.bot.send_message('You can use /unban command only in moderators group',
+                                                reply_to_message=message)
             else:
                 yield self.bot.send_message('No banned users yet', reply_to_message=message)
-
-            if chat_id == self.owner_id:
-                yield self.bot.send_message('You can use /unban command only in moderators group',
-                                            reply_to_message=message)
         else:
             yield self.bot.send_message('Access denied', reply_to_message=message)
 

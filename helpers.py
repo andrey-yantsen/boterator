@@ -93,8 +93,8 @@ class StagesStorage:
 
         return None, {}, 0
 
-    def get_id(self, message):
-        return self.get(message)[0]
+    def get_id(self, *args, **kwargs):
+        return self.get(*args, **kwargs)[0]
 
     @append_stage_key
     def drop(self, message, stage_key=None):
