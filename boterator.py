@@ -1,9 +1,11 @@
 import logging
 import re
 from datetime import datetime, timedelta
+from itertools import groupby
 from time import time
 from ujson import dumps
 
+from math import floor
 from tornado.gen import coroutine, sleep
 from tornado.ioloop import IOLoop
 from tornado import locale
@@ -332,6 +334,13 @@ class Slave:
 
     STAGE_WAIT_CONTENT_TYPE = 15
 
+    STAGE_WAIT_LANGUAGE = 17
+
+    LANGUAGE_LIST = (
+        ('en', '%s English' % Emoji.FLAG_USA),
+        ('ru', '%s Русский' % Emoji.FLAG_RUSSIA),
+    )
+
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
@@ -354,6 +363,7 @@ class Slave:
         bot.add_handler(self.stats_command, '/stats')
         bot.add_handler(self.ban_list_command, '/banlist')
         bot.add_handler(self.change_allowed_command, '/changeallowed')
+        bot.add_handler(self.switchlang_command, '/switchlang')
         bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
@@ -366,6 +376,7 @@ class Slave:
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
         bot.add_handler(self.plaintext_startmessage_handler)
+        bot.add_handler(self.plaintext_switchlang_handler)
         bot.add_handler(self.vote_yes, self.RE_VOTE_YES)
         bot.add_handler(self.vote_no, self.RE_VOTE_NO)
         bot.add_handler(self.ban_command, self.RE_BAN)
@@ -794,6 +805,7 @@ class Slave:
    - `/stats 2016-01-13` for one day (13th january in example)
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
 /banlist - list currently banned users
+/switchlang - change interface language
 /changeallowed - change list of allowed content""").format(current_delay_with_minutes=delay_str,
                                                            current_votes_required=self.settings['votes'],
                                                            current_timeout_with_hours=timeout_str,
@@ -1352,8 +1364,49 @@ class Slave:
                 yield self.bot.send_message(pgettext('Content type enabled/disabled', msg), reply_to_message=message,
                                             reply_markup=self.build_contenttype_keyboard())
             except:
-                yield self.bot.send_message(pgettext('Unknown user response to content type switcher', 'Wrong input'),
-                                            reply_to_message=message)
+                yield self.bot.send_message(pgettext('Invalid user response', 'Wrong input'), reply_to_message=message)
                 return
+        else:
+            return False
+
+    @coroutine
+    @append_pgettext
+    def switchlang_command(self, message, pgettext):
+        chat_id = message['chat']['id']
+        if True or message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            keyboard_rows = []
+
+            for row_id, languages in groupby(enumerate(self.LANGUAGE_LIST), lambda l: floor(l[0] / 4)):
+                keyboard_rows.append([
+                    KeyboardButton(lang_name)
+                    for lang_idx, (lang_code, lang_name) in languages
+                ])
+
+            keyboard = ReplyKeyboardMarkup(keyboard_rows + [[KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]],
+                                           resize_keyboard=True, selective=True)
+            yield self.bot.send_message(pgettext('Change language prompt', 'Select your language'),
+                                        reply_to_message=message, reply_markup=keyboard)
+            self.stages.set(message, self.STAGE_WAIT_LANGUAGE)
+        else:
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
+
+    @coroutine
+    @append_pgettext
+    def plaintext_switchlang_handler(self, message, pgettext):
+        if self.stages.get_id(message) == self.STAGE_WAIT_LANGUAGE:
+            languages = {
+                lang_name: lang_code
+                for lang_code, lang_name in self.LANGUAGE_LIST
+            }
+
+            if message['text'] in languages:
+                yield self.__update_settings(locale=languages[message['text']])
+                pgettext = self.locale.pgettext
+                yield self.bot.send_message(pgettext('Language changed', 'Language changed'),
+                                            reply_to_message=message, reply_markup=ReplyKeyboardHide())
+                self.stages.drop(message)
+            else:
+                yield self.bot.send_message(pgettext('Invalid user response', 'Wrong input'), reply_to_message=message)
         else:
             return False
