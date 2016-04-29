@@ -6,6 +6,9 @@ from time import time
 from ujson import dumps
 
 from math import floor
+
+from babel.dates import format_date
+from babel.numbers import format_number
 from tornado.gen import coroutine, sleep
 from tornado.ioloop import IOLoop
 from tornado import locale
@@ -398,7 +401,7 @@ class Slave:
         self.owner_id = owner_id
         self.bot_id = bot_id
         load_gettext_translations('./locale', 'boterator')
-        self.locale = locale.get(settings.get('locale', 'en'))
+        self.locale = locale.get(self.language)
 
     @coroutine
     @append_pgettext
@@ -631,7 +634,9 @@ class Slave:
                                                                                         'only messages with length '
                                                                                         'between {min_msg_length} and '
                                                                                         '{max_msg_length} symbols.')
-                                            .format(min_msg_length=50, max_msg_length=1000), reply_to_message=message)
+                                            .format(min_msg_length=format_number(50, self.language),
+                                                    max_msg_length=format_number(1000, self.language)),
+                                            reply_to_message=message)
         else:
             report_botan(message, 'slave_message_empty')
             yield self.bot.send_message(pgettext('User sent empty message', 'Seriously??? 8===3'),
@@ -1036,9 +1041,10 @@ class Slave:
 
             yield self.bot.send_chat_action(message['chat']['id'], Api.CHAT_ACTION_TYPING)
 
-            period_str = period_begin.strftime('%Y-%m-%d') \
+            period_str = format_date(period_begin.date(), locale=self.language) \
                 if period_begin.strftime('%Y-%m-%d') == period_end.strftime('%Y-%m-%d') \
-                else '%s - %s' % (period_begin.strftime('%Y-%m-%d'), period_end.strftime('%Y-%m-%d'))
+                else '%s - %s' % (format_date(period_begin.date(), locale=self.language),
+                                  format_date(period_end.date(), locale=self.language))
 
             msg = pgettext('Stats header', 'Stats for {period}').format(period=period_str) + "\n\n"
             msg += pgettext('TOP type', 'TOP5 voters:') + "\n"
@@ -1059,7 +1065,8 @@ class Slave:
             def format_top_votes(row):
                 return pgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
                                 '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
-                                row[0]).format(votes_cnt=row[0], votes_yes_cnt=row[1],
+                                row[0]).format(votes_cnt=format_number(row[0], self.language),
+                                               votes_yes_cnt=format_number(row[1], self.language),
                                                thumb_up_sign=Emoji.THUMBS_UP_SIGN)
 
             msg += format_top(cur.fetchall(), format_top_votes) + "\n"
@@ -1080,7 +1087,7 @@ class Slave:
 
             def format_top_messages(row):
                 return npgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0])\
-                    .format(messages_cnt=row[0])
+                    .format(messages_cnt=format_number(row[0], self.language))
 
             msg += format_top(cur.fetchall(), format_top_messages) + "\n"
             msg += pgettext('TOP type', 'TOP5 users by published messages count:') + "\n"
@@ -1410,3 +1417,7 @@ class Slave:
                 yield self.bot.send_message(pgettext('Invalid user response', 'Wrong input'), reply_to_message=message)
         else:
             return False
+
+    @property
+    def language(self):
+        return self.settings.get('locale', 'en')
