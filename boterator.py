@@ -1373,7 +1373,7 @@ class Slave:
     @append_pgettext
     def switchlang_command(self, message, pgettext):
         chat_id = message['chat']['id']
-        if True or message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             keyboard_rows = []
 
             for row_id, languages in groupby(enumerate(self.LANGUAGE_LIST), lambda l: floor(l[0] / 4)):
