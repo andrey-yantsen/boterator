@@ -7,7 +7,7 @@ deploy:
 DOMAIN = boterator
 
 compile_messages:
-	@find ./locale -type d -depth 1 | while read locale_path; do \
+	@find ./locale/* -maxdepth 0 -type d | while read locale_path; do \
 		locale_name=$(basename ${locale_path}); \
 		pybabel compile --locale=${locale_name} --domain=$(DOMAIN) --directory=locale/; \
 	done
