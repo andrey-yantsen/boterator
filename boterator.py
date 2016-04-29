@@ -13,7 +13,7 @@ from emoji import Emoji
 from globals import get_db
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton
 
-from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext
+from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext, append_npgettext
 from telegram_log_handler import TelegramHandler
 
 
@@ -442,7 +442,8 @@ class Slave:
 
     @coroutine
     @append_pgettext
-    def check_votes_failures(self, pgettext):
+    @append_npgettext
+    def check_votes_failures(self, pgettext, npgettext):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
         cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, message,'
                                      '(SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
@@ -452,9 +453,9 @@ class Slave:
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                received_votes_msg = pgettext('Received votes count', '{votes_received} vote', '{votes_received} votes',
+                received_votes_msg = npgettext('Received votes count', '{votes_received} vote', '{votes_received} votes',
                                               votes).format(votes_received=votes)
-                required_votes_msg = pgettext('Required votes count', '{votes_required}', '{votes_required}',
+                required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
                                               self.settings['votes']).format(votes_required=self.settings['votes'])
 
                 yield self.bot.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
@@ -774,12 +775,13 @@ class Slave:
 
     @coroutine
     @append_pgettext
-    def help_command(self, message, pgettext):
+    @append_npgettext
+    def help_command(self, message, pgettext, npgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_help')
-            delay_str = pgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % self.settings['delay']
-            timeout_str = pgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
+            delay_str = npgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % self.settings['delay']
+            timeout_str = npgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
             power_state_str = pgettext('Moderator\'s ability to alter settings', 'yes' if self.settings.get('power') else 'no')
             msg = pgettext('/help command response', """Bot owner's help:
 /setdelay - change the delay between messages (current: {current_delay_with_minutes})
@@ -955,7 +957,8 @@ class Slave:
 
     @coroutine
     @append_pgettext
-    def stats_command(self, message, pgettext):
+    @append_npgettext
+    def stats_command(self, message, pgettext, npgettext):
         def format_top(rows, f: callable):
             ret = ''
             for row_id, row in enumerate(rows):
@@ -1064,7 +1067,7 @@ class Slave:
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             def format_top_messages(row):
-                return pgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0])\
+                return npgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0])\
                     .format(messages_cnt=row[0])
 
             msg += format_top(cur.fetchall(), format_top_messages) + "\n"

@@ -58,6 +58,13 @@ def append_pgettext(f):
     return wrapper
 
 
+def append_npgettext(f):
+    def wrapper(self, *args, **kwargs):
+        return f(self, *args, npgettext=self.locale.pgettext, **kwargs)
+
+    return wrapper
+
+
 def append_stage_key(f):
     def wrapper(self, message=None, *args, user_id=None, chat_id=None, **kwargs):
         if message:
