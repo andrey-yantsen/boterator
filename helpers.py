@@ -51,6 +51,13 @@ def is_allowed_user(user, bot_id):
     return True
 
 
+def append_pgettext(f):
+    def wrapper(self, *args, **kwargs):
+        return f(self, *args, pgettext=self.locale.pgettext, **kwargs)
+
+    return wrapper
+
+
 def append_stage_key(f):
     def wrapper(self, message=None, *args, user_id=None, chat_id=None, **kwargs):
         if message:

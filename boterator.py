@@ -6,12 +6,14 @@ from ujson import dumps
 
 from tornado.gen import coroutine, sleep
 from tornado.ioloop import IOLoop
+from tornado import locale
+from tornado.locale import load_gettext_translations
 
 from emoji import Emoji
 from globals import get_db
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton
 
-from helpers import report_botan, is_allowed_user, StagesStorage
+from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext
 from telegram_log_handler import TelegramHandler
 
 
@@ -49,7 +51,7 @@ class BotMother:
         if allowed:
             return False
 
-        yield self.bot.send_message('Access denied', reply_to_message=message)
+        yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'), reply_to_message=message)
 
     @coroutine
     def start_command(self, message):
@@ -384,15 +386,18 @@ class Slave:
         self.settings = settings
         self.owner_id = owner_id
         self.bot_id = bot_id
+        load_gettext_translations('./locale', 'boterator')
+        self.locale = locale.get(settings.get('locale', 'en'))
 
     @coroutine
-    def validate_user(self, message):
+    @append_pgettext
+    def validate_user(self, message, pgettext):
         bot_info = yield self.bot.get_me()
         allowed = yield is_allowed_user(message['from'], bot_info['id'])
         if allowed:
             return False
 
-        yield self.bot.send_message('Access denied', reply_to_message=message)
+        yield self.bot.send_message(pgettext('User banned', 'Access denied'), reply_to_message=message)
 
     @coroutine
     def listen(self):
@@ -436,7 +441,8 @@ class Slave:
             logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
     @coroutine
-    def check_votes_failures(self):
+    @append_pgettext
+    def check_votes_failures(self, pgettext):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
         cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, message,'
                                      '(SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
@@ -446,9 +452,17 @@ class Slave:
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                yield self.bot.send_message('Unfortunately your message got only %s votes out of required %s and won’t '
-                                            'be published to the channel.' % (votes, self.settings['votes']),
-                                            reply_to_message=message)
+                received_votes_msg = pgettext('Received votes count', '{votes_received} vote', '{votes_received} votes',
+                                              votes).format(votes_received=votes)
+                required_votes_msg = pgettext('Required votes count', '{votes_required}', '{votes_required}',
+                                              self.settings['votes']).format(votes_required=self.settings['votes'])
+
+                yield self.bot.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
+                                                                      '{votes_received_msg} out of required '
+                                                                      '{votes_required_msg} and won\'t be published to '
+                                                                      'the channel.')
+                                            .format(votes_received_msg=received_votes_msg,
+                                                    votes_required_msg=required_votes_msg), reply_to_message=message)
             except:
                 pass
 
@@ -475,37 +489,46 @@ class Slave:
         return ret.fetchone() is not None
 
     @coroutine
-    def new_chat(self, message):
+    @append_pgettext
+    def new_chat(self, message, pgettext):
         me = yield self.bot.get_me()
 
         if message['new_chat_member']['id'] == me['id']:
             known_chat = yield self.is_moderators_chat(message['chat']['id'], me['id'])
             if known_chat:
-                yield self.bot.send_message('Hi there, @%s!' % message['from']['username'], chat_id=message['chat']['id'])
+                yield get_db().execute('UPDATE registered_bots SET active = True WHERE id = %s', (me['id'], ))
+                yield self.bot.send_message(pgettext('Bot added to a known group', 'Hi there, @{bot_username}!').format(
+                                            bot_username=message['from']['username']), chat_id=message['chat']['id'])
             else:
                 user_id = message['from']['id']
                 if self.mother.stages.get_id(user_id=user_id, chat_id=user_id) == BotMother.STAGE_MODERATION_GROUP:
                     yield self.attach_command(message)
                 else:
-                    yield self.bot.send_message('This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']),
+                    yield self.bot.send_message(pgettext('Bot added to an unknown chat when he isn\'t ready for this',
+                                                         'This bot wasn\'t registered for group {group_title}, type '
+                                                         '/start for more info').format(group_title=message['chat']['title']),
                                                 chat_id=message['chat']['id'])
         else:
             return False
 
     @coroutine
-    def group_created(self, message):
+    @append_pgettext
+    def group_created(self, message, pgettext):
         user_id = message['from']['id']
         if self.mother.stages.get_id(user_id=user_id, chat_id=user_id) == BotMother.STAGE_MODERATION_GROUP:
             yield self.attach_command(message)
         else:
             try:
-                yield self.bot.send_message('This bot wasn\'t registered for %s %s, type /start for more info' % (message['chat']['type'], message['chat']['title']),
+                yield self.bot.send_message(pgettext('New group created with bot and isn\'t ready for this',
+                                                     'This bot wasn\'t registered for group {group_title}, type /start '
+                                                     'for more info').format(group_title=message['chat']['title']),
                                             chat_id=user_id)
             except:
                 pass
 
     @coroutine
-    def attach_command(self, message):
+    @append_pgettext
+    def attach_command(self, message, pgettext):
         user_id = message['from']['id']
         stage = self.mother.stages.get(user_id=user_id, chat_id=user_id)
         report_botan(message, 'slave_attach')
@@ -513,7 +536,8 @@ class Slave:
             yield self.mother.set_slave_attached(stage[1]['last_message'], message['chat'])
         else:
             try:
-                yield self.bot.send_message('Incorrect command', chat_id=message['chat']['id'])
+                yield self.bot.send_message(pgettext('Bot received /attach command when he isn\'t ready',
+                                                     'Incorrect command'), chat_id=message['chat']['id'])
             except:
                 pass
 
@@ -522,16 +546,13 @@ class Slave:
         me = yield self.bot.get_me()
         if message['left_chat_member']['id'] == me['id']:
             report_botan(message, 'slave_left_chat')
-            try:
-                yield self.bot.send_message('Whyyyy?! Remove bot ' + message['left_chat_member']['username'] + ' of ' + message['chat']['title'] + '  :\'(',
-                                            chat_id=message['from']['id'])
-            except:
-                pass
+            yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (me['id'], ))
         else:
             return False
 
     @coroutine
-    def confirm_command(self, message):
+    @append_pgettext
+    def confirm_command(self, message, pgettext):
         if message['from']['id'] != message['chat']['id']:
             return False  # Allow only in private
 
@@ -546,21 +567,26 @@ class Slave:
             INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
             VALUES (%s, %s, %s, %s, NOW(), %s)
             """, (user_message['message_id'], user_message['chat']['id'], user_id, bot_info['id'], dumps(user_message)))
-            yield self.bot.send_message('Okay, I\'ve sent your message for verification. Fingers crossed!',
+            yield self.bot.send_message(pgettext('Message sent for verification', 'Okay, I\'ve sent your message for '
+                                                                                  'verification. Fingers crossed!'),
                                         reply_to_message=user_message)
             yield self.post_new_moderation_request(user_message)
             self.stages.drop(message)
         else:
-            yield self.bot.send_message('Invalid command', reply_to_message=message)
+            yield self.bot.send_message(pgettext('Bot isn\'t ready for the command', 'Invalid command'),
+                                        reply_to_message=message)
 
     @coroutine
-    def cancel_command(self, message):
+    @append_pgettext
+    def cancel_command(self, message, pgettext):
         report_botan(message, 'slave_cancel')
         self.stages.drop(message)
-        yield self.bot.send_message('Oka-a-a-a-a-ay.', reply_to_message=message, reply_markup=ReplyKeyboardHide())
+        yield self.bot.send_message(pgettext('Pending command cancelled', 'Oka-a-a-a-a-ay.'),
+                                    reply_to_message=message, reply_markup=ReplyKeyboardHide())
 
     @coroutine
-    def plaintext_post_handler(self, message):
+    @append_pgettext
+    def plaintext_post_handler(self, message, pgettext):
         if message['chat']['type'] != 'private':
             return False  # Allow only in private
 
@@ -568,29 +594,40 @@ class Slave:
             return False
 
         if self.settings.get('content_status', {}).get('text', True) is False:
-            yield self.bot.send_message('Accepting text messages is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User send text message for verification while texts is disabled',
+                                                 'Accepting text messages are disabled'),
+                                        reply_to_message=message)
             return
 
         mes = message['text']
         if mes.strip() != '':
             if 50 < len(mes) < 1000:
-                yield self.bot.send_message('Looks good for me. Please, take a look on your message one more time.',
+                yield self.bot.send_message(pgettext('Message received, requesting the user to check the message once '
+                                                     'again',
+                                                     'Looks good for me. Please, take a look on your message one more '
+                                                     'time.'),
                                             reply_to_message=message)
                 yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-                yield self.bot.send_message('If everything is correct, type /confirm, otherwise — /cancel',
+                yield self.bot.send_message(pgettext('Message confirmation request', 'If everything is correct, type '
+                                                                                     '/confirm, otherwise - /cancel'),
                                             reply_to_message=message)
                 self.stages.set(message, self.STAGE_ADDING_MESSAGE)
                 report_botan(message, 'slave_message')
             else:
                 report_botan(message, 'slave_message_invalid')
-                yield self.bot.send_message('Sorry, but we can proceed only messages with length between 50 and 1 000 '
-                                            'symbols.', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Incorrect text message received', 'Sorry, but we can proceed '
+                                                                                        'only messages with length '
+                                                                                        'between {min_msg_length} and '
+                                                                                        '{max_msg_length} symbols.')
+                                            .format(min_msg_length=50, max_msg_length=1000), reply_to_message=message)
         else:
             report_botan(message, 'slave_message_empty')
-            yield self.bot.send_message('Seriously??? 8===3', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent empty message', 'Seriously??? 8===3'),
+                                        reply_to_message=message)
 
     @coroutine
-    def multimedia_post_handler(self, message):
+    @append_pgettext
+    def multimedia_post_handler(self, message, pgettext):
         if message['chat']['type'] != 'private':
             return False  # Allow only in private
 
@@ -600,41 +637,54 @@ class Slave:
         report_botan(message, 'slave_message_multimedia')
 
         if 'sticker' in message and self.settings.get('content_status', {}).get('sticker', False) is False:
-            yield self.bot.send_message('Accepting stickers is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent a sticker for verification while stickers are disabled',
+                                                 'Accepting stickers is disabled'), reply_to_message=message)
             return
         elif 'audio' in message and self.settings.get('content_status', {}).get('audio', False) is False:
-            yield self.bot.send_message('Accepting audios is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent an audio for verification while audios are disabled',
+                                                 'Accepting audios is disabled'), reply_to_message=message)
             return
         elif 'voice' in message and self.settings.get('content_status', {}).get('voice', False) is False:
-            yield self.bot.send_message('Accepting voice is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent a voice for verification while voices are disabled',
+                                                 'Accepting voice is disabled'), reply_to_message=message)
             return
         elif 'video' in message and self.settings.get('content_status', {}).get('video', False) is False:
-            yield self.bot.send_message('Accepting videos is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent a video for verification while videos are disabled',
+                                                 'Accepting videos is disabled'), reply_to_message=message)
             return
         elif 'photo' in message and self.settings.get('content_status', {}).get('photo', False) is False:
-            yield self.bot.send_message('Accepting photos is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent a photo for verification while photos are disabled',
+                                                 'Accepting photos is disabled'), reply_to_message=message)
             return
         elif 'document' in message and self.settings.get('content_status', {}).get('document', False) is False:
-            yield self.bot.send_message('Accepting documents is disabled', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User sent a document for verification while documents are disabled',
+                                                 'Accepting documents is disabled'), reply_to_message=message)
             return
 
-        yield self.bot.send_message('Looks good for me. Please, take a look on your message one more time.',
+        yield self.bot.send_message(pgettext('Message received, requesting the user to check the message once '
+                                             'again',
+                                             'Looks good for me. Please, take a look on your message one more '
+                                             'time.'),
                                     reply_to_message=message)
-
         yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-        yield self.bot.send_message('If everything is correct, type /confirm, otherwise — /cancel',
+        yield self.bot.send_message(pgettext('Message confirmation request', 'If everything is correct, type '
+                                                                             '/confirm, otherwise - /cancel'),
                                     reply_to_message=message)
         self.stages.set(message, self.STAGE_ADDING_MESSAGE)
 
     @coroutine
-    def post_new_moderation_request(self, message):
+    @append_pgettext
+    def post_new_moderation_request(self, message, pgettext):
         yield self.bot.forward_message(self.moderator_chat_id, message['chat']['id'], message['message_id'])
-        yield self.bot.send_message('Say %s (/vote_%s_%s_yes) or %s (/vote_%s_%s_no) to this amazing message. Also you '
-                                    'can just send a message to the user (/reply_%s_%s). Or even can BAN him (/ban_%s).'
-                                    % (Emoji.THUMBS_UP_SIGN, message['chat']['id'], message['message_id'],
-                                       Emoji.THUMBS_DOWN_SIGN, message['chat']['id'], message['message_id'],
-                                       message['chat']['id'], message['message_id'], message['from']['id']),
-                                    chat_id=self.moderator_chat_id)
+        msg = pgettext('Verification message', 'Say {thumb_up_sign} ({vote_yes_cmd}) or {thumb_down} ({vote_no_cmd}) '
+                                               'to this amazing message. Also you can just send a message to the user '
+                                               '({reply_cmd}). Or even can BAN him ({ban_cmd}).')\
+            .format(thumb_up_sign=Emoji.THUMBS_UP_SIGN, thumb_down=Emoji.THUMBS_DOWN_SIGN,
+                    vote_yes_cmd='/vote_%s_%s_yes' % (message['chat']['id'], message['message_id']),
+                    vote_no_cmd='/vote_%s_%s_no' % (message['chat']['id'], message['message_id']),
+                    reply_cmd='/reply_%s_%s' % (message['chat']['id'], message['message_id']),
+                    ban_cmd='/ban_%s' % (message['chat']['id'], ))
+        yield self.bot.send_message(msg, chat_id=self.moderator_chat_id)
 
         bot_info = yield self.bot.get_me()
         yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
@@ -662,7 +712,8 @@ class Slave:
         return True
 
     @coroutine
-    def __vote(self, user_id, message_id, original_chat_id, yes: bool):
+    @append_pgettext
+    def __vote(self, user_id, message_id, original_chat_id, yes: bool, pgettext):
         voted = yield self.__is_user_voted(user_id, original_chat_id, message_id)
         opened = yield self.__is_voting_opened(original_chat_id, message_id)
 
@@ -692,7 +743,8 @@ class Slave:
                                            'original_chat_id = %s',
                                            (message_id, original_chat_id))
                     try:
-                        yield self.bot.send_message('Your message was verified and queued for publishing.',
+                        yield self.bot.send_message(pgettext('Message verified and queued for publishing',
+                                                             'Your message was verified and queued for publishing.'),
                                                     chat_id=original_chat_id, reply_to_message_id=message_id)
                     except:
                         pass
@@ -721,24 +773,31 @@ class Slave:
         yield self.__vote(message['from']['id'], message_id, original_chat_id, False)
 
     @coroutine
-    def help_command(self, message):
+    @append_pgettext
+    def help_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_help')
-            msg = """Bot owner's help:
-/setdelay — change the delay between messages (current: %s minutes)
-/setvotes — change required amount of %s to publish a message (current: %s)
-/settimeout — change voting duration (current: %s hours)
-/setstartmessage — change start message (current: %s)
-/togglepower — toggle moderators ability to modify settings (current: %s)
-/stats — display some stats for last 7 days. You can customize period by calling:
+            delay_str = pgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % self.settings['delay']
+            timeout_str = pgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
+            power_state_str = pgettext('Moderator\'s ability to alter settings', 'yes' if self.settings.get('power') else 'no')
+            msg = pgettext('/help command response', """Bot owner's help:
+/setdelay - change the delay between messages (current: {current_delay_with_minutes})
+/setvotes - change required amount of {thumb_up_sign} to publish a message (current: {current_votes_required})
+/settimeout - change voting duration (current: {current_timeout_with_hours})
+/setstartmessage - change start message (current: {current_start_message})
+/togglepower - toggle moderators ability to modify settings (current: {power_state})
+/stats - display some stats for last 7 days. You can customize period by calling:
    - `/stats 5` for last 5 days,
    - `/stats 2016-01-13` for one day (13th january in example)
    - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
-/banlist — list currently banned users
-/changeallowed — change list of allowed content
-""" % (self.settings['delay'], Emoji.THUMBS_UP_SIGN, self.settings['votes'], self.settings['vote_timeout'],
-       self.settings['start'], 'yes' if self.settings.get('power') else 'no')
+/banlist - list currently banned users
+/changeallowed - change list of allowed content""").format(current_delay_with_minutes=delay_str,
+                                                           current_votes_required=self.settings['votes'],
+                                                           current_timeout_with_hours=timeout_str,
+                                                           thumb_up_sign=Emoji.THUMBS_UP_SIGN,
+                                                           current_start_message=self.settings['start'],
+                                                           power_state=power_state_str)
 
             try:
                 yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
@@ -748,15 +807,18 @@ class Slave:
             return False
 
     @coroutine
-    def setdelay_command(self, message):
+    @append_pgettext
+    def setdelay_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setdelay_cmd')
-            yield self.bot.send_message('Set new delay value for messages posting (in minutes)',
+            yield self.bot.send_message(pgettext('New delay request', 'Set new delay value for messages posting (in '
+                                                                      'minutes)'),
                                         reply_to_message=message, reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_DELAY_VALUE)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
     def plaintext_delay_handler(self, message):
@@ -775,7 +837,8 @@ class Slave:
             return False
 
     @coroutine
-    def setvotes_command(self, message):
+    @append_pgettext
+    def setvotes_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setvotes_cmd')
@@ -783,7 +846,8 @@ class Slave:
                                         reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_VOTES_VALUE)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
     def plaintext_votes_handler(self, message):
@@ -802,6 +866,7 @@ class Slave:
             return False
 
     @coroutine
+    @append_pgettext
     def settimeout_command(self, message):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
@@ -810,7 +875,8 @@ class Slave:
                                         reply_to_message=message, reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
     def plaintext_timeout_handler(self, message):
@@ -829,7 +895,8 @@ class Slave:
             return False
 
     @coroutine
-    def setstartmessage_command(self, message):
+    @append_pgettext
+    def setstartmessage_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setstartmessage_cmd')
@@ -837,7 +904,8 @@ class Slave:
                                         reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_START_MESSAGE_VALUE)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
     def plaintext_startmessage_handler(self, message):
@@ -857,28 +925,37 @@ class Slave:
 
     @coroutine
     def __update_settings(self, **kwargs):
+        if 'locale' in kwargs:
+            self.locale = locale.get(kwargs['locale'])
+
         self.settings.update(kwargs)
         yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings),
                                                                                           self.bot_id))
 
     @coroutine
-    def togglepower_command(self, message):
+    @append_pgettext
+    def togglepower_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_togglepower_cmd')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             if self.settings.get('power'):
                 yield self.__update_settings(power=False)
-                yield self.bot.send_message('From now other chat users can not modify bot settings', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Power mode disabled', 'From now other chat users can not modify '
+                                                                            'bot settings'),
+                                            reply_to_message=message)
             else:
                 yield self.__update_settings(power=True)
-                yield self.bot.send_message('From now other chat users can modify bot settings (only inside moderators '
-                                            'chat)', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Power mode enabled', 'From now other chat users can modify bot '
+                                                                           'settings (only inside moderators chat)'),
+                                            reply_to_message=message)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
-    def stats_command(self, message):
+    @append_pgettext
+    def stats_command(self, message, pgettext):
         def format_top(rows, f: callable):
             ret = ''
             for row_id, row in enumerate(rows):
@@ -891,10 +968,11 @@ class Slave:
                 else:
                     user = 'userid %s' % user_id
 
-                ret += "%d. %s — %s\n" % (row_id + 1, user, f(row))
+                ret += pgettext('Stats user item', '{row_id}. {user} - {rating_details}') \
+                    .format(row_id=row_id + 1, user=user, rating_details=f(row)) + "\n"
 
             if not ret:
-                ret = "%s no data\n" % Emoji.CROSS_MARK
+                ret = pgettext('No data for stats report', '{cross_mark} no data').format(cross_mark=Emoji.CROSS_MARK) + "\n"
 
             return ret
 
@@ -912,21 +990,26 @@ class Slave:
                         period_begin = datetime.strptime(period[0], '%Y-%m-%d')
                         period_end = datetime.strptime(period[1], '%Y-%m-%d')
                     except:
-                        yield self.bot.send_message('Invalid period provided, correct value: `/stats 2016-01-01 '
-                                                    '2016-01-13`', reply_to_message=message,
-                                                    parse_mode=Api.PARSE_MODE_MD)
+                        yield self.bot.send_message(pgettext('Invalid stats request', 'Invalid period provided, '
+                                                                                      'correct value: `/stats '
+                                                                                      '2016-01-01 2016-01-13`'),
+                                                    reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                         return
                 elif '-' in period:
                     try:
                         period_begin = datetime.strptime(period, '%Y-%m-%d')
                         period_end = datetime.strptime(period, '%Y-%m-%d')
                     except:
-                        yield self.bot.send_message('Invalid period provided, correct value: `/stats 2016-01-01`',
+                        yield self.bot.send_message(pgettext('Invalid stats request', 'Invalid period provided, '
+                                                                                      'correct value: `/stats '
+                                                                                      '2016-01-01`'),
                                                     reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                         return
                 else:
-                    yield self.bot.send_message('Invalid period provided, correct values: `/stats 2016-01-01 '
-                                                '2016-01-13`, `/stats 5` for last 5 days or `/stats 2016-01-01`',
+                    yield self.bot.send_message(pgettext('Invalid stats request', 'Invalid period provided, correct '
+                                                                                  'values: `/stats 2016-01-01 '
+                                                                                  '2016-01-13`, `/stats 5` for last 5 '
+                                                                                  'days or `/stats 2016-01-01`'),
                                                 reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                     return
             else:
@@ -942,7 +1025,8 @@ class Slave:
                 if period_begin.strftime('%Y-%m-%d') == period_end.strftime('%Y-%m-%d') \
                 else '%s - %s' % (period_begin.strftime('%Y-%m-%d'), period_end.strftime('%Y-%m-%d'))
 
-            msg = "Stats for %s\n\nTop5 voters:\n" % (period_str, )
+            msg = pgettext('Stats header', 'Stats for {period}').format(period=period_str) + "\n\n"
+            msg += pgettext('TOP type', 'TOP5 voters:') + "\n"
 
             query = """
             SELECT vh.user_id, u.first_name, u.last_name, count(*), SUM(vote_yes::int) FROM votes_history vh
@@ -957,9 +1041,15 @@ class Slave:
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
-            msg += format_top(cur.fetchall(), lambda row: '%d votes (with %d %s)' % (row[0], row[1], Emoji.THUMBS_UP_SIGN))
+            def format_top_votes(row):
+                return pgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
+                                '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
+                                row[0]).format(votes_cnt=row[0], votes_yes_cnt=row[1],
+                                               thumb_up_sign=Emoji.THUMBS_UP_SIGN)
 
-            msg += "\nTop5 users by messages count:\n"
+            msg += format_top(cur.fetchall(), format_top_votes) + "\n"
+
+            msg += pgettext('TOP type', 'TOP5 users by messages count:') + "\n"
 
             query = """
             SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
@@ -973,9 +1063,12 @@ class Slave:
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
-            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
+            def format_top_messages(row):
+                return pgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0])\
+                    .format(messages_cnt=row[0])
 
-            msg += "\nTop5 users by published messages count:\n"
+            msg += format_top(cur.fetchall(), format_top_messages) + "\n"
+            msg += pgettext('TOP type', 'TOP5 users by published messages count:') + "\n"
 
             query = """
             SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
@@ -989,9 +1082,8 @@ class Slave:
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
-            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0]))
-
-            msg += "\nTop5 users by declined messages count:\n"
+            msg += format_top(cur.fetchall(), format_top_messages) + "\n"
+            msg += pgettext('TOP type', 'TOP5 users by declined messages count:') + "\n"
 
             query = """
             SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
@@ -1005,26 +1097,29 @@ class Slave:
             cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
-            msg += format_top(cur.fetchall(), lambda row: '%d messages' % (row[0], ))
+            msg += format_top(cur.fetchall(), format_top_messages)
 
             yield self.bot.send_message(msg, reply_to_message=message)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
-    def ban_command(self, message):
+    @append_pgettext
+    def ban_command(self, message, pgettext):
         if message['chat']['id'] != self.moderator_chat_id:
             return False
 
         match = self.RE_BAN.match(message['text'])
         user_id = match.group('user_id')
         report_botan(message, 'slave_ban_cmd')
-        yield self.bot.send_message('Please enter a ban reason for the user', reply_to_message=message,
-                                    reply_markup=ForceReply(True))
+        yield self.bot.send_message(pgettext('Ban reason request', 'Please enter a ban reason for the user'),
+                                    reply_to_message=message, reply_markup=ForceReply(True))
         self.stages.set(message, self.STAGE_WAIT_BAN_MESSAGE, ban_user_id=user_id)
 
     @coroutine
-    def plaintext_ban_handler(self, message):
+    @append_pgettext
+    def plaintext_ban_handler(self, message, pgettext):
         chat_id = message['chat']['id']
 
         stage = self.stages.get(message)
@@ -1035,24 +1130,28 @@ class Slave:
         msg = message['text'].strip()
         if len(msg) < 5:
             report_botan(message, 'slave_ban_short_msg')
-            yield self.bot.send_message('Reason is too short (5 symbols required), try again or send /cancel',
+            yield self.bot.send_message(pgettext('Ban reason too short', 'Reason is too short (5 symbols required), '
+                                                                         'try again or send /cancel'),
                                         reply_to_message=message, reply_markup=ForceReply(True))
         else:
             report_botan(message, 'slave_ban_success')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             try:
-                yield self.bot.send_message("You've been banned from further communication with this bot. Reason:\n"
-                                            "> %s" % msg, chat_id=stage[1]['ban_user_id'])
+                yield self.bot.send_message(pgettext('Message to user in case of ban',
+                                                     "You've been banned from further communication with this bot. "
+                                                     "Reason:\n> {ban_reason}").format(ban_reason=msg),
+                                            chat_id=stage[1]['ban_user_id'])
             except:
                 pass
             yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
                                    'owner_id = %s AND is_voting_success = False', (self.bot_id, stage[1]['ban_user_id'], ))
             yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
                                    'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
-            yield self.bot.send_message('User banned', reply_to_message=message)
+            yield self.bot.send_message(pgettext('Ban confirmation', 'User banned'), reply_to_message=message)
 
     @coroutine
-    def ban_list_command(self, message):
+    @append_pgettext
+    def ban_list_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_ban_list_cmd')
@@ -1071,21 +1170,26 @@ class Slave:
                 else:
                     user = 'userid %s' % user_id
 
-                msg += "%d. %s — %s (banned %s) /unban_%d\n" % (row_id + 1, user, ban_reason,
-                                                                banned_at.strftime('%Y-%m-%d'), user_id)
+                msg += pgettext('Ban user item', '{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}')\
+                           .format(row_id=row_id + 1, user=user, ban_reason=ban_reason,
+                                   ban_date=banned_at.strftime('%Y-%m-%d'), unban_cmd='/unban_%s' % (user_id, ))
 
             if msg:
                 yield self.bot.send_message(msg, reply_to_message=message)
                 if chat_id == self.owner_id:
-                    yield self.bot.send_message('You can use /unban command only in moderators group',
+                    yield self.bot.send_message(pgettext('Bot owner notification', 'You can use /unban command only '
+                                                                                   'in moderators group'),
                                                 reply_to_message=message)
             else:
-                yield self.bot.send_message('No banned users yet', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Ban list is empty', 'No banned users yet'),
+                                            reply_to_message=message)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
-    def unban_command(self, message):
+    @append_pgettext
+    def unban_command(self, message, pgettext):
         if message['chat']['id'] != self.moderator_chat_id:
             return False
 
@@ -1096,45 +1200,53 @@ class Slave:
         user_id = match.group('user_id')
         yield get_db().execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
                                'bot_id = %s', (user_id, self.bot_id))
-        yield self.bot.send_message('User unbanned', reply_to_message=message)
+        yield self.bot.send_message(pgettext('Unban confirmation', 'User unbanned'), reply_to_message=message)
         try:
-            yield self.bot.send_message('Access restored', chat_id=user_id)
+            yield self.bot.send_message(pgettext('User notification in case of unban', 'Access restored'),
+                                        chat_id=user_id)
         except:
             pass
 
     @coroutine
-    def reply_command(self, message):
+    @append_pgettext
+    def reply_command(self, message, pgettext):
         if message['chat']['id'] != self.moderator_chat_id:
             return False
 
         report_botan(message, 'slave_reply_cmd')
         match = self.RE_REPLY.match(message['text'])
-        yield self.bot.send_message('What message should I send to user?', reply_to_message=message,
-                                    reply_markup=ForceReply(True))
+        yield self.bot.send_message(pgettext('Reply message request', 'What message should I send to user?'),
+                                    reply_to_message=message, reply_markup=ForceReply(True))
         self.stages.set(message, self.STAGE_WAIT_REPLY_MESSAGE, msg_id=match.group('message_id'),
                         msg_chat_id=match.group('chat_id'))
 
     @coroutine
-    def plaintext_reply_handler(self, message):
+    @append_pgettext
+    def plaintext_reply_handler(self, message, pgettext):
         stage = self.stages.get(message)
 
         if stage[0] == self.STAGE_WAIT_REPLY_MESSAGE:
             msg = message['text'].strip()
             if len(msg) < 10:
                 report_botan(message, 'slave_reply_short_msg')
-                yield self.bot.send_message('Message is too short (10 symbols required), try again or send /cancel',
+                yield self.bot.send_message(pgettext('Reply message is too short', 'Message is too short (10 symbols '
+                                                                                   'required), try again or send '
+                                                                                   '/cancel'),
                                             reply_to_message=message, reply_markup=ForceReply(True))
             else:
                 try:
                     yield self.bot.send_message(msg, chat_id=stage[1]['msg_chat_id'],
                                                 reply_to_message_id=stage[1]['msg_id'])
-                    yield self.bot.send_message('Message sent', reply_to_message=message)
+                    yield self.bot.send_message(pgettext('Reply delivery confirmation', 'Message sent'),
+                                                reply_to_message=message)
                 except Exception as e:
-                    yield self.bot.send_message('Failed: %s' % e, reply_to_message=message)
+                    yield self.bot.send_message(pgettext('Reply failed', 'Failed: {reason}').format(reason=str(e)),
+                                                reply_to_message=message)
         else:
             return False
 
-    def build_contenttype_keyboard(self):
+    @append_pgettext
+    def build_contenttype_keyboard(self, pgettext):
         content_status = self.settings.get('content_status', {})
         text_enabled = content_status.get('text', True)
         photo_enabled = content_status.get('photo', False)
@@ -1148,26 +1260,29 @@ class Slave:
             False: Emoji.MEDIUM_SMALL_WHITE_CIRCLE,
         }
         return ReplyKeyboardMarkup([[
-            KeyboardButton('%s Text' % marks[text_enabled]),
-            KeyboardButton('%s Photo' % marks[photo_enabled]),
-            KeyboardButton('%s Video' % marks[video_enabled]),
-            KeyboardButton('%s Voice' % marks[voice_enabled]),
-        ], [KeyboardButton('%s Audio' % marks[audio_enabled]),
-            KeyboardButton('%s Document' % marks[doc_enabled]),
-            KeyboardButton('%s Sticker' % marks[sticker_enabled]),
+            KeyboardButton('%s %s' % (marks[text_enabled], pgettext('Content type', 'Text'))),
+            KeyboardButton('%s %s' % (marks[photo_enabled], pgettext('Content type', 'Photo'))),
+            KeyboardButton('%s %s' % (marks[video_enabled], pgettext('Content type', 'Video'))),
+            KeyboardButton('%s %s' % (marks[voice_enabled], pgettext('Content type', 'Voice'))),
+        ], [KeyboardButton('%s %s' % (marks[audio_enabled], pgettext('Content type', 'Audio'))),
+            KeyboardButton('%s %s' % (marks[doc_enabled], pgettext('Content type', 'Document'))),
+            KeyboardButton('%s %s' % (marks[sticker_enabled], pgettext('Content type', 'Sticker'))),
         ], [KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
 
     @coroutine
-    def change_allowed_command(self, message):
+    @append_pgettext
+    def change_allowed_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_change_allowed_cmd')
-            yield self.bot.send_message("You can see current status on keyboard, just click on content type to change "
-                                        "it's status", reply_to_message=message,
+            yield self.bot.send_message(pgettext('/changeallowed response', "You can see current status on keyboard, "
+                                                                            "just click on content type to change it's "
+                                                                            "status"), reply_to_message=message,
                                         reply_markup=self.build_contenttype_keyboard())
             self.stages.set(message, self.STAGE_WAIT_CONTENT_TYPE)
         else:
-            yield self.bot.send_message('Access denied', reply_to_message=message)
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
     @coroutine
     def plaintext_cancel_emoji_handler(self, message):
@@ -1178,7 +1293,22 @@ class Slave:
         return False
 
     @coroutine
-    def plaintext_contenttype_handler(self, message):
+    @append_pgettext
+    def plaintext_contenttype_handler(self, message, pgettext):
+        def __messages():
+            pgettext('Content type enabled/disabled', 'Texts enabled')
+            pgettext('Content type enabled/disabled', 'Texts disabled')
+            pgettext('Content type enabled/disabled', 'Photos enabled')
+            pgettext('Content type enabled/disabled', 'Photos disabled')
+            pgettext('Content type enabled/disabled', 'Videos enabled')
+            pgettext('Content type enabled/disabled', 'Videos disabled')
+            pgettext('Content type enabled/disabled', 'Audios enabled')
+            pgettext('Content type enabled/disabled', 'Audios disabled')
+            pgettext('Content type enabled/disabled', 'Voices enabled')
+            pgettext('Content type enabled/disabled', 'Voices disabled')
+            pgettext('Content type enabled/disabled', 'Stickers enabled')
+            pgettext('Content type enabled/disabled', 'Stickers disabled')
+
         if self.stages.get_id(message) == self.STAGE_WAIT_CONTENT_TYPE:
             try:
                 action_type, content_type = message['text'].split(' ')
@@ -1189,26 +1319,38 @@ class Slave:
                 else:
                     raise ValueError()
 
-                content_type = content_type.lower()
+                content_type = content_type[0].upper() + content_type[1:].lower()
 
                 content_status = self.settings.get('content_status', {})
 
-                if content_type in ('text', 'photo', 'video', 'audio', 'voice', 'sticker', 'document'):
-                    content_status[content_type] = action_type
+                content_types_list = {
+                    pgettext('Content type', 'Text'): 'text',
+                    pgettext('Content type', 'Photo'): 'photo',
+                    pgettext('Content type', 'Video'): 'video',
+                    pgettext('Content type', 'Audio'): 'audio',
+                    pgettext('Content type', 'Voice'): 'voice',
+                    pgettext('Content type', 'Sticker'): 'sticker',
+                    pgettext('Content type', 'Document'): 'document',
+                }
+
+                if content_type in content_types_list:
+                    content_type_raw = content_types_list[content_type]
+                    content_status[content_type_raw] = action_type
                     yield self.__update_settings(content_status=content_status)
                 else:
                     raise ValueError
 
                 action_text = 'enable' if action_type else 'disable'
 
-                report_botan(message, 'slave_content_' + content_type + '_' + action_text)
+                report_botan(message, 'slave_content_' + content_type_raw + '_' + action_text)
 
-                msg = content_type[0].upper() + content_type[1:] + 's ' + action_text + 'd'
+                msg = content_type_raw[0].upper() + content_type_raw[1:] + 's ' + action_text + 'd'
 
-                yield self.bot.send_message(msg, reply_to_message=message,
+                yield self.bot.send_message(pgettext('Content type enabled/disabled', msg), reply_to_message=message,
                                             reply_markup=self.build_contenttype_keyboard())
             except:
-                yield self.bot.send_message('Wrong input', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Unknown user response to content type switcher', 'Wrong input'),
+                                            reply_to_message=message)
                 return
         else:
             return False
