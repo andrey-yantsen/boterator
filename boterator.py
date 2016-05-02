@@ -798,7 +798,8 @@ class Slave:
             report_botan(message, 'slave_help')
             delay_str = npgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % self.settings['delay']
             timeout_str = npgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
-            power_state_str = pgettext('Moderator\'s ability to alter settings', 'yes' if self.settings.get('power') else 'no')
+            power_state = 'yes' if self.settings.get('power') else 'no'
+            power_state_str = pgettext('Moderator\'s ability to alter settings', power_state)
             msg = pgettext('/help command response', """Bot owner's help:
 /setdelay - change the delay between messages (current: {current_delay_with_minutes})
 /setvotes - change required amount of {thumb_up_sign} to publish a message (current: {current_votes_required})
@@ -1063,7 +1064,7 @@ class Slave:
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             def format_top_votes(row):
-                return pgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
+                return npgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
                                 '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
                                 row[0]).format(votes_cnt=format_number(row[0], self.language),
                                                votes_yes_cnt=format_number(row[1], self.language),
@@ -1317,20 +1318,6 @@ class Slave:
     @coroutine
     @append_pgettext
     def plaintext_contenttype_handler(self, message, pgettext):
-        def __messages():
-            pgettext('Content type enabled/disabled', 'Texts enabled')
-            pgettext('Content type enabled/disabled', 'Texts disabled')
-            pgettext('Content type enabled/disabled', 'Photos enabled')
-            pgettext('Content type enabled/disabled', 'Photos disabled')
-            pgettext('Content type enabled/disabled', 'Videos enabled')
-            pgettext('Content type enabled/disabled', 'Videos disabled')
-            pgettext('Content type enabled/disabled', 'Audios enabled')
-            pgettext('Content type enabled/disabled', 'Audios disabled')
-            pgettext('Content type enabled/disabled', 'Voices enabled')
-            pgettext('Content type enabled/disabled', 'Voices disabled')
-            pgettext('Content type enabled/disabled', 'Stickers enabled')
-            pgettext('Content type enabled/disabled', 'Stickers disabled')
-
         if self.stages.get_id(message) == self.STAGE_WAIT_CONTENT_TYPE:
             try:
                 action_type, content_type = message['text'].split(' ')
@@ -1421,3 +1408,21 @@ class Slave:
     @property
     def language(self):
         return self.settings.get('locale', 'en')
+
+
+def __messages():
+    pgettext('Moderator\'s ability to alter settings', 'yes')
+    pgettext('Moderator\'s ability to alter settings', 'no')
+
+    pgettext('Content type enabled/disabled', 'Texts enabled')
+    pgettext('Content type enabled/disabled', 'Texts disabled')
+    pgettext('Content type enabled/disabled', 'Photos enabled')
+    pgettext('Content type enabled/disabled', 'Photos disabled')
+    pgettext('Content type enabled/disabled', 'Videos enabled')
+    pgettext('Content type enabled/disabled', 'Videos disabled')
+    pgettext('Content type enabled/disabled', 'Audios enabled')
+    pgettext('Content type enabled/disabled', 'Audios disabled')
+    pgettext('Content type enabled/disabled', 'Voices enabled')
+    pgettext('Content type enabled/disabled', 'Voices disabled')
+    pgettext('Content type enabled/disabled', 'Stickers enabled')
+    pgettext('Content type enabled/disabled', 'Stickers disabled')
