@@ -1286,10 +1286,11 @@ class Slave:
             KeyboardButton('%s %s' % (marks[text_enabled], pgettext('Content type', 'Text'))),
             KeyboardButton('%s %s' % (marks[photo_enabled], pgettext('Content type', 'Photo'))),
             KeyboardButton('%s %s' % (marks[video_enabled], pgettext('Content type', 'Video'))),
-            KeyboardButton('%s %s' % (marks[voice_enabled], pgettext('Content type', 'Voice'))),
         ], [KeyboardButton('%s %s' % (marks[audio_enabled], pgettext('Content type', 'Audio'))),
             KeyboardButton('%s %s' % (marks[doc_enabled], pgettext('Content type', 'Document'))),
             KeyboardButton('%s %s' % (marks[sticker_enabled], pgettext('Content type', 'Sticker'))),
+        ], [
+            KeyboardButton('%s %s' % (marks[voice_enabled], pgettext('Content type', 'Voice'))),
         ], [KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
 
     @coroutine
