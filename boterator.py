@@ -1321,7 +1321,9 @@ class Slave:
     def plaintext_contenttype_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_CONTENT_TYPE:
             try:
-                action_type, content_type = message['text'].split(' ')
+                split = message['text'].split(' ')
+                action_type, content_type = split[0], ' '.join(split[1:])
+
                 if action_type == Emoji.MEDIUM_SMALL_WHITE_CIRCLE:
                     action_type = True
                 elif action_type == Emoji.CIRCLED_BULLET:
