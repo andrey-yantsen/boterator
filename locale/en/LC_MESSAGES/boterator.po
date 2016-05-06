@@ -356,7 +356,7 @@ msgstr ""
 #: boterator.py:941
 msgctxt "New voting duration request"
 msgid "Set new voting duration value (in hours, only a digits)"
-msgstr ""
+msgstr "Set new voting duration value (in hours, only digits)"
 
 #: boterator.py:957
 msgctxt "Voting duration successfully changed"
