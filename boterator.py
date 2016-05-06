@@ -841,17 +841,18 @@ class Slave:
                                         reply_to_message=message)
 
     @coroutine
-    def plaintext_delay_handler(self, message):
+    @append_pgettext
+    def plaintext_delay_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_DELAY_VALUE:
             if message['text'].isdigit():
                 report_botan(message, 'slave_setdelay')
                 yield self.__update_settings(delay=int(message['text']))
-                yield self.bot.send_message('Delay value updated to %s minutes' % self.settings['delay'],
+                yield self.bot.send_message(pgettext('Messages delay successfully changed', 'Delay value updated'),
                                             reply_to_message=message)
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_setdelay_invalid')
-                yield self.bot.send_message('Invalid delay value. Try again or type /cancel', reply_to_message=message,
+                yield self.bot.send_message(pgettext('Invalid delay value. Try again or type /cancel'), reply_to_message=message,
                                             reply_markup=ForceReply(True))
         else:
             return False
@@ -862,36 +863,39 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setvotes_cmd')
-            yield self.bot.send_message('Set new amount of required votes', reply_to_message=message,
-                                        reply_markup=ForceReply(True))
+            yield self.bot.send_message(pgettext('New required votes count request', 'Set new amount of required votes'),
+                                        reply_to_message=message, reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_VOTES_VALUE)
         else:
             yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
                                         reply_to_message=message)
 
     @coroutine
-    def plaintext_votes_handler(self, message):
+    @append_pgettext
+    def plaintext_votes_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_VOTES_VALUE:
             if message['text'].isdigit():
                 report_botan(message, 'slave_setvotes')
                 yield self.__update_settings(votes=int(message['text']))
-                yield self.bot.send_message('Required votes amount updated to %s' % self.settings['votes'],
+                yield self.bot.send_message(pgettext('Required votes count successfully changed', 'Required votes '
+                                                                                                  'amount updated'),
                                             reply_to_message=message)
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_setvotes_invalid')
-                yield self.bot.send_message('Invalid votes amount value. Try again or type /cancel',
+                yield self.bot.send_message(pgettext('Invalid votes amount value. Try again or type /cancel'),
                                             reply_to_message=message, reply_markup=ForceReply(True))
         else:
             return False
 
     @coroutine
     @append_pgettext
-    def settimeout_command(self, message):
+    def settimeout_command(self, message, pgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_settimeout_cmd')
-            yield self.bot.send_message('Set new voting duration value (in hours, only a digits)',
+            yield self.bot.send_message(pgettext('New voting duration request', 'Set new voting duration value (in '
+                                                                                'hours, only a digits)'),
                                         reply_to_message=message, reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_VOTE_TIMEOUT_VALUE)
         else:
@@ -899,17 +903,19 @@ class Slave:
                                         reply_to_message=message)
 
     @coroutine
-    def plaintext_timeout_handler(self, message):
+    @append_pgettext
+    @append_npgettext
+    def plaintext_timeout_handler(self, message, pgettext, npgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_VOTE_TIMEOUT_VALUE:
             if message['text'].isdigit():
                 report_botan(message, 'slave_settimeout')
                 yield self.__update_settings(vote_timeout=int(message['text']))
-                yield self.bot.send_message('Voting duration setting updated to %s hours' % self.settings['vote_timeout'],
+                yield self.bot.send_message(pgettext('Voting duration successfully changed', 'Voting duration updated'),
                                             reply_to_message=message)
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_settimeout_invalid')
-                yield self.bot.send_message('Invalid voting duration value. Try again or type /cancel',
+                yield self.bot.send_message(pgettext('Invalid voting duration value. Try again or type /cancel'),
                                             reply_to_message=message, reply_markup=ForceReply(True))
         else:
             return False
@@ -920,7 +926,8 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setstartmessage_cmd')
-            yield self.bot.send_message('Set new start message', reply_to_message=message,
+            yield self.bot.send_message(pgettext('New start message request', 'Set new start message'),
+                                        reply_to_message=message,
                                         reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_START_MESSAGE_VALUE)
         else:
@@ -928,18 +935,23 @@ class Slave:
                                         reply_to_message=message)
 
     @coroutine
-    def plaintext_startmessage_handler(self, message):
+    @append_pgettext
+    def plaintext_startmessage_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_START_MESSAGE_VALUE:
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
-                yield self.bot.send_message('Start message changed to "%s"' % self.settings['start'],
-                                            reply_to_message=message)
+                yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message changed to '
+                                                                                           '"%s"') % self.settings['start'],
+                                            reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_setstartmessage_invalid')
-                yield self.bot.send_message('Invalid start message, you should write at least 10 symbols. Try again or '
-                                            'type /cancel', reply_to_message=message, reply_markup=ForceReply(True))
+                yield self.bot.send_message(pgettext('Too short start message entered', 'Invalid start message, you '
+                                                                                        'should write at least 10 '
+                                                                                        'symbols. Try again or type '
+                                                                                        '/cancel'),
+                                            reply_to_message=message, reply_markup=ForceReply(True))
         else:
             return False
 
