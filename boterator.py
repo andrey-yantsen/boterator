@@ -621,7 +621,7 @@ class Slave:
 
         if message['data'] == 'cancel':
             self.stages.drop(user_id=user_id, chat_id=user_id)
-            yield self.bot.edit_message_text('Cancelled', message['message'])
+            yield self.bot.edit_message_text(pgettext('Message publishing cancelled', 'Cancelled'), message['message'])
             return
 
         report_botan(message, 'slave_confirm')

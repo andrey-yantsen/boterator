@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boterator 4bb744e\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-05-06 19:33+0300\n"
+"POT-Creation-Date: 2016-05-06 19:37+0300\n"
 "PO-Revision-Date: 2016-05-05 21:00+0300\n"
 "Last-Translator: \n"
 "Language: en\n"
@@ -198,6 +198,11 @@ msgstr "This bot wasn't registered for group {group_title}. In order to get some
 msgctxt "Bot received /attach command when he isn't ready"
 msgid "Incorrect command"
 msgstr "Sorry, I don’t understand what you want."
+
+#: boterator.py:624
+msgctxt "Message publishing cancelled"
+msgid "Cancelled"
+msgstr ""
 
 #: boterator.py:637
 msgctxt "Message sent for verification"
