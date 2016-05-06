@@ -255,13 +255,10 @@ class BotMother:
             elif time() - stage_begin >= timeout:
                 yield slave.stop()
                 try:
-                    try:
-                        yield self.bot.send_message(pgettext('Boterator: registration cancelled due to timeout',
-                                                             '@%s registration aborted due to timeout')
-                                                    % stage_meta['bot_info']['username'],
-                                                    reply_to_message=original_message)
-                    except:
-                        pass
+                    yield self.bot.send_message(pgettext('Boterator: registration cancelled due to timeout',
+                                                         '@%s registration aborted due to timeout')
+                                                % stage_meta['bot_info']['username'],
+                                                reply_to_message=original_message)
                 except:
                     pass
                 break
