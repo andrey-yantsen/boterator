@@ -46,6 +46,9 @@ class BotMother:
         self.stages = StagesStorage()
         self.slaves = {}
 
+        load_gettext_translations('./locale', 'boterator')
+        self.locale = locale.get('en')
+
         logger = logging.getLogger()
         logger.addHandler(TelegramHandler(bot, logging_user_id, level=logging.WARNING))
 
