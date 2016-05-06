@@ -352,6 +352,18 @@ class Api:
         return (yield self.__request_api('editMessageText', request))
 
     @coroutine
+    def answer_callback_query(self, callback_query_id, text=None, show_alert=False):
+        request = {
+            'callback_query_id': callback_query_id,
+            'show_alert': show_alert
+        }
+
+        if text:
+            request['text'] = text
+
+        return (yield self.__request_api('answerCallbackQuery', request))
+
+    @coroutine
     def _process_update(self):
         def default_filter_text_msg(cmd):
             return lambda r, c: (r == self.UPDATE_TYPE_MSG_TEXT or r == self.UPDATE_TYPE_MSG_ANY) \
