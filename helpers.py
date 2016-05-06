@@ -112,7 +112,7 @@ class StagesStorage:
 
     @append_stage_key
     def drop(self, message, stage_key=None):
-        if self.get_id(message) is not None:
+        if stage_key in self.stages:
             del self.stages[stage_key]
 
     def drop_expired(self):

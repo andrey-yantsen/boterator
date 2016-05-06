@@ -306,6 +306,51 @@ class Api:
         if not handled:
             logging.info('Handler not found: %s', update)
 
+    @staticmethod
+    def _prepare_inline_message(message=None, chat_id=None, message_id=None, inline_message_id=None):
+        request = {}
+
+        if message:
+            request['chat_id'] = message['chat']['id']
+            request['message_id'] = message['message_id']
+        elif chat_id and message_id:
+            request['chat_id'] = chat_id
+            request['message_id'] = message_id
+        else:
+            request['inline_message_id'] = inline_message_id
+
+        return request
+
+    @coroutine
+    def edit_message_reply_markup(self, message=None, chat_id=None, message_id=None, inline_message_id=None,
+                                  reply_markup=None):
+        assert (chat_id and message_id) or message or inline_message_id
+
+        request = self._prepare_inline_message(message=message, chat_id=chat_id, message_id=message_id,
+                                               inline_message_id=inline_message_id)
+
+        if reply_markup:
+            request['reply_markup'] = reply_markup
+
+        return (yield self.__request_api('editMessageReplyMarkup', request))
+
+    @coroutine
+    def edit_message_text(self, text, message=None, chat_id=None, message_id=None, inline_message_id=None,
+                          parse_mode=None, disable_web_page_preview=False, reply_markup=None):
+        request = self._prepare_inline_message(message=message, chat_id=chat_id, message_id=message_id,
+                                               inline_message_id=inline_message_id)
+
+        if parse_mode is not None:
+            request['parse_mode'] = parse_mode
+
+        request['disable_web_page_preview'] = disable_web_page_preview
+        request['text'] = text
+
+        if reply_markup is not None:
+            request['reply_markup'] = reply_markup
+
+        return (yield self.__request_api('editMessageText', request))
+
     @coroutine
     def _process_update(self):
         def default_filter_text_msg(cmd):

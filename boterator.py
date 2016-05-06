@@ -16,7 +16,8 @@ from tornado.locale import load_gettext_translations
 
 from emoji import Emoji
 from globals import get_db
-from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton
+from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
+    InlineKeyboardButton
 
 from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext, append_npgettext
 from telegram_log_handler import TelegramHandler
@@ -397,7 +398,6 @@ class Slave:
     def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
         bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
-        bot.add_handler(self.confirm_command, '/confirm')
         bot.add_handler(self.start_command, '/start')
         bot.add_handler(self.cancel_command, '/cancel')
         bot.add_handler(self.help_command, '/help')
@@ -411,6 +411,7 @@ class Slave:
         bot.add_handler(self.ban_list_command, '/banlist')
         bot.add_handler(self.change_allowed_command, '/changeallowed')
         bot.add_handler(self.switchlang_command, '/switchlang')
+        bot.add_handler(self.inline_message_review, None, Api.UPDATE_TYPE_CALLBACK_QUERY)
         bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
@@ -591,7 +592,7 @@ class Slave:
         user_id = message['from']['id']
         stage = self.mother.stages.get(user_id=user_id, chat_id=user_id)
         report_botan(message, 'slave_attach')
-        if stage[0] == BotMother.STAGE_MODERATION_GROUP:
+        if stage[0] == BotMother.STAGE_MODERATION_GROUP and message['chat']['type'] != 'private':
             yield self.mother.set_slave_attached(stage[1]['last_message'], message['chat'])
         else:
             try:
@@ -611,29 +612,32 @@ class Slave:
 
     @coroutine
     @append_pgettext
-    def confirm_command(self, message, pgettext):
-        if message['from']['id'] != message['chat']['id']:
-            return False  # Allow only in private
-
+    def inline_message_review(self, message, pgettext):
         user_id = message['from']['id']
-        stage = self.stages.get(message)
-        if stage[0] == self.STAGE_ADDING_MESSAGE:
-            report_botan(message, 'slave_confirm')
-            user_message = stage[1]['last_message']
-            yield self.bot.send_chat_action(message['chat']['id'], Api.CHAT_ACTION_TYPING)
-            bot_info = yield self.bot.get_me()
-            yield get_db().execute("""
-            INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
-            VALUES (%s, %s, %s, %s, NOW(), %s)
-            """, (user_message['message_id'], user_message['chat']['id'], user_id, bot_info['id'], dumps(user_message)))
-            yield self.bot.send_message(pgettext('Message sent for verification', 'Okay, I\'ve sent your message for '
-                                                                                  'verification. Fingers crossed!'),
-                                        reply_to_message=user_message)
-            yield self.post_new_moderation_request(user_message)
-            self.stages.drop(message)
-        else:
-            yield self.bot.send_message(pgettext('Bot isn\'t ready for the command', 'Invalid command'),
-                                        reply_to_message=message)
+        stage = self.stages.get(user_id=user_id, chat_id=user_id)
+
+        if stage[0] != self.STAGE_ADDING_MESSAGE:
+            return False
+
+        if message['data'] == 'cancel':
+            self.stages.drop(user_id=user_id, chat_id=user_id)
+            yield self.bot.edit_message_text('Cancelled', message['message'])
+            return
+
+        report_botan(message, 'slave_confirm')
+        user_message = stage[1]['last_message']
+        yield self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
+        bot_info = yield self.bot.get_me()
+        yield get_db().execute("""
+        INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
+        VALUES (%s, %s, %s, %s, NOW(), %s)
+        """, (user_message['message_id'], user_message['chat']['id'], user_id, bot_info['id'], dumps(user_message)))
+        yield self.post_new_moderation_request(user_message)
+
+        yield self.bot.edit_message_text(pgettext('Message sent for verification', 'Okay, I\'ve sent your message for '
+                                                                                   'verification. Fingers crossed!'),
+                                         message['message'])
+        self.stages.drop(user_id=user_id, chat_id=user_id)
 
     @coroutine
     @append_pgettext
@@ -642,6 +646,24 @@ class Slave:
         self.stages.drop(message)
         yield self.bot.send_message(pgettext('Pending command cancelled', 'Oka-a-a-a-a-ay.'),
                                     reply_to_message=message, reply_markup=ReplyKeyboardHide())
+
+    @coroutine
+    @append_pgettext
+    def _request_message_confirmation(self, message, pgettext):
+        yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
+        yield self.bot.send_message(pgettext('Message received, requesting the user to check the message once again',
+                                             'Looks good for me. I\'ve printed the message in exact same way as it '
+                                             'will be publised. Please, take a look on your message one more time. And '
+                                             'click Confirm button if everything is fine'),
+                                    reply_to_message=message,
+                                    reply_markup=InlineKeyboardMarkup([
+                                        [InlineKeyboardButton(pgettext('`Confirm` button on message review keyboard',
+                                                                       'Confirm'), callback_data='confirm'),
+                                         InlineKeyboardButton(pgettext('`Cancel` button on message review keyboard',
+                                                                       'Cancel'), callback_data='cancel'),
+                                         ]
+                                    ]))
+        self.stages.set(message, self.STAGE_ADDING_MESSAGE)
 
     @coroutine
     @append_pgettext
@@ -661,16 +683,7 @@ class Slave:
         mes = message['text']
         if mes.strip() != '':
             if 50 < len(mes) < 1000:
-                yield self.bot.send_message(pgettext('Message received, requesting the user to check the message once '
-                                                     'again',
-                                                     'Looks good for me. Please, take a look on your message one more '
-                                                     'time.'),
-                                            reply_to_message=message)
-                yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-                yield self.bot.send_message(pgettext('Message confirmation request', 'If everything is correct, type '
-                                                                                     '/confirm, otherwise - /cancel'),
-                                            reply_to_message=message)
-                self.stages.set(message, self.STAGE_ADDING_MESSAGE)
+                yield self._request_message_confirmation(message)
                 report_botan(message, 'slave_message')
             else:
                 report_botan(message, 'slave_message_invalid')
@@ -694,8 +707,6 @@ class Slave:
 
         if self.stages.get_id(message):
             return False
-
-        report_botan(message, 'slave_message_multimedia')
 
         if 'sticker' in message and self.settings.get('content_status', {}).get('sticker', False) is False:
             yield self.bot.send_message(pgettext('User sent a sticker for verification while stickers are disabled',
@@ -722,16 +733,8 @@ class Slave:
                                                  'Accepting documents is disabled'), reply_to_message=message)
             return
 
-        yield self.bot.send_message(pgettext('Message received, requesting the user to check the message once '
-                                             'again',
-                                             'Looks good for me. Please, take a look on your message one more '
-                                             'time.'),
-                                    reply_to_message=message)
-        yield self.bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-        yield self.bot.send_message(pgettext('Message confirmation request', 'If everything is correct, type '
-                                                                             '/confirm, otherwise - /cancel'),
-                                    reply_to_message=message)
-        self.stages.set(message, self.STAGE_ADDING_MESSAGE)
+        report_botan(message, 'slave_message_multimedia')
+        yield self._request_message_confirmation(message)
 
     @coroutine
     @append_pgettext
@@ -1438,7 +1441,7 @@ class Slave:
                                            resize_keyboard=True, selective=True)
             yield self.bot.send_message(pgettext('Change language prompt', 'Select your language'),
                                         reply_to_message=message, reply_markup=keyboard)
-            self.stages.set(message, self.STAGE_WAIT_LANGUAGE)
+            self.stages.set(message, self.STAGE_WAIT_LANGUAGE, do_not_validate=True)
         else:
             yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
                                         reply_to_message=message)
