@@ -941,8 +941,7 @@ class Slave:
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
-                yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message changed to '
-                                                                                           '"%s"') % self.settings['start'],
+                yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message updates'),
                                             reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                 self.stages.drop(message)
             else:
