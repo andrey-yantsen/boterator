@@ -50,7 +50,8 @@ class BotMother:
         logger.addHandler(TelegramHandler(bot, logging_user_id, level=logging.WARNING))
 
     @coroutine
-    def validate_user(self, message):
+    @append_pgettext
+    def validate_user(self, message, pgettext):
         bot_info = yield self.bot.get_me()
         allowed = is_allowed_user(message['from'], bot_info['id'])
         if allowed:
@@ -59,37 +60,44 @@ class BotMother:
         yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'), reply_to_message=message)
 
     @coroutine
-    def start_command(self, message):
+    @append_pgettext
+    def start_command(self, message, pgettext):
         report_botan(message, 'boterator_start')
-        yield self.bot.send_message('Hello, this is Boterator. In order to start ask @BotFather to create a new bot. '
-                                    'Then feel free to use /reg command to register new bot using token.',
+        yield self.bot.send_message(pgettext('Boterator: /start response', 'Hello, this is Boterator. In order to '
+                                                                           'start ask @BotFather to create a new bot. '
+                                                                           'Then feel free to use /reg command to '
+                                                                           'register new bot using token.'),
                                     reply_to_message=message)
 
     @coroutine
-    def reg_command(self, message):
+    @append_pgettext
+    def reg_command(self, message, pgettext):
         if self.stages.get_id(message):
-            yield self.bot.send_message('Another action is in progress, continue or /cancel', reply_to_message=message)
-            return
+            return False
 
         report_botan(message, 'boterator_reg')
 
-        yield self.bot.send_message('Ok, please tell me the token, which you\'ve received from @BotFather',
+        yield self.bot.send_message(pgettext('Boterator: /reg response', 'Ok, please tell me the token, which you\'ve '
+                                                                         'received from @BotFather'),
                                     reply_to_message=message)
         self.stages.set(message, self.STAGE_WAITING_TOKEN)
 
     @coroutine
-    def plaintext_token(self, message):
+    @append_pgettext
+    def plaintext_token(self, message, pgettext):
         if self.stages.get_id(message) != self.STAGE_WAITING_TOKEN:
             return False
 
         token = message['text'].strip()
         if token == '':
             report_botan(message, 'boterator_token_empty')
-            yield self.bot.send_message('I guess you forgot to enter the token :)', reply_to_message=message)
+            yield self.bot.send_message(pgettext('Boterator: empty token entered', 'I guess you forgot to enter the '
+                                                                                   'token :)'), reply_to_message=message)
         else:
             if len(token.split(':')) != 2:
                 report_botan(message, 'boterator_token_invalid')
-                yield self.bot.send_message('Token is incorrect. And I can do nothing with that.',
+                yield self.bot.send_message(pgettext('Boterator: non-well formatted token', 'Token is incorrect. And I '
+                                                                                            'can do nothing with that.'),
                                             reply_to_message=message)
                 return
 
@@ -100,21 +108,25 @@ class BotMother:
                 new_bot_me = yield new_bot.get_me()
                 if new_bot_me['id'] in self.slaves:
                     report_botan(message, 'boterator_token_duplicate')
-                    yield self.bot.send_message('It seems like this bot is already registered. Try to crete another '
-                                                'one', reply_to_message=message)
+                    yield self.bot.send_message(pgettext('Boterator: provided token is already registered and alive',
+                                                         'It seems like this bot is already registered. Try to crete '
+                                                         'another one'), reply_to_message=message)
                     return
-                yield self.bot.send_message("Ok, I\'ve got basic information for @%s\n"
-                                            'Now add him to a group of moderators (or copy and paste `@%s /attach` to '
-                                            'the group, in case you’ve already added him), where I should send '
-                                            'messages for verification, or type /cancel' % (new_bot_me['username'],
-                                                                                            new_bot_me['username']),
+                yield self.bot.send_message(pgettext('Boterator: token received',
+                                                     "Ok, I\'ve got basic information for @%s\n"
+                                                     'Now add him to a group of moderators (or copy and paste `@%s '
+                                                     '/attach` to the group, in case you’ve already added him), where '
+                                                     'I should send messages for verification, or type /cancel')\
+                                            % (new_bot_me['username'], new_bot_me['username']),
                                             reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
 
-                hello_message = 'Hi there, guys! Now it is possible to publish messages in this channel by any of ' \
-                                'you. All you need to do — is to write a message to me (bot named @%s), and it will ' \
-                                'be published after verification by our team.' % new_bot_me['username']
+                hello_message = pgettext('Boterator: default channel-hello message',
+                                         'Hi there, guys! Now it is possible to publish messages in this channel by '
+                                         'any of you. All you need to do — is to write a message to me (bot named '
+                                         '@%s), and it will be published after verification by our team.')\
+                                % new_bot_me['username']
 
-                start_message = "Just enter your message, and we're ready."
+                start_message = pgettext('Boterator: default start message', "Just enter your message, and we're ready.")
 
                 self.stages.set(message, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
                                 hello=hello_message, start_message=start_message)
@@ -124,22 +136,28 @@ class BotMother:
             except Exception as e:
                 report_botan(message, 'boterator_token_failure')
                 logging.exception(e)
-                yield self.bot.send_message('Unable to get bot info: %s' % str(e), reply_to_message=message)
+                yield self.bot.send_message(pgettext('Token check failed', 'Unable to get bot info: %s') % str(e),
+                                            reply_to_message=message)
 
     @coroutine
-    def cancel_command(self, message):
+    @append_pgettext
+    def cancel_command(self, message, pgettext):
         report_botan(message, 'boterator_cancel')
         self.stages.drop(message)
-        yield self.bot.send_message('Oka-a-a-a-a-ay.', reply_to_message=message)
+        yield self.bot.send_message(pgettext('Boterator: /cancel response', 'Oka-a-a-a-a-ay.'),
+                                    reply_to_message=message)
 
     @coroutine
-    def plaintext_channel_name(self, message):
+    @append_pgettext
+    def plaintext_channel_name(self, message, pgettext):
         stage = self.stages.get(message)
         if stage[0] == self.STAGE_WAITING_PUBLIC_CHANNEL:
             channel_name = message['text'].strip()
             if message['text'][0] != '@' or ' ' in channel_name:
                 report_botan(message, 'boterator_channel_invalid')
-                yield self.bot.send_message('Invalid channel name. Try again or type /cancel', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Boterator: invalid channel name received',
+                                                     'Invalid channel name. Try again or type /cancel'),
+                                            reply_to_message=message)
             else:
                 try:
                     new_bot = Api(stage[1]['token'])
@@ -151,14 +169,16 @@ class BotMother:
                     report_botan(message, 'boterator_registered')
                 except Exception as e:
                     report_botan(message, 'boterator_channel_failure')
-                    yield self.bot.send_message('Hey, I\'m unable to send hello message, is everything ready for me? '
-                                                'Here is an error from Telegram api: %s' % str(e),
+                    yield self.bot.send_message(pgettext('Boterator: sending channel-hello message failed',
+                                                         'Hey, I\'m unable to send hello message, is everything ready '
+                                                         'for me? Here is an error from Telegram api: %s') % str(e),
                                                 reply_to_message=message)
         else:
             return False
 
     @coroutine
-    def listen(self):
+    @append_pgettext
+    def listen(self, pgettext):
         logging.info('Initializing slaves')
         self.slaves = dict()
 
@@ -175,7 +195,9 @@ class BotMother:
                 logging.exception('Bot #%s failed', bot_id)
                 yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
                 try:
-                    yield self.bot.send_message('I\'m failed to establish connection to your bot with token %s' % token,
+                    yield self.bot.send_message(pgettext('Boterator: unable to establish startup connection with bot',
+                                                         'I\'m failed to establish connection to your bot with token %s')\
+                                                % token,
                                                 chat_id=owner_id)
                 except:
                     pass
@@ -185,7 +207,8 @@ class BotMother:
         logging.info('Mother termination')
 
     @coroutine
-    def __wait_for_registration_complete(self, original_message, timeout=3600):
+    @append_pgettext
+    def __wait_for_registration_complete(self, original_message, pgettext=None, timeout=3600):
         stage = self.stages.get(original_message)
         slave = Slave(stage[1]['token'], self, None, None, {}, original_message['from']['id'], None)
         slave.listen()
@@ -200,6 +223,9 @@ class BotMother:
                 yield get_db().execute("""
                                       INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
                                       VALUES (%s, %s, %s, %s, %s, True, %s)
+                                      ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, owner_id = EXCLUDED.owner_id,
+                                      moderator_chat_id = EXCLUDED.moderator_chat_id, target_channel=EXCLUDED.target_channel,
+                                      active = EXCLUDED.active, settings = EXCLUDED.settings
                                       """, (stage_meta['bot_info']['id'], stage_meta['token'],
                                             original_message['from']['id'], stage_meta['moderation'],
                                             stage_meta['channel'], dumps(default_settings)))
@@ -209,14 +235,16 @@ class BotMother:
                 self.slaves[stage_meta['bot_info']['id']] = slave
 
                 try:
-                    yield self.bot.send_message("And we're ready for some magic!\n"
-                                                'By default the bot will wait for 5 votes to approve the message, '
-                                                'perform 15 minutes delay between channel messages, wait 24 '
-                                                'hours before closing a voting for each message and allow only '
-                                                'text messages (no multimedia content at all). To modify this '
-                                                '(and few other) settings send /help in PM to @%s. By default '
-                                                'you\'re the only user who can change these settings and use /help '
-                                                'command' % (stage_meta['bot_info']['username'], ),
+                    yield self.bot.send_message(pgettext('Boterator: new bot registered',
+                                                         "And we're ready for some magic!\n"
+                                                         'By default the bot will wait for 5 votes to approve the '
+                                                         'message, perform 15 minutes delay between channel messages, '
+                                                         'wait 24 hours before closing a voting for each message and '
+                                                         'allow only text messages (no multimedia content at all). To '
+                                                         'modify this (and few other) settings send /help in PM to @%s. '
+                                                         'By default you\'re the only user who can change these '
+                                                         'settings and use /help command')
+                                                % (stage_meta['bot_info']['username'], ),
                                                 reply_to_message=original_message)
                 except:
                     pass
@@ -225,7 +253,9 @@ class BotMother:
                 yield slave.stop()
                 try:
                     try:
-                        yield self.bot.send_message('@%s registration aborted due to timeout' % stage_meta['bot_info']['username'],
+                        yield self.bot.send_message(pgettext('Boterator: registration cancelled due to timeout',
+                                                             '@%s registration aborted due to timeout')
+                                                    % stage_meta['bot_info']['username'],
                                                     reply_to_message=original_message)
                     except:
                         pass
@@ -248,17 +278,18 @@ class BotMother:
         yield self.bot.stop()
 
     @coroutine
-    def set_slave_attached(self, message, chat):
+    @append_pgettext
+    def set_slave_attached(self, message, chat, pgettext=None):
         stage = self.stages.get(message)
         yield self.bot.send_chat_action(message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
-        msg = "Ok, I'll be sending moderation requests to %s %s\n" \
-              "Now you need to add your bot (@%s) to a channel as administrator and " \
-              "tell me the channel name (e.g. @mobilenewsru)\n" \
-              "As soon as I will receive the channel name I'll send a message with " \
-              "following text:\n> %s\n" \
-              "You can change the message, if you mind, just send me /changehello.\n" \
-              "Also there is 'start' message for your new bot:\n> %s\n" \
-              "You can change it with /changestart" \
+        msg = pgettext('Boterator: slave attached to moderator`s channel',
+                       "Ok, I'll be sending moderation requests to %s %s\n"
+                       "Now you need to add your bot (@%s) to a channel as administrator and tell me the channel name "
+                       "(e.g. @mobilenewsru)\n"
+                       "As soon as I will receive the channel name I'll send a message with following text:\n> %s\n"
+                       "You can change the message, if you mind, just send me /changehello.\n"
+                       "Also there is 'start' message for your new bot:\n> %s\n"
+                       "You can change it with /changestart") \
               % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
                  stage[1]['start_message'])
 
@@ -270,54 +301,67 @@ class BotMother:
         self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, moderation=chat['id'])
 
     @coroutine
-    def change_hello_command(self, message):
+    @append_pgettext
+    def change_hello_command(self, message, pgettext):
         if self.stages.get_id(message) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            yield self.bot.send_message('It\'s not possible to change hello message on current step, sorry',
-                                        reply_to_message=message)
+            return False
         else:
             report_botan(message, 'boterator_change_hello_cmd')
-            yield self.bot.send_message('Ok, I\'m listening to you. How I should say hello to your subscribers?',
+            yield self.bot.send_message(pgettext('Boterator: /changehello response',
+                                                 'Ok, I\'m listening to you. How I should say hello to your '
+                                                 'subscribers?'),
                                         reply_to_message=message)
             self.stages.set(message, self.STAGE_WAITING_HELLO, do_not_validate=True)
 
     @coroutine
-    def plaintext_set_hello(self, message):
+    @append_pgettext
+    def plaintext_set_hello(self, message, pgettext):
         if self.stages.get_id(message) != self.STAGE_WAITING_HELLO:
             return False
         else:
             text = message['text'].strip()
             if len(text) >= 10:
                 report_botan(message, 'boterator_change_hello_success')
-                yield self.bot.send_message('Ok, noted, now tell me the channel name', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Boterator: channel-hello message updated',
+                                                     'Ok, noted, now tell me the channel name'),
+                                            reply_to_message=message)
                 self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, hello=text)
             else:
                 report_botan(message, 'boterator_change_hello_short')
-                yield self.bot.send_message('Hey, you should write at least 10 symbols', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Boterator: channel-hello message is too short',
+                                                     'Hey, you should write at least 10 symbols'),
+                                            reply_to_message=message)
 
     @coroutine
-    def change_start_command(self, message):
+    @append_pgettext
+    def change_start_command(self, message, pgettext):
         if self.stages.get_id(message) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            yield self.bot.send_message('It\'s not possible to change start message on current step, sorry',
-                                        reply_to_message=message)
+            return False
         else:
             report_botan(message, 'boterator_change_start_cmd')
-            yield self.bot.send_message('Ok, I\'m listening to you. How I should say hello to your authors?',
+            yield self.bot.send_message(pgettext('Boterator: /changestart response',
+                                                 'Ok, I\'m listening to you. How I should say hello to your authors?'),
                                         reply_to_message=message)
             self.stages.set(message, self.STAGE_WAITING_START_MESSAGE, do_not_validate=True)
 
     @coroutine
-    def plaintext_set_start_message(self, message):
+    @append_pgettext
+    def plaintext_set_start_message(self, message, pgettext):
         if self.stages.get_id(message) != self.STAGE_WAITING_START_MESSAGE:
             return False
         else:
             text = message['text'].strip()
             if len(text) >= 10:
                 report_botan(message, 'boterator_change_start_success')
-                yield self.bot.send_message('Ok, noted, now tell me the channel name', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Boterator: /start message updated',
+                                                     'Ok, noted, now tell me the channel name'),
+                                            reply_to_message=message)
                 self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, start_message=text)
             else:
                 report_botan(message, 'boterator_change_start_short')
-                yield self.bot.send_message('Hey, you should write at least 10 symbols', reply_to_message=message)
+                yield self.bot.send_message(pgettext('Boterator: /start message is too short',
+                                                     'Hey, you should write at least 10 symbols'),
+                                            reply_to_message=message)
 
 
 class Slave:

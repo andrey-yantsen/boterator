@@ -18,7 +18,8 @@ PO_FILE = $(LOCALE_DIR)/$(DOMAIN).po
 BABEL_CONFIG = $(BASE_DIR)/babel.cfg
 
 collect_messages:
-	@pybabel extract ./ --output=$(POT_FILE) --charset=UTF-8 --sort-by-file --mapping=$(BABEL_CONFIG)
+	@pybabel extract ./ --project=boterator --version=$$(git rev-parse --short HEAD) --output=$(POT_FILE) \
+	  --charset=UTF-8 --sort-by-file --mapping=$(BABEL_CONFIG)
 
 	@test -f "$(PO_FILE)" \
 	  && pybabel update --domain=$(DOMAIN) --input-file=$(POT_FILE) --output-dir=$(BASE_DIR) --locale=$(LANG) --no-wrap \
