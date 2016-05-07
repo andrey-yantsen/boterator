@@ -1,5 +1,6 @@
 import logging
 import re
+from copy import deepcopy
 from datetime import datetime, timedelta
 from itertools import groupby
 from time import time
@@ -52,6 +53,8 @@ class BotMother:
 
         logger = logging.getLogger()
         logger.addHandler(TelegramHandler(bot, logging_user_id, level=logging.WARNING))
+
+        self.default_slave_settings = {}
 
     @coroutine
     @append_pgettext
@@ -130,10 +133,8 @@ class BotMother:
                                          '@%s), and it will be published after verification by our team.')\
                                 % new_bot_me['username']
 
-                start_message = pgettext('Boterator: default start message', "Just enter your message, and we're ready.")
-
                 self.stages.set(message, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
-                                hello=hello_message, start_message=start_message)
+                                hello=hello_message, start_message=self.default_slave_settings['start'])
 
                 self.__wait_for_registration_complete(message)
                 report_botan(message, 'boterator_token')
@@ -183,14 +184,41 @@ class BotMother:
     @coroutine
     @append_pgettext
     def listen(self, pgettext):
+        self.default_slave_settings = {
+            'delay': 15,
+            'votes': 5,
+            'vote_timeout': 24,
+            'start': pgettext('Boterator: default start message', "Just enter your message, and we're ready."),
+            'content_status': {
+                'text': True,
+                'photo': False,
+                'voice': False,
+                'video': False,
+                'audio': False,
+                'document': False,
+            },
+        }
+
         logging.info('Initializing slaves')
         self.slaves = dict()
 
         cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel, settings FROM '
                                      'registered_bots WHERE active = True')
 
+        def update_settings_recursive(base_settings, bot_settings):
+            base_settings = deepcopy(base_settings)
+
+            for key, value in bot_settings.items():
+                if type(value) is dict:
+                    base_settings[key] = update_settings_recursive(base_settings[key], value)
+                else:
+                    base_settings[key] = value
+
+            return base_settings
+
         for bot_id, token, owner_id, moderator_chat_id, target_channel, settings in cur.fetchall():
-            slave = Slave(token, self, moderator_chat_id, target_channel, settings, owner_id, bot_id)
+            slave_settings = update_settings_recursive(self.default_slave_settings, settings)
+            slave = Slave(token, self, moderator_chat_id, target_channel, slave_settings, owner_id, bot_id)
             try:
                 yield slave.bot.get_me()
                 slave.listen()
@@ -212,7 +240,8 @@ class BotMother:
 
     @coroutine
     @append_pgettext
-    def __wait_for_registration_complete(self, original_message, pgettext=None, timeout=3600):
+    @append_npgettext
+    def __wait_for_registration_complete(self, original_message, npgettext=None, pgettext=None, timeout=3600):
         stage = self.stages.get(original_message)
         slave = Slave(stage[1]['token'], self, None, None, {}, original_message['from']['id'], None)
         slave.listen()
@@ -220,7 +249,9 @@ class BotMother:
             stage_id, stage_meta, stage_begin = self.stages.get(original_message)
 
             if stage_id == self.STAGE_REGISTERED:
-                default_settings = {"delay": 15, "votes": 5, "vote_timeout": 24, "start": stage_meta['start_message']}
+                settings = deepcopy(self.default_slave_settings)
+                settings['start'] = stage_meta['start_message']
+
                 yield slave.stop()
 
                 yield self.bot.send_chat_action(original_message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
@@ -232,24 +263,36 @@ class BotMother:
                                       active = EXCLUDED.active, settings = EXCLUDED.settings
                                       """, (stage_meta['bot_info']['id'], stage_meta['token'],
                                             original_message['from']['id'], stage_meta['moderation'],
-                                            stage_meta['channel'], dumps(default_settings)))
+                                            stage_meta['channel'], dumps(settings)))
                 slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'],
-                              default_settings, original_message['from']['id'], stage_meta['bot_info']['id'])
+                              settings, original_message['from']['id'], stage_meta['bot_info']['id'])
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
 
+                votes_cnt_msg = npgettext('Boterator: default votes cnd', '%d vote', '%d votes',
+                                          self.default_slave_settings['votes']) % self.default_slave_settings['votes']
+
+                delay_msg = npgettext('Boterator: default delay', '%d minute', '%d minutes',
+                                      self.default_slave_settings['delay']) % self.default_slave_settings['delay']
+
+                timeout_msg = npgettext('Boterator: default timeout', '%d hour', '%d hours',
+                                        self.default_slave_settings['vote_timeout'])\
+                              % self.default_slave_settings['vote_timeout']
+
+                msg = pgettext('Boterator: new bot registered',
+                               "And we're ready for some magic!\n"
+                               'By default the bot will wait for {votes_cnt_msg} to approve the '
+                               'message, perform {delay_msg} delay between channel messages, '
+                               'wait {timeout_msg} before closing a voting for each message and '
+                               'allow only text messages (no multimedia content at all). To '
+                               'modify this (and few other) settings send /help in PM to @{bot_username}. '
+                               'By default you\'re the only user who can change these '
+                               'settings and use /help command').format(votes_cnt_msg=votes_cnt_msg,
+                                                                        delay_msg=delay_msg, timeout_msg=timeout_msg,
+                                                                        bot_username=stage_meta['bot_info']['username'])
+
                 try:
-                    yield self.bot.send_message(pgettext('Boterator: new bot registered',
-                                                         "And we're ready for some magic!\n"
-                                                         'By default the bot will wait for 5 votes to approve the '
-                                                         'message, perform 15 minutes delay between channel messages, '
-                                                         'wait 24 hours before closing a voting for each message and '
-                                                         'allow only text messages (no multimedia content at all). To '
-                                                         'modify this (and few other) settings send /help in PM to @%s. '
-                                                         'By default you\'re the only user who can change these '
-                                                         'settings and use /help command')
-                                                % (stage_meta['bot_info']['username'], ),
-                                                reply_to_message=original_message)
+                    yield self.bot.send_message(msg, reply_to_message=original_message)
                 except:
                     pass
                 break
@@ -676,7 +719,7 @@ class Slave:
         if self.stages.get_id(message):
             return False
 
-        if self.settings.get('content_status', {}).get('text', True) is False:
+        if self.settings['content_status']['text'] is False:
             yield self.bot.send_message(pgettext('User send text message for verification while texts is disabled',
                                                  'Accepting text messages are disabled'),
                                         reply_to_message=message)
@@ -710,27 +753,27 @@ class Slave:
         if self.stages.get_id(message):
             return False
 
-        if 'sticker' in message and self.settings.get('content_status', {}).get('sticker', False) is False:
+        if 'sticker' in message and self.settings['content_status']['sticker'] is False:
             yield self.bot.send_message(pgettext('User sent a sticker for verification while stickers are disabled',
                                                  'Accepting stickers is disabled'), reply_to_message=message)
             return
-        elif 'audio' in message and self.settings.get('content_status', {}).get('audio', False) is False:
+        elif 'audio' in message and self.settings['content_status']['audio'] is False:
             yield self.bot.send_message(pgettext('User sent an audio for verification while audios are disabled',
                                                  'Accepting audios is disabled'), reply_to_message=message)
             return
-        elif 'voice' in message and self.settings.get('content_status', {}).get('voice', False) is False:
+        elif 'voice' in message and self.settings['content_status']['voice'] is False:
             yield self.bot.send_message(pgettext('User sent a voice for verification while voices are disabled',
                                                  'Accepting voice is disabled'), reply_to_message=message)
             return
-        elif 'video' in message and self.settings.get('content_status', {}).get('video', False) is False:
+        elif 'video' in message and self.settings['content_status']['video'] is False:
             yield self.bot.send_message(pgettext('User sent a video for verification while videos are disabled',
                                                  'Accepting videos is disabled'), reply_to_message=message)
             return
-        elif 'photo' in message and self.settings.get('content_status', {}).get('photo', False) is False:
+        elif 'photo' in message and self.settings['content_status']['photo'] is False:
             yield self.bot.send_message(pgettext('User sent a photo for verification while photos are disabled',
                                                  'Accepting photos is disabled'), reply_to_message=message)
             return
-        elif 'document' in message and self.settings.get('content_status', {}).get('document', False) is False:
+        elif 'document' in message and self.settings['content_status']['document'] is False:
             yield self.bot.send_message(pgettext('User sent a document for verification while documents are disabled',
                                                  'Accepting documents is disabled'), reply_to_message=message)
             return
@@ -849,24 +892,11 @@ class Slave:
             timeout_str = npgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
             power_state = 'yes' if self.settings.get('power') else 'no'
             power_state_str = pgettext('Moderator\'s ability to alter settings', power_state)
-            msg = pgettext('/help command response', """Bot owner's help:
-/setdelay - change the delay between messages (current: {current_delay_with_minutes})
-/setvotes - change required amount of {thumb_up_sign} to publish a message (current: {current_votes_required})
-/settimeout - change voting duration (current: {current_timeout_with_hours})
-/setstartmessage - change start message (current: {current_start_message})
-/togglepower - toggle moderators ability to modify settings (current: {power_state})
-/stats - display some stats for last 7 days. You can customize period by calling:
-   - `/stats 5` for last 5 days,
-   - `/stats 2016-01-13` for one day (13th january in example)
-   - `/stats 2016-01-01 2016-01-31` for custom interval (entire january in example)
-/banlist - list currently banned users
-/switchlang - change interface language
-/changeallowed - change list of allowed content""").format(current_delay_with_minutes=delay_str,
-                                                           current_votes_required=self.settings['votes'],
-                                                           current_timeout_with_hours=timeout_str,
-                                                           thumb_up_sign=Emoji.THUMBS_UP_SIGN,
-                                                           current_start_message=self.settings['start'],
-                                                           power_state=power_state_str)
+            msg = pgettext('/help command response', 'bot.help.response')\
+                .format(current_delay_with_minutes=delay_str, current_votes_required=self.settings['votes'],
+                        current_timeout_with_hours=timeout_str, thumb_up_sign=Emoji.THUMBS_UP_SIGN,
+                        current_start_message=self.settings['start'], power_state=power_state_str,
+                        current_text_limit=[self.settings.get('text_min', 50), self.settings.get('text_max', 1000)])
 
             try:
                 yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
@@ -1330,14 +1360,14 @@ class Slave:
 
     @append_pgettext
     def build_contenttype_keyboard(self, pgettext):
-        content_status = self.settings.get('content_status', {})
-        text_enabled = content_status.get('text', True)
-        photo_enabled = content_status.get('photo', False)
-        video_enabled = content_status.get('video', False)
-        voice_enabled = content_status.get('voice', False)
-        audio_enabled = content_status.get('audio', False)
-        doc_enabled = content_status.get('document', False)
-        sticker_enabled = content_status.get('sticker', False)
+        content_status = self.settings['content_status']
+        text_enabled = content_status['text']
+        photo_enabled = content_status['photo']
+        video_enabled = content_status['video']
+        voice_enabled = content_status['voice']
+        audio_enabled = content_status['audio']
+        doc_enabled = content_status['document']
+        sticker_enabled = content_status['sticker']
         marks = {
             True: Emoji.CIRCLED_BULLET,
             False: Emoji.MEDIUM_SMALL_WHITE_CIRCLE,
@@ -1393,7 +1423,7 @@ class Slave:
 
                 content_type = content_type[0].upper() + content_type[1:].lower()
 
-                content_status = self.settings.get('content_status', {})
+                content_status = self.settings['content_status']
 
                 content_types_list = {
                     pgettext('Content type', 'Text'): 'text',
