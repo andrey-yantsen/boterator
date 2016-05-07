@@ -8,7 +8,6 @@ from ujson import dumps
 
 from math import floor
 
-from babel import core
 from babel.dates import format_date
 from babel.numbers import format_number
 from tornado.gen import coroutine, sleep
@@ -200,6 +199,7 @@ class BotMother:
                 'video': False,
                 'audio': False,
                 'document': False,
+                'sticker': False,
             },
         }
 
