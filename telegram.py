@@ -440,7 +440,7 @@ class Api:
                 elif 'callback_query' in update:
                     handled = yield self.__execute_update_handler(default_filter_cb(update['callback_query']['data']),
                                                                   update['callback_query'])
-                    if handled:
+                    if handled is False:
                         yield self.answer_callback_query(update['callback_query']['id'])
                 else:
                     logging.info('Unsupported message received: %s', update)
