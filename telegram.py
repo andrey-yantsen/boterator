@@ -84,7 +84,7 @@ class Api:
         return True
 
     @coroutine
-    def __request_api(self, method, body=None, request_timeout=10, retry_on_serverside_error=False):
+    def __request_api(self, method, body=None, request_timeout=10, retry_on_nonuser_error=False):
         def guess_filename(obj):
             """Tries to guess the filename of the given object."""
             name = getattr(obj, 'name', None)
@@ -142,7 +142,7 @@ class Api:
                     response = yield AsyncHTTPClient().fetch(url, body=body, **request)
                     break
                 except HTTPError as e:
-                    if not retry_on_serverside_error or e.code < 500 or e.code >= 599:
+                    if not retry_on_nonuser_error or 400 <= e.code < 500:
                         raise
                     else:
                         yield sleep(5)
@@ -165,7 +165,7 @@ class Api:
         return None
 
     @coroutine
-    def get_updates(self, offset: int=None, limit: int=100, timeout: int=2, retry_on_serverside_error: bool=False):
+    def get_updates(self, offset: int=None, limit: int=100, timeout: int=2, retry_on_nonuser_error: bool=False):
         assert 1 <= limit <= 100
         assert 0 <= timeout
 
@@ -178,7 +178,7 @@ class Api:
             request['offset'] = offset
 
         data = yield self.__request_api('getUpdates', request, request_timeout=timeout * 1.5,
-                                        retry_on_serverside_error=retry_on_serverside_error)
+                                        retry_on_nonuser_error=retry_on_nonuser_error)
 
         if data is None:
             return []
@@ -204,7 +204,7 @@ class Api:
         yield self.get_me()
 
         while self.consumption_state == self.STATE_WORKING:
-            get_updates_f = self.get_updates(last_update_id, retry_on_serverside_error=True)
+            get_updates_f = self.get_updates(last_update_id, retry_on_nonuser_error=True)
 
             while get_updates_f.running():
                 yield sleep(0.05)
