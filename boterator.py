@@ -944,7 +944,7 @@ class Slave:
     @append_pgettext
     def plaintext_delay_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_DELAY_VALUE:
-            if message['text'].isdigit():
+            if message['text'].isdigit() and int(message['text']) >= 0:
                 report_botan(message, 'slave_setdelay')
                 yield self.__update_settings(delay=int(message['text']))
                 yield self.bot.send_message(pgettext('Messages delay successfully changed', 'Delay value updated'),
@@ -974,7 +974,7 @@ class Slave:
     @append_pgettext
     def plaintext_votes_handler(self, message, pgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_VOTES_VALUE:
-            if message['text'].isdigit():
+            if message['text'].isdigit() and int(message['text']) > 0:
                 report_botan(message, 'slave_setvotes')
                 yield self.__update_settings(votes=int(message['text']))
                 yield self.bot.send_message(pgettext('Required votes count successfully changed', 'Required votes '
@@ -1007,7 +1007,7 @@ class Slave:
     @append_npgettext
     def plaintext_timeout_handler(self, message, pgettext, npgettext):
         if self.stages.get_id(message) == self.STAGE_WAIT_VOTE_TIMEOUT_VALUE:
-            if message['text'].isdigit():
+            if message['text'].isdigit() and int(message['text']) > 0:
                 report_botan(message, 'slave_settimeout')
                 yield self.__update_settings(vote_timeout=int(message['text']))
                 yield self.bot.send_message(pgettext('Voting duration successfully changed', 'Voting duration updated'),
