@@ -670,11 +670,3 @@ msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
 msgstr "Стикеры запрещены."
 
-#~ msgctxt "Boterator: provided token is already registered and alive"
-#~ msgid "It seems like this bot is already registered. Try to crete another one"
-#~ msgstr ""
-
-#~ msgctxt "Boterator: unable to establish startup connection with bot"
-#~ msgid "I'm failed to establish connection to your bot with token %s"
-#~ msgstr ""
-
