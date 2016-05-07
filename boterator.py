@@ -616,6 +616,9 @@ class Slave:
 
     @coroutine
     def start_command(self, message):
+        if not self.moderator_chat_id:
+            return False
+
         report_botan(message, 'slave_start')
         try:
             yield self.bot.send_message(self.settings['start'], reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
