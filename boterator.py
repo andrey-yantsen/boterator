@@ -1392,6 +1392,8 @@ class Slave:
                 except Exception as e:
                     yield self.bot.send_message(pgettext('Reply failed', 'Failed: {reason}').format(reason=str(e)),
                                                 reply_to_message=message)
+
+                self.stages.drop(message)
         else:
             return False
 
