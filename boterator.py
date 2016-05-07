@@ -1584,6 +1584,7 @@ class Slave:
                     yield self.__update_settings(text_min=limits[0], text_max=limits[1])
                     yield self.bot.send_message(pgettext('Text limits changed successfully', 'Limits updated'),
                                                 reply_to_message=message)
+                    self.stages.drop(message)
             else:
                 yield self.bot.send_message(pgettext('Non-well formated text limits provided',
                                                      'Please use following format: `{min_length}..{max_length}` (e.g. '
