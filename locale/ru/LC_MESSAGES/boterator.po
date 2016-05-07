@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: boterator 0ebbc3e\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2016-05-07 11:03+0300\n"
+"POT-Creation-Date: 2016-05-07 11:46+0300\n"
 "PO-Revision-Date: 2016-05-05 21:12+0300\n"
 "Last-Translator: \n"
 "Language: ru\n"
@@ -18,9 +18,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.3.4\n"
 
-#: boterator.py:68 boterator.py:940 boterator.py:970 boterator.py:1002
-#: boterator.py:1034 boterator.py:1084 boterator.py:1238 boterator.py:1321
-#: boterator.py:1419 boterator.py:1499
+#: boterator.py:67 boterator.py:958 boterator.py:990 boterator.py:1022
+#: boterator.py:1054 boterator.py:1104 boterator.py:1259 boterator.py:1343
+#: boterator.py:1443 boterator.py:1523 boterator.py:1562
 msgctxt "User not allowed to perform this action"
 msgid "Access denied"
 msgstr "Доступ запрещён."
@@ -40,17 +40,17 @@ msgctxt "Boterator: empty token entered"
 msgid "I guess you forgot to enter the token :)"
 msgstr ""
 
-#: boterator.py:107
+#: boterator.py:108
 msgctxt "Boterator: non-well formatted token"
 msgid "Token is incorrect. And I can do nothing with that."
 msgstr ""
 
-#: boterator.py:119
+#: boterator.py:120
 msgctxt "Boterator: provided token is already registered and alive"
 msgid "It seems like this bot is already registered. Try to create another one"
 msgstr ""
 
-#: boterator.py:123
+#: boterator.py:124
 #, python-format
 msgctxt "Boterator: token received"
 msgid ""
@@ -58,46 +58,46 @@ msgid ""
 "Now add him to a group of moderators (or copy and paste `@%s /attach` to the group, in case youâve already added him), where I should send messages for verification, or type /cancel"
 msgstr ""
 
-#: boterator.py:131
+#: boterator.py:132
 #, python-format
 msgctxt "Boterator: default channel-hello message"
 msgid "Hi there, guys! Now it is possible to publish messages in this channel by any of you. All you need to do â is to write a message to me (bot named @%s), and it will be published after verification by our team."
 msgstr ""
 
-#: boterator.py:145
+#: boterator.py:146
 #, python-format
 msgctxt "Token check failed"
 msgid "Unable to get bot info: %s"
 msgstr ""
 
-#: boterator.py:153
+#: boterator.py:154
 msgctxt "Boterator: /cancel response"
 msgid "Oka-a-a-a-a-ay."
 msgstr ""
 
-#: boterator.py:164
+#: boterator.py:165
 msgctxt "Boterator: invalid channel name received"
 msgid "Invalid channel name. Try again or type /cancel"
 msgstr ""
 
-#: boterator.py:178
+#: boterator.py:180
 #, python-format
 msgctxt "Boterator: sending channel-hello message failed"
 msgid "Hey, I'm unable to send hello message, is everything ready for me? Here is an error from Telegram api: %s"
 msgstr ""
 
-#: boterator.py:192
+#: boterator.py:196
 msgctxt "Boterator: default start message"
 msgid "Just enter your message, and we're ready."
 msgstr ""
 
-#: boterator.py:243
+#: boterator.py:248
 #, python-format
 msgctxt "Boterator: unable to establish startup connection with bot"
 msgid "I'm failed to establish connection to your bot with token %s. Your bot was deactivated, to enable it again - perform registration process from the beginning."
 msgstr ""
 
-#: boterator.py:281
+#: boterator.py:286
 #, python-format
 msgctxt "Boterator: default votes cnd"
 msgid "%d vote"
@@ -106,7 +106,7 @@ msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
 
-#: boterator.py:284
+#: boterator.py:289
 #, python-format
 msgctxt "Boterator: default delay"
 msgid "%d minute"
@@ -115,7 +115,7 @@ msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
 
-#: boterator.py:287
+#: boterator.py:292
 #, python-format
 msgctxt "Boterator: default timeout"
 msgid "%d hour"
@@ -124,20 +124,20 @@ msgstr[0] ""
 msgstr[1] ""
 msgstr[2] ""
 
-#: boterator.py:291
+#: boterator.py:296
 msgctxt "Boterator: new bot registered"
 msgid ""
 "And we're ready for some magic!\n"
 "By default the bot will wait for {votes_cnt_msg} to approve the message, perform {delay_msg} delay between channel messages, wait {timeout_msg} before closing a voting for each message and allow only text messages (no multimedia content at all). To modify this (and few other) settings send /help in PM to @{bot_username}. By default you're the only user who can change these settings and use /help command"
 msgstr ""
 
-#: boterator.py:311
+#: boterator.py:316
 #, python-format
 msgctxt "Boterator: registration cancelled due to timeout"
 msgid "@%s registration aborted due to timeout"
 msgstr ""
 
-#: boterator.py:342
+#: boterator.py:347
 #, python-format
 msgctxt "Boterator: slave attached to moderator`s channel"
 msgid ""
@@ -151,42 +151,42 @@ msgid ""
 "You can change it with /changestart"
 msgstr ""
 
-#: boterator.py:367
+#: boterator.py:372
 msgctxt "Boterator: /changehello response"
 msgid "Ok, I'm listening to you. How I should say hello to your subscribers?"
 msgstr ""
 
-#: boterator.py:382
+#: boterator.py:387
 msgctxt "Boterator: channel-hello message updated"
 msgid "Ok, noted, now tell me the channel name"
 msgstr ""
 
-#: boterator.py:388
+#: boterator.py:393
 msgctxt "Boterator: channel-hello message is too short"
 msgid "Hey, you should write at least 10 symbols"
 msgstr ""
 
-#: boterator.py:399
+#: boterator.py:404
 msgctxt "Boterator: /changestart response"
 msgid "Ok, I'm listening to you. How I should say hello to your authors?"
 msgstr ""
 
-#: boterator.py:413
+#: boterator.py:418
 msgctxt "Boterator: /start message updated"
 msgid "Ok, noted, now tell me the channel name"
 msgstr ""
 
-#: boterator.py:419
+#: boterator.py:424
 msgctxt "Boterator: /start message is too short"
 msgid "Hey, you should write at least 10 symbols"
 msgstr ""
 
-#: boterator.py:515
+#: boterator.py:524
 msgctxt "User banned"
 msgid "Access denied"
 msgstr "Доступ запрещён."
 
-#: boterator.py:579
+#: boterator.py:591
 msgctxt "Received votes count"
 msgid "{votes_received} vote"
 msgid_plural "{votes_received} votes"
@@ -194,7 +194,7 @@ msgstr[0] "{votes_received} голос"
 msgstr[1] "{votes_received} голоса"
 msgstr[2] "{votes_received} голосов"
 
-#: boterator.py:581
+#: boterator.py:594
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
@@ -202,107 +202,107 @@ msgstr[0] "{votes_required}"
 msgstr[1] "{votes_required}"
 msgstr[2] "{votes_required}"
 
-#: boterator.py:584
+#: boterator.py:597
 msgctxt "Voting failed"
 msgid "Unfortunately your message got only {votes_received_msg} out of required {votes_required_msg} and won't be published to the channel."
 msgstr "К сожалению, ваше сообщение получило только {votes_received_msg} из необходимых {votes_required_msg} и не будет опубликовано в канале."
 
-#: boterator.py:624
+#: boterator.py:638
 msgctxt "Bot added to a known group"
 msgid "Hi there, @{bot_username}!"
 msgstr "Привет, котаны!"
 
-#: boterator.py:631
+#: boterator.py:645
 msgctxt "Bot added to an unknown chat when he isn't ready for this"
 msgid "This bot wasn't registered for group {group_title}, type /start for more info"
 msgstr "Этот бот не был зарегистрирован для использования в группе {group_title}. Для получения дополнительной информации напишите /start в личном сообщении @BoteratorBot."
 
-#: boterator.py:646
+#: boterator.py:661
 msgctxt "New group created with bot and isn't ready for this"
 msgid "This bot wasn't registered for group {group_title}, type /start for more info"
 msgstr "Этот бот не был зарегистрирован для использования в группе {group_title}. Для получения дополнительной информации напишите /start в личном сообщении @BoteratorBot."
 
-#: boterator.py:663
+#: boterator.py:678
 msgctxt "Bot received /attach command when he isn't ready"
 msgid "Incorrect command"
 msgstr "Некорректный ввод."
 
-#: boterator.py:688
+#: boterator.py:703
 msgctxt "Message publishing cancelled"
 msgid "Cancelled"
 msgstr ""
 
-#: boterator.py:702
+#: boterator.py:717
 msgctxt "Message sent for verification"
 msgid "Okay, I've sent your message for verification. Fingers crossed!"
 msgstr "Отлично, ваше сообщение отправлено на модерацию. Дружно скрестим пальцы!"
 
-#: boterator.py:713
+#: boterator.py:728
 msgctxt "Pending command cancelled"
 msgid "Oka-a-a-a-a-ay."
 msgstr "Oka-a-a-a-a-ay."
 
-#: boterator.py:720
+#: boterator.py:735
 msgctxt "Message received, requesting the user to check the message once again"
 msgid "Looks good for me. I've printed the message in exact same way as it will be publised. Please, take a look on your message one more time. And click Confirm button if everything is fine"
 msgstr ""
 
-#: boterator.py:726
+#: boterator.py:741
 msgctxt "`Confirm` button on message review keyboard"
 msgid "Confirm"
 msgstr ""
 
-#: boterator.py:728
+#: boterator.py:743
 msgctxt "`Cancel` button on message review keyboard"
 msgid "Cancel"
 msgstr ""
 
-#: boterator.py:744
+#: boterator.py:759
 msgctxt "User send text message for verification while texts is disabled"
 msgid "Accepting text messages are disabled"
 msgstr "Приём текстовых сообщение отключён."
 
-#: boterator.py:756
+#: boterator.py:771
 msgctxt "Incorrect text message received"
 msgid "Sorry, but we can proceed only messages with length between {min_msg_length} and {max_msg_length} symbols."
 msgstr "Необходимо ввести от {min_msg_length} до {max_msg_length} символов."
 
-#: boterator.py:765
+#: boterator.py:780
 msgctxt "User sent empty message"
 msgid "Seriously??? 8===3"
 msgstr "Кажется, вы забыли добавить текст в ваши пробелы."
 
-#: boterator.py:778
+#: boterator.py:793
 msgctxt "User sent a sticker for verification while stickers are disabled"
 msgid "Accepting stickers is disabled"
 msgstr "Приём стикеров отключён."
 
-#: boterator.py:782
+#: boterator.py:797
 msgctxt "User sent an audio for verification while audios are disabled"
 msgid "Accepting audios is disabled"
 msgstr "Приём аудио отключён."
 
-#: boterator.py:786
+#: boterator.py:801
 msgctxt "User sent a voice for verification while voices are disabled"
 msgid "Accepting voice is disabled"
 msgstr "Приём голосовых сообщений отключён."
 
-#: boterator.py:790
+#: boterator.py:805
 msgctxt "User sent a video for verification while videos are disabled"
 msgid "Accepting videos is disabled"
 msgstr "Приём видео отключён."
 
-#: boterator.py:794
+#: boterator.py:809
 msgctxt "User sent a photo for verification while photos are disabled"
 msgid "Accepting photos is disabled"
 msgstr "Приём изображений отключён."
 
-#: boterator.py:798
+#: boterator.py:813
 msgctxt "User sent a document for verification while documents are disabled"
 msgid "Accepting documents is disabled"
 msgstr "Приём документов отключён."
 
-#: boterator.py:809
+#: boterator.py:824
 msgctxt "Verification message"
 msgid "Say {thumb_up_sign} ({vote_yes_cmd}) or {thumb_down} ({vote_no_cmd}) to this amazing message. Also you can just send a message to the user ({reply_cmd}). Or even can BAN him ({ban_cmd})."
 msgstr ""
@@ -314,12 +314,12 @@ msgstr ""
 "Отправить пользователю сообщение {reply_cmd}\n"
 "Забанить негодяя {ban_cmd}"
 
-#: boterator.py:876
+#: boterator.py:892
 msgctxt "Message verified and queued for publishing"
 msgid "Your message was verified and queued for publishing."
 msgstr "Ваше сообщение было одобрено и добавлено в очередь публикаций."
 
-#: boterator.py:912
+#: boterator.py:928
 #, python-format
 msgctxt "Delay between channel messages"
 msgid "%s minute"
@@ -328,7 +328,7 @@ msgstr[0] "%s минута"
 msgstr[1] "%s минуты"
 msgstr[2] "%s минут"
 
-#: boterator.py:913
+#: boterator.py:930
 #, python-format
 msgctxt "Voting timeout"
 msgid "%s hour"
@@ -337,7 +337,7 @@ msgstr[0] "%s час"
 msgstr[1] "%s часа"
 msgstr[2] "%s часов"
 
-#: boterator.py:916
+#: boterator.py:934
 msgctxt "/help command response"
 msgid "bot.help.response"
 msgstr ""
@@ -346,6 +346,7 @@ msgstr ""
 "/setvotes — изменить необходимое количество {thumb_up_sign} для публикации сообщения (текущее значение: {current_votes_required})\n"
 "/settimeout — изменить продолжительность голосования (текущее значение: {current_timeout_with_hours})\n"
 "/setstartmessage — изменить стартовое сообщение бота (текущее значение: {current_start_message})\n"
+"/settextlimits — изменить ограничение на длинну текстовых сообщение (текущее значение: {current_text_limit[min]}..{current_text_limit[max]})\n"
 "/togglepower — изменить состояние власти модераторов (текущее значение: {power_state})\n"
 "/stats — отобразить статистику за последние 7 дней. Можно изменить период сбора статистики:\n"
 "   — `/stats 5` последние 5 дней,\n"
@@ -353,99 +354,99 @@ msgstr ""
 "   — `/stats 2016-01-01 2016-01-31` для произвольного периода\n"
 "/banlist — отобразить список забаненных пользователей\n"
 "/switchlang — изменить язык интерфейса\n"
-"/changeallowed — изменить список разрешённых типов сообщений"
+"/changeallowed — изменить список разрешённых типов сообщений\n"
 
-#: boterator.py:935
+#: boterator.py:953
 msgctxt "New delay request"
 msgid "Set new delay value for messages posting (in minutes)"
 msgstr "Введите новое значение задержки между публикациями сообщений (в минутах)."
 
-#: boterator.py:950
+#: boterator.py:968
 msgctxt "Messages delay successfully changed"
 msgid "Delay value updated"
 msgstr ""
 
-#: boterator.py:966
+#: boterator.py:986
 msgctxt "New required votes count request"
 msgid "Set new amount of required votes"
 msgstr ""
 
-#: boterator.py:980
+#: boterator.py:1000
 msgctxt "Required votes count successfully changed"
 msgid "Required votes amount updated"
 msgstr ""
 
-#: boterator.py:997
+#: boterator.py:1017
 msgctxt "New voting duration request"
 msgid "Set new voting duration value (in hours, only a digits)"
 msgstr ""
 
-#: boterator.py:1013
+#: boterator.py:1033
 msgctxt "Voting duration successfully changed"
 msgid "Voting duration updated"
 msgstr ""
 
-#: boterator.py:1029
+#: boterator.py:1049
 msgctxt "New start message request"
 msgid "Set new start message"
 msgstr ""
 
-#: boterator.py:1044
+#: boterator.py:1064
 msgctxt "Start message successfully changed"
-msgid "Start message updates"
+msgid "Start message updated"
 msgstr ""
 
-#: boterator.py:1049
+#: boterator.py:1069
 msgctxt "Too short start message entered"
 msgid "Invalid start message, you should write at least 10 symbols. Try again or type /cancel"
 msgstr ""
 
-#: boterator.py:1075
+#: boterator.py:1095
 msgctxt "Power mode disabled"
 msgid "From now other chat users can not modify bot settings"
 msgstr "Теперь другие пользователи чата модераторов НЕ могут изменять настройки бота."
 
-#: boterator.py:1080
+#: boterator.py:1100
 msgctxt "Power mode enabled"
 msgid "From now other chat users can modify bot settings (only inside moderators chat)"
 msgstr "Теперь другие пользователи чата модераторов могут изменять настройки бота."
 
-#: boterator.py:1103
+#: boterator.py:1123
 msgctxt "Stats user item"
 msgid "{row_id}. {user} - {rating_details}"
 msgstr "{row_id}. {user} — {rating_details}"
 
-#: boterator.py:1107
+#: boterator.py:1127
 msgctxt "No data for stats report"
 msgid "{cross_mark} no data"
 msgstr "{cross_mark} нет данных"
 
-#: boterator.py:1125
+#: boterator.py:1146
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01 2016-01-13`"
 msgstr "Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01 2016-01-13`"
 
-#: boterator.py:1135
+#: boterator.py:1156
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01`"
 msgstr "Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01`"
 
-#: boterator.py:1141
+#: boterator.py:1162
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct values: `/stats 2016-01-01 2016-01-13`, `/stats 5` for last 5 days or `/stats 2016-01-01`"
 msgstr "Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01 2016-01-13`, `/stats 5` для статистики за последние 5 дней или `/stats 2016-01-01`"
 
-#: boterator.py:1161
+#: boterator.py:1182
 msgctxt "Stats header"
 msgid "Stats for {period}"
 msgstr "Статистика за {period}"
 
-#: boterator.py:1162
+#: boterator.py:1183
 msgctxt "TOP type"
 msgid "TOP5 voters:"
 msgstr "ТОП5 голосующих:"
 
-#: boterator.py:1178
+#: boterator.py:1199
 msgctxt "Votes count"
 msgid "{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})"
 msgid_plural "{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})"
@@ -453,12 +454,12 @@ msgstr[0] "{votes_cnt} голос (при {votes_yes_cnt} {thumb_up_sign})"
 msgstr[1] "{votes_cnt} голоса (при {votes_yes_cnt} {thumb_up_sign})"
 msgstr[2] "{votes_cnt} голосов (при {votes_yes_cnt} {thumb_up_sign})"
 
-#: boterator.py:1186
+#: boterator.py:1207
 msgctxt "TOP type"
 msgid "TOP5 users by messages count:"
 msgstr "ТОП5 пользователей по количеству отправленных сообщений:"
 
-#: boterator.py:1201
+#: boterator.py:1222
 msgctxt "Messages count"
 msgid "{messages_cnt} message"
 msgid_plural "{messages_cnt} messages"
@@ -466,27 +467,27 @@ msgstr[0] "{messages_cnt} сообщение"
 msgstr[1] "{messages_cnt} сообщения"
 msgstr[2] "{messages_cnt} сообщений"
 
-#: boterator.py:1205
+#: boterator.py:1226
 msgctxt "TOP type"
 msgid "TOP5 users by published messages count:"
 msgstr "ТОП5 пользователей по количеству опубликованных сообщений:"
 
-#: boterator.py:1220
+#: boterator.py:1241
 msgctxt "TOP type"
 msgid "TOP5 users by declined messages count:"
 msgstr "ТОП5 пользователей по количеству отклонённых сообщений:"
 
-#: boterator.py:1250
+#: boterator.py:1271
 msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user"
 msgstr "Укажите, пожалуйста, причину бана."
 
-#: boterator.py:1267
+#: boterator.py:1288
 msgctxt "Ban reason too short"
 msgid "Reason is too short (5 symbols required), try again or send /cancel"
 msgstr "Может быть, как-то поразвёрнутей? :) (нужно ввести хотя бы 5 символов). Попробуйте ещё раз или отправьте /cancel"
 
-#: boterator.py:1274
+#: boterator.py:1295
 msgctxt "Message to user in case of ban"
 msgid ""
 "You've been banned from further communication with this bot. Reason:\n"
@@ -495,178 +496,211 @@ msgstr ""
 "К сожалению, вы были забанены. Дальнейшая коммуникация с ботом невозможна. Причина:\n"
 "> {ban_reason}"
 
-#: boterator.py:1284
+#: boterator.py:1306
 msgctxt "Ban confirmation"
 msgid "User banned"
 msgstr "Пользователь забанен."
 
-#: boterator.py:1307
+#: boterator.py:1329
 msgctxt "Ban user item"
 msgid "{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}"
 msgstr "{row_id}. {user} — {ban_reason} (дата бана {ban_date}) {unban_cmd}"
 
-#: boterator.py:1314
+#: boterator.py:1336
 msgctxt "Bot owner notification"
 msgid "You can use /unban command only in moderators group"
 msgstr "Команду /unban можно использовать только в группе модераторов."
 
-#: boterator.py:1318
+#: boterator.py:1340
 msgctxt "Ban list is empty"
 msgid "No banned users yet"
 msgstr "Ещё ни один пользователь не забанен."
 
-#: boterator.py:1337
+#: boterator.py:1359
 msgctxt "Unban confirmation"
 msgid "User unbanned"
 msgstr "Пользователь амнистирован!"
 
-#: boterator.py:1339
+#: boterator.py:1361
 msgctxt "User notification in case of unban"
 msgid "Access restored"
 msgstr "Вы амнистированы. Ура!"
 
-#: boterator.py:1352
+#: boterator.py:1374
 msgctxt "Reply message request"
 msgid "What message should I send to user?"
 msgstr "Какое сообщение отправить пользователю?"
 
-#: boterator.py:1366
+#: boterator.py:1388
 msgctxt "Reply message is too short"
 msgid "Message is too short (10 symbols required), try again or send /cancel"
 msgstr "Давайте всё-таки немного подробнее (нужно ввести хотя бы 10 символов). Попробуйте ещё раз или отправьте /cancel"
 
-#: boterator.py:1374
+#: boterator.py:1396
 msgctxt "Reply delivery confirmation"
 msgid "Message sent"
 msgstr "Сообщение успешно отправлено."
 
-#: boterator.py:1377
+#: boterator.py:1399
 msgctxt "Reply failed"
 msgid "Failed: {reason}"
 msgstr "Ошибка: {reason}"
 
-#: boterator.py:1397 boterator.py:1450
+#: boterator.py:1421 boterator.py:1474
 msgctxt "Content type"
 msgid "Text"
 msgstr "Текст"
 
-#: boterator.py:1398 boterator.py:1451
+#: boterator.py:1422 boterator.py:1475
 msgctxt "Content type"
 msgid "Photo"
 msgstr "Изображения"
 
-#: boterator.py:1399 boterator.py:1452
+#: boterator.py:1423 boterator.py:1476
 msgctxt "Content type"
 msgid "Video"
 msgstr "Видео"
 
-#: boterator.py:1400 boterator.py:1453
+#: boterator.py:1424 boterator.py:1477
 msgctxt "Content type"
 msgid "Audio"
 msgstr "Аудио"
 
-#: boterator.py:1401 boterator.py:1456
+#: boterator.py:1425 boterator.py:1480
 msgctxt "Content type"
 msgid "Document"
 msgstr "Документы"
 
-#: boterator.py:1402 boterator.py:1455
+#: boterator.py:1426 boterator.py:1479
 msgctxt "Content type"
 msgid "Sticker"
 msgstr "Стикеры"
 
-#: boterator.py:1404 boterator.py:1454
+#: boterator.py:1428 boterator.py:1478
 msgctxt "Content type"
 msgid "Voice"
 msgstr "Голосовые сообщения"
 
-#: boterator.py:1413
+#: boterator.py:1437
 msgctxt "/changeallowed response"
 msgid "You can see current status on keyboard, just click on content type to change it's status"
 msgstr "Вы можете видеть текущее состояние на клавиатуре. Просто нажмите на нужную кнопку чтобы разрешить или запретить тип сообщений."
 
-#: boterator.py:1475 boterator.py:1518
+#: boterator.py:1499 boterator.py:1542
 msgctxt "Invalid user response"
 msgid "Wrong input"
 msgstr "Некорректный ввод."
 
-#: boterator.py:1495
+#: boterator.py:1519
 msgctxt "Change language prompt"
 msgid "Select your language"
 msgstr "Выберите язык."
 
-#: boterator.py:1514
+#: boterator.py:1538
 msgctxt "Language changed"
 msgid "Language changed"
 msgstr "Язык изменён."
 
-#: boterator.py:1528
+#: boterator.py:1555
+msgctxt "New length limits request"
+msgid "Please enter new value for length limits formatted like `{min_length}..{max_length}` (e.g. `1..10`)"
+msgstr ""
+
+#: boterator.py:1576
+msgctxt "Bottom limit is too low"
+msgid "Bottom limit must be greater than 0"
+msgstr ""
+
+#: boterator.py:1580
+msgctxt "Top limit is too low"
+msgid "Top limit must be greater than bottom one"
+msgstr ""
+
+#: boterator.py:1585
+msgctxt "Text limits changed successfully"
+msgid "Limits updated"
+msgstr ""
+
+#: boterator.py:1587
+msgctxt "Non-well formated text limits provided"
+msgid "Please use following format: `{min_length}..{max_length}` (e.g. `1..10`), or send /cancel"
+msgstr ""
+
+#: boterator.py:1596
 msgctxt "Moderator's ability to alter settings"
 msgid "yes"
 msgstr "вкл"
 
-#: boterator.py:1529
+#: boterator.py:1597
 msgctxt "Moderator's ability to alter settings"
 msgid "no"
 msgstr "выкл"
 
-#: boterator.py:1531
+#: boterator.py:1599
 msgctxt "Content type enabled/disabled"
 msgid "Texts enabled"
 msgstr "Текстовые сообщения разрешены."
 
-#: boterator.py:1532
+#: boterator.py:1600
 msgctxt "Content type enabled/disabled"
 msgid "Texts disabled"
 msgstr "Текстовые сообщения запрещены."
 
-#: boterator.py:1533
+#: boterator.py:1601
 msgctxt "Content type enabled/disabled"
 msgid "Photos enabled"
 msgstr "Изображения разрешены."
 
-#: boterator.py:1534
+#: boterator.py:1602
 msgctxt "Content type enabled/disabled"
 msgid "Photos disabled"
 msgstr "Изображения запрещены."
 
-#: boterator.py:1535
+#: boterator.py:1603
 msgctxt "Content type enabled/disabled"
 msgid "Videos enabled"
 msgstr "Видео-сообщения разрешены."
 
-#: boterator.py:1536
+#: boterator.py:1604
 msgctxt "Content type enabled/disabled"
 msgid "Videos disabled"
 msgstr "Видео-сообщения запрещены."
 
-#: boterator.py:1537
+#: boterator.py:1605
 msgctxt "Content type enabled/disabled"
 msgid "Audios enabled"
 msgstr "Аудио-сообщения разрешены."
 
-#: boterator.py:1538
+#: boterator.py:1606
 msgctxt "Content type enabled/disabled"
 msgid "Audios disabled"
 msgstr "Аудио-сообщения запрещены."
 
-#: boterator.py:1539
+#: boterator.py:1607
 msgctxt "Content type enabled/disabled"
 msgid "Voices enabled"
 msgstr "Голосовые сообщения разрешены."
 
-#: boterator.py:1540
+#: boterator.py:1608
 msgctxt "Content type enabled/disabled"
 msgid "Voices disabled"
 msgstr "Голосовые сообщения запрещены."
 
-#: boterator.py:1541
+#: boterator.py:1609
 msgctxt "Content type enabled/disabled"
 msgid "Stickers enabled"
 msgstr "Стикеры разрешены."
 
-#: boterator.py:1542
+#: boterator.py:1610
 msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
 msgstr "Стикеры запрещены."
+
+#~ msgctxt "Start message successfully changed"
+#~ msgid "Start message updates"
+#~ msgstr ""
+
+#~ msgctxt "Non-well formated text limits provided"
+#~ msgid "Please use following format:`{min_length}..{max_length}` (e.g. `1..10`)"
+#~ msgstr ""
 

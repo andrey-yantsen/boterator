@@ -191,6 +191,8 @@ class BotMother:
             'delay': 15,
             'votes': 5,
             'vote_timeout': 24,
+            'text_min': 50,
+            'text_max': 1000,
             'start': pgettext('Boterator: default start message', "Just enter your message, and we're ready."),
             'content_status': {
                 'text': True,
@@ -443,6 +445,8 @@ class Slave:
 
     STAGE_WAIT_LANGUAGE = 17
 
+    STAGE_WAIT_TEXT_LIMITS = 19
+
     LANGUAGE_LIST = (
         ('en', '%s English' % Emoji.FLAG_USA),
         ('ru', '%s Русский' % Emoji.FLAG_RUSSIA),
@@ -470,6 +474,7 @@ class Slave:
         bot.add_handler(self.ban_list_command, '/banlist')
         bot.add_handler(self.change_allowed_command, '/changeallowed')
         bot.add_handler(self.switchlang_command, '/switchlang')
+        bot.add_handler(self.settextlimits_command, '/settextlimits')
         bot.add_handler(self.cbq_message_review, None, Api.UPDATE_TYPE_CALLBACK_QUERY)
         bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
@@ -482,6 +487,7 @@ class Slave:
         bot.add_handler(self.plaintext_delay_handler)
         bot.add_handler(self.plaintext_votes_handler)
         bot.add_handler(self.plaintext_timeout_handler)
+        bot.add_handler(self.plaintext_textlimits_handler)
         bot.add_handler(self.plaintext_startmessage_handler)
         bot.add_handler(self.plaintext_switchlang_handler)
         bot.add_handler(self.vote_yes, self.RE_VOTE_YES)
@@ -757,7 +763,7 @@ class Slave:
 
         mes = message['text']
         if mes.strip() != '':
-            if 50 < len(mes) < 1000:
+            if self.settings['text_min'] <= len(mes) <= self.settings['text_max']:
                 yield self._request_message_confirmation(message)
                 report_botan(message, 'slave_message')
             else:
@@ -766,8 +772,8 @@ class Slave:
                                                                                         'only messages with length '
                                                                                         'between {min_msg_length} and '
                                                                                         '{max_msg_length} symbols.')
-                                            .format(min_msg_length=format_number(50, self.language),
-                                                    max_msg_length=format_number(1000, self.language)),
+                                            .format(min_msg_length=format_number(self.settings['text_min'], self.language),
+                                                    max_msg_length=format_number(self.settings['text_max'], self.language)),
                                             reply_to_message=message)
         else:
             report_botan(message, 'slave_message_empty')
@@ -929,7 +935,7 @@ class Slave:
                 .format(current_delay_with_minutes=delay_str, current_votes_required=self.settings['votes'],
                         current_timeout_with_hours=timeout_str, thumb_up_sign=Emoji.THUMBS_UP_SIGN,
                         current_start_message=self.settings['start'], power_state=power_state_str,
-                        current_text_limit=[self.settings.get('text_min', 50), self.settings.get('text_max', 1000)])
+                        current_text_limit={'min': self.settings['text_min'], 'max': self.settings['text_max']})
 
             try:
                 yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
@@ -1055,7 +1061,7 @@ class Slave:
             if message['text'] and len(message['text'].strip()) > 10:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
-                yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message updates'),
+                yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message updated'),
                                             reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
                 self.stages.drop(message)
             else:
@@ -1540,6 +1546,51 @@ class Slave:
     @property
     def language(self):
         return self.settings.get('locale', 'en')
+
+    @coroutine
+    @append_pgettext
+    def settextlimits_command(self, message, pgettext):
+        chat_id = message['chat']['id']
+        if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
+            yield self.bot.send_message(pgettext('New length limits request', 'Please enter new value for length '
+                                                                              'limits formatted like '
+                                                                              '`{min_length}..{max_length}` (e.g. '
+                                                                              '`1..10`)'), reply_to_message=message,
+                                        parse_mode=Api.PARSE_MODE_MD)
+            self.stages.set(message, self.STAGE_WAIT_TEXT_LIMITS)
+        else:
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
+
+    @coroutine
+    @append_pgettext
+    def plaintext_textlimits_handler(self, message, pgettext):
+        if self.stages.get_id(message) == self.STAGE_WAIT_TEXT_LIMITS:
+            limits = message['text'].strip().split('..')
+
+            if len(limits) == 2 and limits[0].isdigit() and limits[1].isdigit():
+                limits[0] = int(limits[0])
+                limits[1] = int(limits[1])
+
+                if limits[0] < 1:
+                    yield self.bot.send_message(pgettext('Bottom limit is too low', 'Bottom limit must be greater than '
+                                                                                    '0'),
+                                                reply_to_message=message)
+                elif limits[1] <= limits[0]:
+                    yield self.bot.send_message(pgettext('Top limit is too low', 'Top limit must be greater than '
+                                                                                 'bottom one'),
+                                                reply_to_message=message)
+                else:
+                    yield self.__update_settings(text_min=limits[0], text_max=limits[1])
+                    yield self.bot.send_message(pgettext('Text limits changed successfully', 'Limits updated'),
+                                                reply_to_message=message)
+            else:
+                yield self.bot.send_message(pgettext('Non-well formated text limits provided',
+                                                     'Please use following format: `{min_length}..{max_length}` (e.g. '
+                                                     '`1..10`), or send /cancel'), reply_to_message=message,
+                                            parse_mode=Api.PARSE_MODE_MD)
+        else:
+            return False
 
 
 def __messages():
