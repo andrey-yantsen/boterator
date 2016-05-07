@@ -1,8 +1,8 @@
  .PHONY: deploy
 
 deploy:
-	ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -A aviasales@boterator.int.avs.io "cd ~/boterator && git fetch origin && git reset --hard origin/master && source ../.bashrc && pip3 install -r requirements.txt && make compile_messages"
-	ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -A aviasales@boterator.int.avs.io "touch ~/restart.txt"
+	ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -A $(DEPLOY_TO) "cd ~/boterator && git fetch origin && git reset --hard origin/master && source ../.bashrc && pip3 install -r requirements.txt && make compile_messages"
+	ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -A $(DEPLOY_TO) "touch ~/restart.txt"
 
 DOMAIN = boterator
 
