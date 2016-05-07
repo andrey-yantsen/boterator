@@ -84,7 +84,7 @@ class Api:
         return True
 
     @coroutine
-    def __request_api(self, method, body=None, request_timeout=10):
+    def __request_api(self, method, body=None, request_timeout=10, retry_on_serverside_error=False):
         def guess_filename(obj):
             """Tries to guess the filename of the given object."""
             name = getattr(obj, 'name', None)
@@ -137,7 +137,15 @@ class Api:
             else:
                 request['method'] = 'GET'
 
-            response = yield AsyncHTTPClient().fetch(url, body=body, **request)
+            while True:
+                try:
+                    response = yield AsyncHTTPClient().fetch(url, body=body, **request)
+                    break
+                except HTTPError as e:
+                    if not retry_on_serverside_error or e.code < 500 or e.code >= 599:
+                        raise
+                    else:
+                        yield sleep(5)
 
             if response and response.body:
                 response = ujson.loads(response.body.decode('utf-8'))
@@ -146,17 +154,18 @@ class Api:
                 else:
                     raise ApiError(response['error_code'], response['description'])
         except HTTPError as e:
-            # raise any user-specific errors
-            if 400 <= e.code <= 499:
+            if e.code == 599:
+                logging.exception('%s request timed out', method)  # Do nothing on timeout, just return None
+            elif e.response and e.response.body:
                 response = ujson.loads(e.response.body.decode('utf-8'))
                 raise ApiError(response['error_code'], response['description'])
-            if 500 <= e.code < 599:  # Ignore internal HTTPClient errors - 599
-                logging.exception('Telegram api error')
+            else:
+                raise ApiError(e.code, None)
 
         return None
 
     @coroutine
-    def get_updates(self, offset: int=None, limit: int=100, timeout: int=5):
+    def get_updates(self, offset: int=None, limit: int=100, timeout: int=5, retry_on_serverside_error: bool=False):
         assert 1 <= limit <= 100
         assert 0 <= timeout
 
@@ -168,7 +177,8 @@ class Api:
         if offset is not None:
             request['offset'] = offset
 
-        data = yield self.__request_api('getUpdates', request, timeout * 1.5)
+        data = yield self.__request_api('getUpdates', request, request_timeout=timeout * 1.5,
+                                        retry_on_serverside_error=retry_on_serverside_error)
 
         if data is None:
             return []
@@ -194,7 +204,7 @@ class Api:
         yield self.get_me()
 
         while self.consumption_state == self.STATE_WORKING:
-            get_updates_f = self.get_updates(last_update_id)
+            get_updates_f = self.get_updates(last_update_id, retry_on_serverside_error=True)
             # Actually default tornado's futures doesn't support cancellation, so let's make some magic
             cancelled = False
 
