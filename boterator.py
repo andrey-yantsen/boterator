@@ -65,7 +65,8 @@ class BotMother:
         if allowed:
             return False
 
-        yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'), reply_to_message=message)
+        yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                    reply_to_message=message)
 
     @coroutine
     @append_pgettext
@@ -100,7 +101,8 @@ class BotMother:
         if token == '':
             report_botan(message, 'boterator_token_empty')
             yield self.bot.send_message(pgettext('Boterator: empty token entered', 'I guess you forgot to enter the '
-                                                                                   'token :)'), reply_to_message=message)
+                                                                                   'token :)'),
+                                        reply_to_message=message)
         else:
             if len(token.split(':')) != 2:
                 report_botan(message, 'boterator_token_invalid')
@@ -124,14 +126,14 @@ class BotMother:
                                                      "Ok, I\'ve got basic information for @%s\n"
                                                      'Now add him to a group of moderators (or copy and paste `@%s '
                                                      '/attach` to the group, in case you’ve already added him), where '
-                                                     'I should send messages for verification, or type /cancel')\
+                                                     'I should send messages for verification, or type /cancel') \
                                             % (new_bot_me['username'], new_bot_me['username']),
                                             reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
 
                 hello_message = pgettext('Boterator: default channel-hello message',
                                          'Hi there, guys! Now it is possible to publish messages in this channel by '
                                          'any of you. All you need to do — is to write a message to me (bot named '
-                                         '@%s), and it will be published after verification by our team.')\
+                                         '@%s), and it will be published after verification by our team.') \
                                 % new_bot_me['username']
 
                 self.stages.set(message, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
@@ -168,7 +170,8 @@ class BotMother:
                 try:
                     new_bot = Api(stage[1]['token'])
                     try:
-                        yield new_bot.send_message(stage[1]['hello'], chat_id=channel_name, parse_mode=Api.PARSE_MODE_MD)
+                        yield new_bot.send_message(stage[1]['hello'], chat_id=channel_name,
+                                                   parse_mode=Api.PARSE_MODE_MD)
                     except:
                         yield new_bot.send_message(stage[1]['hello'], chat_id=channel_name)
                     self.stages.set(message, self.STAGE_REGISTERED, channel=channel_name)
@@ -204,7 +207,7 @@ class BotMother:
         self.slaves = dict()
 
         cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel, settings FROM '
-                                     'registered_bots WHERE active = True')
+                                     'registered_bots WHERE active = TRUE')
 
         def update_settings_recursive(base_settings, bot_settings):
             base_settings = deepcopy(base_settings)
@@ -235,7 +238,7 @@ class BotMother:
     @coroutine
     @append_pgettext
     def slave_revoked(self, bot_id, token, owner_id, pgettext):
-        yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
+        yield get_db().execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (bot_id,))
         if bot_id in self.slaves:
             del self.slaves[bot_id]
 
@@ -266,7 +269,7 @@ class BotMother:
                 yield self.bot.send_chat_action(original_message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
                 yield get_db().execute("""
                                       INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
-                                      VALUES (%s, %s, %s, %s, %s, True, %s)
+                                      VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                                       ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, owner_id = EXCLUDED.owner_id,
                                       moderator_chat_id = EXCLUDED.moderator_chat_id, target_channel=EXCLUDED.target_channel,
                                       active = EXCLUDED.active, settings = EXCLUDED.settings
@@ -285,7 +288,7 @@ class BotMother:
                                       self.default_slave_settings['delay']) % self.default_slave_settings['delay']
 
                 timeout_msg = npgettext('Boterator: default timeout', '%d hour', '%d hours',
-                                        self.default_slave_settings['vote_timeout'])\
+                                        self.default_slave_settings['vote_timeout']) \
                               % self.default_slave_settings['vote_timeout']
 
                 msg = pgettext('Boterator: new bot registered',
@@ -531,7 +534,8 @@ class Slave:
 
     @coroutine
     def check_votes_success(self):
-        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s', (self.bot_id, ))
+        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s',
+                                     (self.bot_id,))
         row = cur.fetchone()
         if row and row[0]:
             allowed_time = row[0] + timedelta(minutes=self.settings.get('delay', 15))
@@ -540,8 +544,8 @@ class Slave:
 
         if datetime.now() >= allowed_time:
             cur = yield get_db().execute('SELECT message FROM incoming_messages WHERE bot_id = %s '
-                                         'AND is_voting_success = True and is_published = False '
-                                         'ORDER BY created_at LIMIT 1', (self.bot_id, ))
+                                         'AND is_voting_success = TRUE AND is_published = FALSE '
+                                         'ORDER BY created_at LIMIT 1', (self.bot_id,))
 
             row = cur.fetchone()
 
@@ -556,10 +560,11 @@ class Slave:
         report_botan(message, 'slave_publish')
         try:
             yield self.bot.forward_message(self.channel_name, message['chat']['id'], message['message_id'])
-            yield get_db().execute('UPDATE incoming_messages SET is_published = True WHERE id = %s AND original_chat_id = %s',
-                                   (message['message_id'], message['chat']['id']))
+            yield get_db().execute(
+                'UPDATE incoming_messages SET is_published = TRUE WHERE id = %s AND original_chat_id = %s',
+                (message['message_id'], message['chat']['id']))
             yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
-                                   (self.bot_id, ))
+                                   (self.bot_id,))
         except:
             logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
@@ -569,17 +574,19 @@ class Slave:
     def check_votes_failures(self, pgettext, npgettext):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
         cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, message,'
-                                     '(SELECT SUM(vote_yes::int) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
-                               'FROM incoming_messages im WHERE bot_id = %s AND '
-                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
+                                     '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+                                     'FROM incoming_messages im WHERE bot_id = %s AND '
+                                     'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
+                                     (self.bot_id, vote_timeout))
 
         for owner_id, message_id, chat_id, message, votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                received_votes_msg = npgettext('Received votes count', '{votes_received} vote', '{votes_received} votes',
-                                              votes).format(votes_received=votes)
+                received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
+                                               '{votes_received} votes',
+                                               votes).format(votes_received=votes)
                 required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
-                                              self.settings['votes']).format(votes_required=self.settings['votes'])
+                                               self.settings['votes']).format(votes_required=self.settings['votes'])
 
                 yield self.bot.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
                                                                       '{votes_received_msg} out of required '
@@ -590,8 +597,9 @@ class Slave:
             except:
                 pass
 
-        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
-                               'is_voting_success = False AND is_voting_fail = False AND created_at <= %s', (self.bot_id, vote_timeout))
+        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
+                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
+                               (self.bot_id, vote_timeout))
         if self.bot.consumption_state == Api.STATE_WORKING:
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
 
@@ -609,7 +617,7 @@ class Slave:
 
     @coroutine
     def is_moderators_chat(self, chat_id, bot_id):
-        ret = yield get_db().execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s', (chat_id, bot_id, ))
+        ret = yield get_db().execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s', (chat_id, bot_id,))
         return ret.fetchone() is not None
 
     @coroutine
@@ -620,9 +628,9 @@ class Slave:
         if message['new_chat_member']['id'] == me['id']:
             known_chat = yield self.is_moderators_chat(message['chat']['id'], me['id'])
             if known_chat:
-                yield get_db().execute('UPDATE registered_bots SET active = True WHERE id = %s', (me['id'], ))
+                yield get_db().execute('UPDATE registered_bots SET active = TRUE WHERE id = %s', (me['id'],))
                 yield self.bot.send_message(pgettext('Bot added to a known group', 'Hi there, @{bot_username}!').format(
-                                            bot_username=message['from']['username']), chat_id=message['chat']['id'])
+                    bot_username=message['from']['username']), chat_id=message['chat']['id'])
             else:
                 user_id = message['from']['id']
                 if self.mother.stages.get_id(user_id=user_id, chat_id=user_id) == BotMother.STAGE_MODERATION_GROUP:
@@ -630,7 +638,8 @@ class Slave:
                 else:
                     yield self.bot.send_message(pgettext('Bot added to an unknown chat when he isn\'t ready for this',
                                                          'This bot wasn\'t registered for group {group_title}, type '
-                                                         '/start for more info').format(group_title=message['chat']['title']),
+                                                         '/start for more info').format(
+                        group_title=message['chat']['title']),
                                                 chat_id=message['chat']['id'])
         else:
             return False
@@ -670,7 +679,7 @@ class Slave:
         me = yield self.bot.get_me()
         if message['left_chat_member']['id'] == me['id']:
             report_botan(message, 'slave_left_chat')
-            yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (me['id'], ))
+            yield get_db().execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (me['id'],))
         else:
             return False
 
@@ -808,16 +817,17 @@ class Slave:
         yield self.bot.forward_message(self.moderator_chat_id, message['chat']['id'], message['message_id'])
         msg = pgettext('Verification message', 'Say {thumb_up_sign} ({vote_yes_cmd}) or {thumb_down} ({vote_no_cmd}) '
                                                'to this amazing message. Also you can just send a message to the user '
-                                               '({reply_cmd}). Or even can BAN him ({ban_cmd}).')\
+                                               '({reply_cmd}). Or even can BAN him ({ban_cmd}).') \
             .format(thumb_up_sign=Emoji.THUMBS_UP_SIGN, thumb_down=Emoji.THUMBS_DOWN_SIGN,
                     vote_yes_cmd='/vote_%s_%s_yes' % (message['chat']['id'], message['message_id']),
                     vote_no_cmd='/vote_%s_%s_no' % (message['chat']['id'], message['message_id']),
                     reply_cmd='/reply_%s_%s' % (message['chat']['id'], message['message_id']),
-                    ban_cmd='/ban_%s' % (message['chat']['id'], ))
+                    ban_cmd='/ban_%s' % (message['chat']['id'],))
         yield self.bot.send_message(msg, chat_id=self.moderator_chat_id)
 
         bot_info = yield self.bot.get_me()
-        yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s', (bot_info['id'], ))
+        yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
+                               (bot_info['id'],))
 
     @coroutine
     def __is_user_voted(self, user_id, original_chat_id, message_id):
@@ -847,7 +857,7 @@ class Slave:
         voted = yield self.__is_user_voted(user_id, original_chat_id, message_id)
         opened = yield self.__is_voting_opened(original_chat_id, message_id)
 
-        cur = yield get_db().execute('SELECT SUM(vote_yes::int) FROM votes_history WHERE message_id = %s AND '
+        cur = yield get_db().execute('SELECT SUM(vote_yes::INT) FROM votes_history WHERE message_id = %s AND '
                                      'original_chat_id = %s',
                                      (message_id, original_chat_id))
         current_yes = cur.fetchone()[0]
@@ -866,10 +876,10 @@ class Slave:
             if current_yes >= self.settings.get('votes', 5):
                 cur = yield get_db().execute('SELECT is_voting_success, message FROM incoming_messages WHERE id = %s '
                                              'AND original_chat_id = %s',
-                                       (message_id, original_chat_id))
+                                             (message_id, original_chat_id))
                 row = cur.fetchone()
                 if not row[0]:
-                    yield get_db().execute('UPDATE incoming_messages SET is_voting_success = True WHERE id = %s AND '
+                    yield get_db().execute('UPDATE incoming_messages SET is_voting_success = TRUE WHERE id = %s AND '
                                            'original_chat_id = %s',
                                            (message_id, original_chat_id))
                     try:
@@ -909,11 +919,13 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_help')
-            delay_str = npgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % self.settings['delay']
-            timeout_str = npgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % self.settings['vote_timeout']
+            delay_str = npgettext('Delay between channel messages', '%s minute', '%s minutes', self.settings['delay']) % \
+                        self.settings['delay']
+            timeout_str = npgettext('Voting timeout', '%s hour', '%s hours', self.settings['vote_timeout']) % \
+                          self.settings['vote_timeout']
             power_state = 'yes' if self.settings.get('power') else 'no'
             power_state_str = pgettext('Moderator\'s ability to alter settings', power_state)
-            msg = pgettext('/help command response', 'bot.help.response')\
+            msg = pgettext('/help command response', 'bot.help.response') \
                 .format(current_delay_with_minutes=delay_str, current_votes_required=self.settings['votes'],
                         current_timeout_with_hours=timeout_str, thumb_up_sign=Emoji.THUMBS_UP_SIGN,
                         current_start_message=self.settings['start'], power_state=power_state_str,
@@ -952,7 +964,8 @@ class Slave:
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_setdelay_invalid')
-                yield self.bot.send_message(pgettext('Invalid delay value. Try again or type /cancel'), reply_to_message=message,
+                yield self.bot.send_message(pgettext('Invalid delay value. Try again or type /cancel'),
+                                            reply_to_message=message,
                                             reply_markup=ForceReply(True))
         else:
             return False
@@ -963,8 +976,9 @@ class Slave:
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or (self.settings.get('power') and chat_id == self.moderator_chat_id):
             report_botan(message, 'slave_setvotes_cmd')
-            yield self.bot.send_message(pgettext('New required votes count request', 'Set new amount of required votes'),
-                                        reply_to_message=message, reply_markup=ForceReply(True))
+            yield self.bot.send_message(
+                pgettext('New required votes count request', 'Set new amount of required votes'),
+                reply_to_message=message, reply_markup=ForceReply(True))
             self.stages.set(message, self.STAGE_WAIT_VOTES_VALUE)
         else:
             yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
@@ -1101,10 +1115,11 @@ class Slave:
                     user = 'userid %s' % user_id
 
                 ret += pgettext('Stats user item', '{row_id}. {user} - {rating_details}') \
-                    .format(row_id=row_id + 1, user=user, rating_details=f(row)) + "\n"
+                           .format(row_id=row_id + 1, user=user, rating_details=f(row)) + "\n"
 
             if not ret:
-                ret = pgettext('No data for stats report', '{cross_mark} no data').format(cross_mark=Emoji.CROSS_MARK) + "\n"
+                ret = pgettext('No data for stats report', '{cross_mark} no data').format(
+                    cross_mark=Emoji.CROSS_MARK) + "\n"
 
             return ret
 
@@ -1162,7 +1177,7 @@ class Slave:
             msg += pgettext('TOP type', 'TOP5 voters:') + "\n"
 
             query = """
-            SELECT vh.user_id, u.first_name, u.last_name, count(*), SUM(vote_yes::int) FROM votes_history vh
+            SELECT vh.user_id, u.first_name, u.last_name, count(*), SUM(vote_yes::INT) FROM votes_history vh
             JOIN incoming_messages im ON im.id = vh.message_id AND im.original_chat_id = vh.original_chat_id
             LEFT JOIN users u ON u.user_id = vh.user_id AND u.bot_id = im.bot_id
             WHERE im.bot_id = %s AND vh.created_at BETWEEN %s AND %s
@@ -1176,10 +1191,10 @@ class Slave:
 
             def format_top_votes(row):
                 return npgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
-                                '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
-                                row[0]).format(votes_cnt=format_number(row[0], self.language),
-                                               votes_yes_cnt=format_number(row[1], self.language),
-                                               thumb_up_sign=Emoji.THUMBS_UP_SIGN)
+                                 '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
+                                 row[0]).format(votes_cnt=format_number(row[0], self.language),
+                                                votes_yes_cnt=format_number(row[1], self.language),
+                                                thumb_up_sign=Emoji.THUMBS_UP_SIGN)
 
             msg += format_top(cur.fetchall(), format_top_votes) + "\n"
 
@@ -1198,7 +1213,7 @@ class Slave:
                                                  period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             def format_top_messages(row):
-                return npgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0])\
+                return npgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0]) \
                     .format(messages_cnt=format_number(row[0], self.language))
 
             msg += format_top(cur.fetchall(), format_top_messages) + "\n"
@@ -1207,7 +1222,7 @@ class Slave:
             query = """
             SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
             LEFT JOIN users u ON u.user_id = im.owner_id AND u.bot_id = im.bot_id
-            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND im.is_published = True
+            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND im.is_published = TRUE
             GROUP BY im.owner_id, u.first_name, u.last_name
             ORDER BY COUNT(*) DESC
             LIMIT 5
@@ -1222,7 +1237,7 @@ class Slave:
             query = """
             SELECT im.owner_id, u.first_name, u.last_name, count(*) FROM incoming_messages im
             LEFT JOIN users u ON u.user_id = im.owner_id AND u.bot_id = im.bot_id
-            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND is_voting_fail = True
+            WHERE im.bot_id = %s AND im.created_at BETWEEN %s AND %s AND is_voting_fail = TRUE
             GROUP BY im.owner_id, u.first_name, u.last_name
             ORDER BY COUNT(*) DESC
             LIMIT 5
@@ -1277,8 +1292,9 @@ class Slave:
                                             chat_id=stage[1]['ban_user_id'])
             except:
                 pass
-            yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = True WHERE bot_id = %s AND '
-                                   'owner_id = %s AND is_voting_success = False', (self.bot_id, stage[1]['ban_user_id'], ))
+            yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
+                                   'owner_id = %s AND is_voting_success = FALSE',
+                                   (self.bot_id, stage[1]['ban_user_id'],))
             yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
                                    'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
             yield self.bot.send_message(pgettext('Ban confirmation', 'User banned'), reply_to_message=message)
@@ -1292,7 +1308,7 @@ class Slave:
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
             cur = yield get_db().execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
                                          'FROM users WHERE bot_id = %s AND '
-                                         'banned_at IS NOT NULL ORDER BY banned_at DESC', (self.bot_id, ))
+                                         'banned_at IS NOT NULL ORDER BY banned_at DESC', (self.bot_id,))
 
             msg = ''
 
@@ -1304,9 +1320,9 @@ class Slave:
                 else:
                     user = 'userid %s' % user_id
 
-                msg += pgettext('Ban user item', '{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}')\
-                           .format(row_id=row_id + 1, user=user, ban_reason=ban_reason,
-                                   ban_date=banned_at.strftime('%Y-%m-%d'), unban_cmd='/unban_%s' % (user_id, ))
+                msg += pgettext('Ban user item', '{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}') \
+                    .format(row_id=row_id + 1, user=user, ban_reason=ban_reason,
+                            ban_date=banned_at.strftime('%Y-%m-%d'), unban_cmd='/unban_%s' % (user_id,))
 
             if msg:
                 yield self.bot.send_message(msg, reply_to_message=message)
@@ -1400,7 +1416,7 @@ class Slave:
         ], [KeyboardButton('%s %s' % (marks[audio_enabled], pgettext('Content type', 'Audio'))),
             KeyboardButton('%s %s' % (marks[doc_enabled], pgettext('Content type', 'Document'))),
             KeyboardButton('%s %s' % (marks[sticker_enabled], pgettext('Content type', 'Sticker'))),
-        ], [
+            ], [
             KeyboardButton('%s %s' % (marks[voice_enabled], pgettext('Content type', 'Voice'))),
         ], [KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]], resize_keyboard=True, selective=True)
 
@@ -1421,7 +1437,7 @@ class Slave:
 
     @coroutine
     def plaintext_cancel_emoji_handler(self, message):
-        if message['text'] in (Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE, ):
+        if message['text'] in (Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE,):
             yield self.cancel_command(message)
             return
 
@@ -1486,9 +1502,9 @@ class Slave:
 
             for row_id, languages in groupby(enumerate(self.LANGUAGE_LIST), lambda l: floor(l[0] / 4)):
                 keyboard_rows.append([
-                    KeyboardButton(lang_name)
-                    for lang_idx, (lang_code, lang_name) in languages
-                ])
+                                         KeyboardButton(lang_name)
+                                         for lang_idx, (lang_code, lang_name) in languages
+                                         ])
 
             keyboard = ReplyKeyboardMarkup(keyboard_rows + [[KeyboardButton(Emoji.END_WITH_LEFTWARDS_ARROW_ABOVE)]],
                                            resize_keyboard=True, selective=True)
@@ -1506,7 +1522,7 @@ class Slave:
             languages = {
                 lang_name: lang_code
                 for lang_code, lang_name in self.LANGUAGE_LIST
-            }
+                }
 
             if message['text'] in languages:
                 yield self.__update_settings(locale=languages[message['text']])
