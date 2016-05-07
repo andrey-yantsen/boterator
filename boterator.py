@@ -475,7 +475,8 @@ class Slave:
         bot.add_handler(self.change_allowed_command, '/changeallowed')
         bot.add_handler(self.switchlang_command, '/switchlang')
         bot.add_handler(self.settextlimits_command, '/settextlimits')
-        bot.add_handler(self.cbq_message_review, None, Api.UPDATE_TYPE_CALLBACK_QUERY)
+        bot.add_handler(self.cbq_message_review, 'confirm', Api.UPDATE_TYPE_CALLBACK_QUERY)
+        bot.add_handler(self.cbq_cancel, 'cancel', Api.UPDATE_TYPE_CALLBACK_QUERY)
         bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
@@ -698,12 +699,6 @@ class Slave:
         if stage[0] != self.STAGE_ADDING_MESSAGE:
             return False
 
-        if message['data'] == 'cancel':
-            self.stages.drop(user_id=user_id, chat_id=user_id)
-            yield self.bot.edit_message_text(pgettext('Message publishing cancelled', 'Cancelled'), message['message'])
-            yield self.bot.answer_callback_query(message['id'])
-            return
-
         report_botan(message, 'slave_confirm')
         user_message = stage[1]['last_message']
         yield self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
@@ -717,8 +712,15 @@ class Slave:
         yield self.bot.edit_message_text(pgettext('Message sent for verification', 'Okay, I\'ve sent your message for '
                                                                                    'verification. Fingers crossed!'),
                                          message['message'])
-        yield self.bot.answer_callback_query(message['id'])
         self.stages.drop(user_id=user_id, chat_id=user_id)
+
+    @coroutine
+    @append_pgettext
+    def cbq_cancel(self, message, pgettext):
+        user_id = message['from']['id']
+        self.stages.drop(user_id=user_id, chat_id=user_id)
+        yield self.bot.edit_message_text(pgettext('Message publishing cancelled', 'Cancelled'), message['message'])
+        return
 
     @coroutine
     @append_pgettext

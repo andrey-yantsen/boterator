@@ -309,6 +309,7 @@ class Api:
 
         if not handled:
             logging.info('Handler not found: %s', update)
+            return False
 
     @staticmethod
     def _prepare_inline_message(message=None, chat_id=None, message_id=None, inline_message_id=None):
@@ -379,6 +380,10 @@ class Api:
         def default_filter(msg_type):
             return lambda r, _: r == msg_type
 
+        def default_filter_cb(cmd):
+            return lambda r, c: r == self.UPDATE_TYPE_CALLBACK_QUERY and\
+                                (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)) or c is False)
+
         bot_info = yield self.get_me()
         while True:
             update = yield self.processing_queue.get()
@@ -433,7 +438,10 @@ class Api:
                 elif 'chosen_inline_result' in update:
                     yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CHOSEN_INLINE_RESULT), update['chosen_inline_result'])
                 elif 'callback_query' in update:
-                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CALLBACK_QUERY), update['callback_query'])
+                    handled = yield self.__execute_update_handler(default_filter_cb(update['callback_query']['data']),
+                                                                  update['callback_query'])
+                    if handled:
+                        yield self.answer_callback_query(update['callback_query']['id'])
                 else:
                     logging.info('Unsupported message received: %s', update)
             except:
