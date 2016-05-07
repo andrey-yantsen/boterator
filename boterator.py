@@ -8,6 +8,7 @@ from ujson import dumps
 
 from math import floor
 
+from babel import core
 from babel.dates import format_date
 from babel.numbers import format_number
 from tornado.gen import coroutine, sleep
@@ -18,7 +19,7 @@ from tornado.locale import load_gettext_translations
 from emoji import Emoji
 from globals import get_db
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
-    InlineKeyboardButton
+    InlineKeyboardButton, ApiError
 
 from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext, append_npgettext
 from telegram_log_handler import TelegramHandler
@@ -116,7 +117,7 @@ class BotMother:
                 if new_bot_me['id'] in self.slaves:
                     report_botan(message, 'boterator_token_duplicate')
                     yield self.bot.send_message(pgettext('Boterator: provided token is already registered and alive',
-                                                         'It seems like this bot is already registered. Try to crete '
+                                                         'It seems like this bot is already registered. Try to create '
                                                          'another one'), reply_to_message=message)
                     return
                 yield self.bot.send_message(pgettext('Boterator: token received',
@@ -224,19 +225,27 @@ class BotMother:
                 slave.listen()
                 self.slaves[bot_id] = slave
             except:
-                logging.exception('Bot #%s failed', bot_id)
-                yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
-                try:
-                    yield self.bot.send_message(pgettext('Boterator: unable to establish startup connection with bot',
-                                                         'I\'m failed to establish connection to your bot with token %s')\
-                                                % token,
-                                                chat_id=owner_id)
-                except:
-                    pass
+                logging.exception('Bot #%s failed', bot_id, token, owner_id)
+                yield self.slave_revoked(bot_id, token, owner_id)
 
         logging.info('Waiting for commands')
         yield self.bot.wait_commands()
         logging.info('Mother termination')
+
+    @coroutine
+    @append_pgettext
+    def slave_revoked(self, bot_id, token, owner_id, pgettext):
+        yield get_db().execute('UPDATE registered_bots SET active = False WHERE id = %s', (bot_id, ))
+        if bot_id in self.slaves:
+            del self.slaves[bot_id]
+
+        try:
+            yield self.bot.send_message(pgettext('Boterator: unable to establish startup connection with bot',
+                                                 'I\'m failed to establish connection to your bot with token %s. Your '
+                                                 'bot was deactivated, to enable it again - perform registration '
+                                                 'process from the beginning.') % token, chat_id=owner_id)
+        except:
+            pass
 
     @coroutine
     @append_pgettext
@@ -326,6 +335,10 @@ class BotMother:
     def set_slave_attached(self, message, chat, pgettext=None):
         stage = self.stages.get(message)
         yield self.bot.send_chat_action(message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
+
+        if 'title' not in chat:
+            chat['title'] = '@' + message['from']['username']
+
         msg = pgettext('Boterator: slave attached to moderator`s channel',
                        "Ok, I'll be sending moderation requests to %s %s\n"
                        "Now you need to add your bot (@%s) to a channel as administrator and tell me the channel name "
@@ -505,7 +518,15 @@ class Slave:
     def listen(self):
         IOLoop.current().add_callback(self.check_votes_success)
         IOLoop.current().add_callback(self.check_votes_failures)
-        yield self.bot.wait_commands()
+        try:
+            yield self.bot.wait_commands()
+        except ApiError as e:
+            if e.code == 401:
+                logging.warning('Bot #%s is unable to connect to api', self.bot_id)
+                yield self.mother.slave_revoked(self.bot_id, self.bot.token, self.owner_id)
+            else:
+                raise
+
         logging.info('Slave termination')
 
     @coroutine
@@ -635,7 +656,7 @@ class Slave:
         user_id = message['from']['id']
         stage = self.mother.stages.get(user_id=user_id, chat_id=user_id)
         report_botan(message, 'slave_attach')
-        if stage[0] == BotMother.STAGE_MODERATION_GROUP and message['chat']['type'] != 'private':
+        if stage[0] == BotMother.STAGE_MODERATION_GROUP:
             yield self.mother.set_slave_attached(stage[1]['last_message'], message['chat'])
         else:
             try:

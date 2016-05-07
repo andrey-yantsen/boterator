@@ -165,7 +165,7 @@ class Api:
         return None
 
     @coroutine
-    def get_updates(self, offset: int=None, limit: int=100, timeout: int=5, retry_on_serverside_error: bool=False):
+    def get_updates(self, offset: int=None, limit: int=100, timeout: int=2, retry_on_serverside_error: bool=False):
         assert 1 <= limit <= 100
         assert 0 <= timeout
 
@@ -205,17 +205,11 @@ class Api:
 
         while self.consumption_state == self.STATE_WORKING:
             get_updates_f = self.get_updates(last_update_id, retry_on_serverside_error=True)
-            # Actually default tornado's futures doesn't support cancellation, so let's make some magic
-            cancelled = False
 
-            while get_updates_f.running() and not cancelled:
-                if self.consumption_state == self.STATE_STOP_PENDING:
-                    cancelled = True
-                    break
-
+            while get_updates_f.running():
                 yield sleep(0.05)
 
-            if cancelled:
+            if self.consumption_state == self.STATE_STOP_PENDING:
                 self.consumption_state = self.STATE_STOPPED
                 break
 
