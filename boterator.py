@@ -64,7 +64,7 @@ class BotMother:
         if allowed:
             return False
 
-        yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+        yield self.bot.send_message(pgettext('Boterator: User not allowed to perform this action', 'Access denied'),
                                     reply_to_message=message)
 
     @coroutine
@@ -143,7 +143,7 @@ class BotMother:
             except Exception as e:
                 report_botan(message, 'boterator_token_failure')
                 logging.exception(e)
-                yield self.bot.send_message(pgettext('Token check failed', 'Unable to get bot info: %s') % str(e),
+                yield self.bot.send_message(pgettext('Boterator: Token check failed', 'Unable to get bot info: %s') % str(e),
                                             reply_to_message=message)
 
     @coroutine
@@ -283,7 +283,7 @@ class BotMother:
                 slave.listen()
                 self.slaves[stage_meta['bot_info']['id']] = slave
 
-                votes_cnt_msg = npgettext('Boterator: default votes cnd', '%d vote', '%d votes',
+                votes_cnt_msg = npgettext('Boterator: default votes cnt', '%d vote', '%d votes',
                                           self.default_slave_settings['votes']) % self.default_slave_settings['votes']
 
                 delay_msg = npgettext('Boterator: default delay', '%d minute', '%d minutes',
