@@ -28,7 +28,8 @@ build_translation: collect_messages
 	  || pybabel init --input-file=$(POT_FILE) --output-dir=$(BASE_DIR) --domain=$(DOMAIN) --locale=$(LANG) --no-wrap
 
 upload_loco: collect_messages
-	@curl -s -XPOST -H 'Authorization: Loco $(LOCO_KEY)' -d @locale/boterator.pot https://localise.biz/api/import/pot > /dev/null
+	@curl -s -XPOST -H 'Content-type: text/x-gettext-translation' -H 'Authorization: Loco $(LOCO_KEY)' \
+	    --data-binary @locales/boterator.pot https://localise.biz/api/import/pot > /dev/null
 
 download_loco:
 	@curl -s -H 'Authorization: Loco $(LOCO_KEY)' https://localise.biz/api/export/archive/po.zip -o loco.zip

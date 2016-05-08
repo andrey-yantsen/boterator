@@ -18,7 +18,7 @@ msgstr ""
 "X-Loco-Api-Version: 1.0.14"
 
 #: boterator.py:286 loco:572ee04814d72565678b4567
-msgctxt "Boterator: default votes cnd"
+msgctxt "Boterator: default votes cnt"
 msgid "%d vote"
 msgid_plural "%d votes"
 msgstr[0] "%d vote"
