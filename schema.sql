@@ -46,7 +46,8 @@ CREATE TABLE incoming_messages (
     is_voting_fail boolean DEFAULT false NOT NULL,
     is_published boolean DEFAULT false NOT NULL,
     is_voting_success boolean DEFAULT false NOT NULL,
-    message jsonb
+    message jsonb,
+    moderation_message_id integer
 );
 
 
@@ -84,7 +85,8 @@ CREATE TABLE users (
     created_at timestamp without time zone NOT NULL,
     updated_at timestamp without time zone NOT NULL,
     banned_at timestamp without time zone,
-    ban_reason character varying
+    ban_reason character varying,
+    settings jsonb DEFAULT '{}'::jsonb NOT NULL
 );
 
 
