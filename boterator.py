@@ -723,7 +723,6 @@ class Slave:
         user_id = message['from']['id']
         self.stages.drop(user_id=user_id, chat_id=user_id)
         yield self.bot.edit_message_text(pgettext('Message publishing cancelled', 'Cancelled'), message['message'])
-        return
 
     @coroutine
     @append_pgettext
