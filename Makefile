@@ -29,7 +29,7 @@ build_translation: collect_messages
 
 upload_loco: collect_messages
 	@curl -s -XPOST -H 'Content-type: text/x-gettext-translation' -H 'Authorization: Loco $(LOCO_KEY)' \
-	    --data-binary @locales/boterator.pot https://localise.biz/api/import/pot > /dev/null
+	    --data-binary @locales/boterator.pot https://localise.biz/api/import/pot?index=id > /dev/null
 
 download_loco:
 	@curl -s -H 'Authorization: Loco $(LOCO_KEY)' https://localise.biz/api/export/archive/po.zip -o loco.zip
