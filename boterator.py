@@ -48,7 +48,7 @@ class BotMother:
         self.stages = StagesStorage()
         self.slaves = {}
 
-        load_gettext_translations('./locale', 'boterator')
+        load_gettext_translations('./locales', 'boterator')
         self.locale = locale.get('en')
 
         logger = logging.getLogger()
@@ -449,7 +449,7 @@ class Slave:
 
     LANGUAGE_LIST = (
         ('en', '%s English' % Emoji.FLAG_USA),
-        ('ru', '%s Русский' % Emoji.FLAG_RUSSIA),
+        ('ru_RU', '%s Русский' % Emoji.FLAG_RUSSIA),
     )
 
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
@@ -511,7 +511,7 @@ class Slave:
         self.settings = settings
         self.owner_id = owner_id
         self.bot_id = bot_id
-        load_gettext_translations('./locale', 'boterator')
+        load_gettext_translations('./locales', 'boterator')
         self.locale = locale.get(self.language)
 
     @coroutine
