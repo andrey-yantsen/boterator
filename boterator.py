@@ -448,7 +448,7 @@ class Slave:
     STAGE_WAIT_TEXT_LIMITS = 19
 
     LANGUAGE_LIST = (
-        ('en', '%s English' % Emoji.FLAG_USA),
+        ('en_US', '%s English' % Emoji.FLAG_USA),
         ('ru_RU', '%s Русский' % Emoji.FLAG_RUSSIA),
     )
 
@@ -1549,7 +1549,7 @@ class Slave:
 
     @property
     def language(self):
-        return self.settings.get('locale', 'en')
+        return self.settings.get('locale', 'en_US')
 
     @coroutine
     @append_pgettext

@@ -34,7 +34,7 @@ upload_loco: collect_messages
 download_loco:
 	@curl -s -H 'Authorization: Loco $(LOCO_KEY)' https://localise.biz/api/export/archive/po.zip -o loco.zip
 	@unzip loco.zip >/dev/null && rm loco.zip
-	@rsync boterator-po-archive/locales/ ./locales/ >/dev/null
+	@rsync -r boterator-po-archive/locales/ ./locales/ && rm -rf ./locales/en
 	@rm -rf boterator-po-archive
 
 compile_messages_loco: download_loco compile_messages
