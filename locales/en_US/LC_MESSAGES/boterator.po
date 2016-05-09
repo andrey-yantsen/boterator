@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-09 06:08+0100\n"
+"PO-Revision-Date: 2016-05-09 06:23+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -21,64 +21,64 @@ msgstr ""
 msgctxt "Boterator: default votes cnt"
 msgid "%d vote"
 msgid_plural "%d votes"
-msgstr[0] "%d vote"
-msgstr[1] "%d votes"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:289 loco:572f0e8214d7253d068b4569
 msgctxt "Boterator: default delay"
 msgid "%d minute"
 msgid_plural "%d minutes"
-msgstr[0] "%d minute"
-msgstr[1] "%d minutes"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:292 loco:572f0e8214d7253d068b456b
 msgctxt "Boterator: default timeout"
 msgid "%d hour"
 msgid_plural "%d hours"
-msgstr[0] "%d hour"
-msgstr[1] "%d hours"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:592 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
 msgid "{votes_received} vote"
 msgid_plural "{votes_received} votes"
-msgstr[0] "{votes_received} vote"
-msgstr[1] "{votes_received} votes"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:595 loco:572f0e8214d7253d068b456f
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
-msgstr[0] "{votes_required}"
-msgstr[1] "{votes_required}"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:932 loco:572f0e8214d7253d068b4571
 msgctxt "Delay between channel messages"
 msgid "%s minute"
 msgid_plural "%s minutes"
-msgstr[0] "%s minute"
-msgstr[1] "%s minutes"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:934 loco:572f0e8214d7253d068b4573
 msgctxt "Voting timeout"
 msgid "%s hour"
 msgid_plural "%s hours"
-msgstr[0] "%s hour"
-msgstr[1] "%s hours"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:1203 loco:572f0e8214d7253d068b4575
 msgctxt "Votes count"
 msgid "{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})"
 msgid_plural "{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})"
-msgstr[0] "{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})"
-msgstr[1] "{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:1226 loco:572f0e8214d7253d068b4577
 msgctxt "Messages count"
 msgid "{messages_cnt} message"
 msgid_plural "{messages_cnt} messages"
-msgstr[0] "{messages_cnt} message"
-msgstr[1] "{messages_cnt} messages"
+msgstr[0] ""
+msgstr[1] ""
 
 #: boterator.py:962 boterator.py:994 boterator.py:1026 boterator.py:1058 
 #: boterator.py:1108 boterator.py:1263 boterator.py:1347 boterator.py:1447 
@@ -105,7 +105,7 @@ msgstr "@BotFather gave you the token. Please send it to me."
 #: boterator.py:102 loco:572f0e8214d7253d068b457c
 msgctxt "Boterator: empty token entered"
 msgid "I guess you forgot to enter the token :)"
-msgstr "I guess you forgot to enter the token :)"
+msgstr ""
 
 #: boterator.py:108 loco:572f0e8214d7253d068b457d
 msgctxt "Boterator: non-well formatted token"
@@ -145,7 +145,7 @@ msgstr ""
 #: boterator.py:154 loco:572f0e8214d7253d068b4582
 msgctxt "Boterator: /cancel response"
 msgid "Oka-a-a-a-a-ay."
-msgstr "Oka-a-a-a-a-ay."
+msgstr ""
 
 #: boterator.py:165 loco:572f0e8214d7253d068b4583
 msgctxt "Boterator: invalid channel name received"
@@ -164,7 +164,7 @@ msgstr ""
 #: boterator.py:196 loco:572f0e8214d7253d068b4585
 msgctxt "Boterator: default start message"
 msgid "Just enter your message, and we're ready."
-msgstr "Just enter your message, and we're ready."
+msgstr ""
 
 #: boterator.py:248 loco:572f0e8214d7253d068b4586
 msgctxt "Boterator: unable to establish startup connection with bot"
@@ -272,13 +272,11 @@ msgid ""
 "Unfortunately your message got only {votes_received_msg} out of required "
 "{votes_required_msg} and won't be published to the channel."
 msgstr ""
-"Unfortunately your message got only {votes_received_msg} out of required "
-"{votes_required_msg} and won't be published to the channel."
 
 #: boterator.py:642 loco:572f0e8214d7253d068b4592
 msgctxt "Bot added to a known group"
 msgid "Hi there, @{bot_username}!"
-msgstr "Hi there, @{bot_username}!"
+msgstr ""
 
 #: boterator.py:649 loco:572f0e8214d7253d068b4593
 msgctxt "Bot added to an unknown chat when he isn't ready for this"
@@ -314,7 +312,7 @@ msgstr "Cancelled."
 #: boterator.py:732 loco:572f0e8214d7253d068b4598
 msgctxt "Pending command cancelled"
 msgid "Oka-a-a-a-a-ay."
-msgstr "Oka-a-a-a-a-ay."
+msgstr ""
 
 #: boterator.py:739 loco:572f0e8214d7253d068b4599
 msgctxt "Message received, requesting the user to check the message once again"
@@ -329,12 +327,12 @@ msgstr ""
 #: boterator.py:745 loco:572f0e8214d7253d068b459a
 msgctxt "`Confirm` button on message review keyboard"
 msgid "Confirm"
-msgstr "Confirm"
+msgstr ""
 
 #: boterator.py:747 loco:572f0e8214d7253d068b459b
 msgctxt "`Cancel` button on message review keyboard"
 msgid "Cancel"
-msgstr "Cancel"
+msgstr ""
 
 #: boterator.py:763 loco:572f0e8214d7253d068b459c
 msgctxt "User send text message for verification while texts is disabled"
@@ -529,12 +527,12 @@ msgstr ""
 #: boterator.py:1186 loco:572f0e8214d7253d068b45b8
 msgctxt "Stats header"
 msgid "Stats for {period}"
-msgstr "Stats for {period}"
+msgstr ""
 
 #: boterator.py:1187 loco:572f0e8214d7253d068b45b9
 msgctxt "TOP type"
 msgid "TOP5 voters:"
-msgstr "TOP5 voters:"
+msgstr ""
 
 #: boterator.py:1211 loco:572f0e8214d7253d068b45ba
 msgctxt "TOP type"
@@ -620,12 +618,12 @@ msgstr "Message was succesfully sent."
 #: boterator.py:1403 loco:572f0e8214d7253d068b45c9
 msgctxt "Reply failed"
 msgid "Failed: {reason}"
-msgstr "Failed: {reason}"
+msgstr ""
 
 #: boterator.py:1425 boterator.py:1478 loco:572f0e8214d7253d068b45ca
 msgctxt "Content type"
 msgid "Text"
-msgstr "Text"
+msgstr ""
 
 #: boterator.py:1426 boterator.py:1479 loco:572f0e8214d7253d068b45cb
 msgctxt "Content type"
@@ -635,27 +633,27 @@ msgstr "Pictures"
 #: boterator.py:1427 boterator.py:1480 loco:572f0e8214d7253d068b45cc
 msgctxt "Content type"
 msgid "Video"
-msgstr "Video"
+msgstr ""
 
 #: boterator.py:1428 boterator.py:1481 loco:572f0e8214d7253d068b45cd
 msgctxt "Content type"
 msgid "Audio"
-msgstr "Audio"
+msgstr ""
 
 #: boterator.py:1429 boterator.py:1484 loco:572f0e8214d7253d068b45ce
 msgctxt "Content type"
 msgid "Document"
-msgstr "Document"
+msgstr ""
 
 #: boterator.py:1430 boterator.py:1483 loco:572f0e8214d7253d068b45cf
 msgctxt "Content type"
 msgid "Sticker"
-msgstr "Sticker"
+msgstr ""
 
 #: boterator.py:1432 boterator.py:1482 loco:572f0e8214d7253d068b45d0
 msgctxt "Content type"
 msgid "Voice"
-msgstr "Voice"
+msgstr ""
 
 #: boterator.py:1441 loco:572f0e8214d7253d068b45d1
 msgctxt "/changeallowed response"
@@ -717,12 +715,12 @@ msgstr ""
 #: boterator.py:1602 loco:572f0e8214d7253d068b45da
 msgctxt "Moderator's ability to alter settings"
 msgid "yes"
-msgstr "yes"
+msgstr ""
 
 #: boterator.py:1603 loco:572f0e8214d7253d068b45db
 msgctxt "Moderator's ability to alter settings"
 msgid "no"
-msgstr "no"
+msgstr ""
 
 #: boterator.py:1605 loco:572f0e8214d7253d068b45dc
 msgctxt "Content type enabled/disabled"
