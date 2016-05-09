@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-08 15:10+0100\n"
+"PO-Revision-Date: 2016-05-09 06:08+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: Russian (Russia)\n"
 "Language: ru-RU\n"
@@ -126,8 +126,7 @@ msgstr "Неверный токен. И я с этим ничего не мог�
 msgctxt "Boterator: provided token is already registered and alive"
 msgid "It seems like this bot is already registered. Try to create another one"
 msgstr ""
-"Похоже, что этот бот уже зарегистрирован. Попробуйте использовать другого "
-"бота."
+"Похоже, этот бот уже зарегистрирован. Попробуйте использовать другого бота."
 
 #: boterator.py:124 loco:572f0e8214d7253d068b457f
 msgctxt "Boterator: token received"
@@ -150,7 +149,7 @@ msgid ""
 "@%s), and it will be published after verification by our team."
 msgstr ""
 "Всем привет! Теперь подписчики могут публиковать информацию в этот канал. "
-"Для этого нужно отправить мне сообщение (бот @%s), и я отправлю его на "
+"Для этого нужно прислать мне сообщение (бот @%s), и я отправлю его на "
 "модерацию."
 
 #: boterator.py:154 loco:572f0e8214d7253d068b4582
@@ -229,14 +228,14 @@ msgstr ""
 "Окей, я буду отправлять сообщения на модерацию в %s %s.\n"
 "\n"
 "Теперь вам нужно добавить своего бота (@%s) в канал в качестве "
-"администратора и сказать мне его имя.\n"
-"Как только я получу имя канала, я отправлю приветственный текст в него:\n"
+"администратора и сказать мне имя канала. Как только я получу имя канала, я "
+"отправлю в него такой приветственный текст:\n"
 "> %s\n"
 "Вы можете изменить этот текст. Для этого отправьте мне /changehello.\n"
 "\n"
-"Также есть стартовое сообщение для вашего бота:\n"
+"По умолчанию у вашего бота стоит вот такое приветственное сообщение:\n"
 "> %s\n"
-"Для его изменения отправьте /changestart."
+"Его вы тоже можете изменить. Для этого отправьте мне /changestart."
 
 #: boterator.py:372 loco:572f0e8214d7253d068b458a
 msgctxt "Boterator: /changehello response"
@@ -313,8 +312,7 @@ msgstr "Некорректный ввод."
 #: boterator.py:715 loco:572f0e8214d7253d068b4596
 msgctxt "Message sent for verification"
 msgid "Okay, I've sent your message for verification. Fingers crossed!"
-msgstr ""
-"Отлично, ваше сообщение отправлено на модерацию. Дружно скрестим пальцы!"
+msgstr "Отлично, ваше сообщение отправлено на модерацию. Скрестим пальцы! :)"
 
 #: boterator.py:725 loco:572f0e8214d7253d068b4597
 msgctxt "Message publishing cancelled"
@@ -324,7 +322,7 @@ msgstr "Отменено."
 #: boterator.py:732 loco:572f0e8214d7253d068b4598
 msgctxt "Pending command cancelled"
 msgid "Oka-a-a-a-a-ay."
-msgstr "Oka-a-a-a-a-ay."
+msgstr "Оке-е-е-е-е-ей."
 
 #: boterator.py:739 loco:572f0e8214d7253d068b4599
 msgctxt "Message received, requesting the user to check the message once again"
@@ -334,7 +332,7 @@ msgid ""
 "Confirm button if everything is fine"
 msgstr ""
 "Мне нравится. Посмотри ещё раз, как будет выглядеть сообщение. Если всё в "
-"порядке, просто нажми на Подтвердить."
+"порядке, просто нажми Подтвердить."
 
 #: boterator.py:745 loco:572f0e8214d7253d068b459a
 msgctxt "`Confirm` button on message review keyboard"
@@ -404,14 +402,14 @@ msgstr ""
 "{thumb_up_sign} {vote_yes_cmd}\n"
 "{thumb_down} {vote_no_cmd}\n"
 "\n"
-"Ещё варианты:\n"
+"Что ещё можно сделать:\n"
 "Отправить пользователю сообщение {reply_cmd}\n"
 "Забанить негодяя {ban_cmd}"
 
 #: boterator.py:896 loco:572f0e8214d7253d068b45a6
 msgctxt "Message verified and queued for publishing"
 msgid "Your message was verified and queued for publishing."
-msgstr "Ваше сообщение было одобрено и добавлено в очередь публикаций."
+msgstr "Ура! Ваше сообщение было одобрено и добавлено в очередь публикаций."
 
 #: boterator.py:938 loco:572f0e8214d7253d068b45a7
 msgctxt "/help command response"
@@ -424,8 +422,6 @@ msgstr ""
 "сообщения (текущее значение: {current_votes_required})\n"
 "/settimeout — изменить продолжительность голосования (текущее значение: "
 "{current_timeout_with_hours})\n"
-"/setstartmessage — изменить стартовое сообщение бота (текущее значение: "
-"{current_start_message})\n"
 "/settextlimits — изменить ограничение на длинну текстовых сообщение (текущее "
 "значение: {current_text_limit[min]}..{current_text_limit[max]})\n"
 "/togglepower — изменить состояние власти модераторов (текущее значение: "
@@ -438,37 +434,42 @@ msgstr ""
 "/banlist — отобразить список забаненных пользователей\n"
 "/switchlang — изменить язык интерфейса\n"
 "/changeallowed — изменить список разрешённых типов сообщений\n"
+"\n"
+"/setstartmessage — изменить стартовое сообщение бота (текущее значение: "
+"{current_start_message})"
 
 #: boterator.py:957 loco:572f0e8214d7253d068b45a8
 msgctxt "New delay request"
 msgid "Set new delay value for messages posting (in minutes)"
-msgstr ""
-"Введите новое значение задержки между публикациями сообщений (в минутах)."
+msgstr "Введите новую задержку между публикациями сообщений (в минутах)."
 
 #: boterator.py:972 loco:572f0e8214d7253d068b45a9
 msgctxt "Messages delay successfully changed"
 msgid "Delay value updated"
-msgstr "Новое значение задержки между сообщениями сохранено."
+msgstr "Новая задержка между публикациями сообщений сохранена."
 
 #: boterator.py:990 loco:572f0e8214d7253d068b45aa
 msgctxt "New required votes count request"
 msgid "Set new amount of required votes"
 msgstr ""
+"Установите новое количество голосов, необходимое для одобрения сообщения."
 
 #: boterator.py:1004 loco:572f0e8214d7253d068b45ab
 msgctxt "Required votes count successfully changed"
 msgid "Required votes amount updated"
-msgstr ""
+msgstr "Новое количество необходимых голосов установлено."
 
 #: boterator.py:1021 loco:572f0e8214d7253d068b45ac
 msgctxt "New voting duration request"
 msgid "Set new voting duration value (in hours, only a digits)"
 msgstr ""
+"Установите новую продолжительность голосования (в часах, используйте только "
+"цифры)."
 
 #: boterator.py:1037 loco:572f0e8214d7253d068b45ad
 msgctxt "Voting duration successfully changed"
 msgid "Voting duration updated"
-msgstr ""
+msgstr "Новая продолжительность голосования установлена."
 
 #: boterator.py:1053 loco:572f0e8214d7253d068b45ae
 msgctxt "New start message request"
@@ -486,12 +487,14 @@ msgid ""
 "Invalid start message, you should write at least 10 symbols. Try again or "
 "type /cancel"
 msgstr ""
+"Такое стартовое сообщение не подходит. Нужно использовать хотя бы 10 "
+"символов. Попробуйте ещё раз или введите /cancel."
 
 #: boterator.py:1099 loco:572f0e8214d7253d068b45b1
 msgctxt "Power mode disabled"
 msgid "From now other chat users can not modify bot settings"
 msgstr ""
-"Теперь другие пользователи чата модераторов НЕ могут изменять настройки бота."
+"Теперь другие участники чата модераторов НЕ МОГУТ изменять настройки бота."
 
 #: boterator.py:1104 loco:572f0e8214d7253d068b45b2
 msgctxt "Power mode enabled"
@@ -499,7 +502,7 @@ msgid ""
 "From now other chat users can modify bot settings (only inside moderators "
 "chat)"
 msgstr ""
-"Теперь другие пользователи чата модераторов могут изменять настройки бота."
+"Теперь другие участники чата модераторов МОГУТ изменять настройки бота."
 
 #: boterator.py:1127 loco:572f0e8214d7253d068b45b3
 msgctxt "Stats user item"
@@ -516,13 +519,13 @@ msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01 2016-01-13`"
 msgstr ""
 "Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01 "
-"2016-01-13`"
+"2016-01-13`."
 
 #: boterator.py:1160 loco:572f0e8214d7253d068b45b6
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01`"
 msgstr ""
-"Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01`"
+"Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01`."
 
 #: boterator.py:1166 loco:572f0e8214d7253d068b45b7
 msgctxt "Invalid stats request"
@@ -532,7 +535,7 @@ msgid ""
 msgstr ""
 "Запрошен некорректный период, правильно писать вот так: `/stats 2016-01-01 "
 "2016-01-13`, `/stats 5` для статистики за последние 5 дней или `/stats 2016-"
-"01-01`"
+"01-01`."
 
 #: boterator.py:1186 loco:572f0e8214d7253d068b45b8
 msgctxt "Stats header"
@@ -569,7 +572,7 @@ msgctxt "Ban reason too short"
 msgid "Reason is too short (5 symbols required), try again or send /cancel"
 msgstr ""
 "Может быть, как-то поразвёрнутей? :) (нужно ввести хотя бы 5 символов). "
-"Попробуйте ещё раз или отправьте /cancel"
+"Попробуйте ещё раз или отправьте /cancel."
 
 #: boterator.py:1299 loco:572f0e8214d7253d068b45bf
 msgctxt "Message to user in case of ban"
@@ -599,7 +602,7 @@ msgstr "Команду /unban можно использовать только �
 #: boterator.py:1344 loco:572f0e8214d7253d068b45c3
 msgctxt "Ban list is empty"
 msgid "No banned users yet"
-msgstr "Ещё ни один пользователь не забанен."
+msgstr "Ещё ни один пользователь не был забанен."
 
 #: boterator.py:1363 loco:572f0e8214d7253d068b45c4
 msgctxt "Unban confirmation"
@@ -621,7 +624,7 @@ msgctxt "Reply message is too short"
 msgid "Message is too short (10 symbols required), try again or send /cancel"
 msgstr ""
 "Давайте всё-таки немного подробнее (нужно ввести хотя бы 10 символов). "
-"Попробуйте ещё раз или отправьте /cancel"
+"Попробуйте ещё раз или отправьте /cancel."
 
 #: boterator.py:1400 loco:572f0e8214d7253d068b45c8
 msgctxt "Reply delivery confirmation"
@@ -698,16 +701,18 @@ msgid ""
 "Please enter new value for length limits formatted like `{min_length}.."
 "{max_length}` (e.g. `1..10`)"
 msgstr ""
+"Пожалуйста, введите новые ограничения в формате `{min_length}..{max_length}` "
+"(например, `1..10`)."
 
 #: boterator.py:1580 loco:572f0e8214d7253d068b45d6
 msgctxt "Bottom limit is too low"
 msgid "Bottom limit must be greater than 0"
-msgstr ""
+msgstr "Нижний лимит не может быть меньше 0."
 
 #: boterator.py:1584 loco:572f0e8214d7253d068b45d7
 msgctxt "Top limit is too low"
 msgid "Top limit must be greater than bottom one"
-msgstr ""
+msgstr "Верхний лимит должен быть больше нижнего лимита."
 
 #: boterator.py:1589 loco:572f0e8214d7253d068b45d8
 msgctxt "Text limits changed successfully"
@@ -720,6 +725,8 @@ msgid ""
 "Please use following format: `{min_length}..{max_length}` (e.g. `1..10`), or "
 "send /cancel"
 msgstr ""
+"Пожалуйста, используйте формат: `{min_length}..{max_length}` (например, `1.."
+"10`), или отправьте /cancel."
 
 #: boterator.py:1602 loco:572f0e8214d7253d068b45da
 msgctxt "Moderator's ability to alter settings"
@@ -799,4 +806,4 @@ msgstr "Доступ запрещён."
 #: boterator.py:146 loco:572f0e9d14d725ad058b4568
 msgctxt "Boterator: Token check failed"
 msgid "Unable to get bot info: %s"
-msgstr "Ошибка при проверке токена: %s"
+msgstr "Ошибка при проверке токена: %s."
