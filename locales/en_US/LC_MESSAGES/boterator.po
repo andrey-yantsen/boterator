@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-09 06:23+0100\n"
+"PO-Revision-Date: 2016-05-09 15:01+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -725,62 +725,62 @@ msgstr ""
 #: boterator.py:1605 loco:572f0e8214d7253d068b45dc
 msgctxt "Content type enabled/disabled"
 msgid "Texts enabled"
-msgstr "Text messages: enabled."
+msgstr "Text messages enabled."
 
 #: boterator.py:1606 loco:572f0e8214d7253d068b45dd
 msgctxt "Content type enabled/disabled"
 msgid "Texts disabled"
-msgstr "Text messages: disabled."
+msgstr "Text messages disabled."
 
 #: boterator.py:1607 loco:572f0e8214d7253d068b45de
 msgctxt "Content type enabled/disabled"
 msgid "Photos enabled"
-msgstr "Pictures: enabled."
+msgstr "Pictures enabled."
 
 #: boterator.py:1608 loco:572f0e8214d7253d068b45df
 msgctxt "Content type enabled/disabled"
 msgid "Photos disabled"
-msgstr "Pictures: disabled."
+msgstr "Pictures disabled."
 
 #: boterator.py:1609 loco:572f0e8214d7253d068b45e0
 msgctxt "Content type enabled/disabled"
 msgid "Videos enabled"
-msgstr "Video: enabled."
+msgstr "Video enabled."
 
 #: boterator.py:1610 loco:572f0e8214d7253d068b45e1
 msgctxt "Content type enabled/disabled"
 msgid "Videos disabled"
-msgstr "Video: disabled."
+msgstr "Video disabled."
 
 #: boterator.py:1611 loco:572f0e8214d7253d068b45e2
 msgctxt "Content type enabled/disabled"
 msgid "Audios enabled"
-msgstr "Audio: enabled."
+msgstr "Audio enabled."
 
 #: boterator.py:1612 loco:572f0e8214d7253d068b45e3
 msgctxt "Content type enabled/disabled"
 msgid "Audios disabled"
-msgstr "Audio: disabled."
+msgstr "Audio disabled."
 
 #: boterator.py:1613 loco:572f0e8214d7253d068b45e4
 msgctxt "Content type enabled/disabled"
 msgid "Voices enabled"
-msgstr "Voice messages: enabled."
+msgstr "Voice messages enabled."
 
 #: boterator.py:1614 loco:572f0e8214d7253d068b45e5
 msgctxt "Content type enabled/disabled"
 msgid "Voices disabled"
-msgstr "Voice messages: disabled."
+msgstr "Voice messages disabled."
 
 #: boterator.py:1615 loco:572f0e8214d7253d068b45e6
 msgctxt "Content type enabled/disabled"
 msgid "Stickers enabled"
-msgstr "Stickers: enabled."
+msgstr "Stickers enabled."
 
 #: boterator.py:1616 loco:572f0e8214d7253d068b45e7
 msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
-msgstr "Stickers: disabled."
+msgstr "Stickers disabled."
 
 #: boterator.py:67 loco:572f0e9d14d725ad058b4567
 msgctxt "Boterator: User not allowed to perform this action"
