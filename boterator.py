@@ -472,6 +472,7 @@ class Slave:
         bot.add_handler(self.togglepower_command, '/togglepower')
         bot.add_handler(self.stats_command, '/stats')
         bot.add_handler(self.ban_list_command, '/banlist')
+        bot.add_handler(self.polls_list_command, '/pollslist')
         bot.add_handler(self.change_allowed_command, '/changeallowed')
         bot.add_handler(self.switchlang_command, '/switchlang')
         bot.add_handler(self.settextlimits_command, '/settextlimits')
@@ -1618,6 +1619,34 @@ class Slave:
         else:
             return False
 
+    @coroutine
+    @append_npgettext
+    @append_pgettext
+    def polls_list_command(self, message, pgettext, npgettext):
+        chat_id = message['chat']['id']
+        if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
+            cur = yield get_db().execute('SELECT message FROM incoming_messages WHERE is_voting_success = False AND '
+                                         'is_voting_fail = False AND is_published = False AND bot_id = %s',
+                                         (self.bot_id, ))
+
+            pending = cur.fetchall()
+
+            if len(pending):
+                polls_cnt_msg = npgettext('Polls count', '%d poll', '%d polls', len(pending)) % len(pending)
+                reply_part_one = pgettext('/pollslist reply message', 'There is {polls_msg} in progress:')\
+                    .format(polls_msg=polls_cnt_msg)
+                yield self.bot.send_message(reply_part_one, reply_to_message=message)
+
+                for (message_to_moderate, ) in pending:
+                    yield self.post_new_moderation_request(message_to_moderate)
+            else:
+                yield self.bot.send_message(pgettext('/pollslist reply on empty pending-polls list',
+                                                     'There is no polls in progress.'),
+                                            reply_to_message=message)
+
+        else:
+            yield self.bot.send_message(pgettext('User not allowed to perform this action', 'Access denied'),
+                                        reply_to_message=message)
 
 def __messages():
     pgettext('Moderator\'s ability to alter settings', 'yes')
