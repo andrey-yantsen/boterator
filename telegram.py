@@ -397,7 +397,7 @@ class Api:
                             update['message']['text'] = update['message']['text'][:-len(bot_info['username'])-1].strip()
 
                         # Got bot command
-                        if update['message']['text'][0] == '/':
+                        if len(update['message']['text']) and update['message']['text'][0] == '/':
                             if update['message']['text'].find(' ') > -1:
                                 cmd = update['message']['text'][:update['message']['text'].find(' ')]
                             else:
