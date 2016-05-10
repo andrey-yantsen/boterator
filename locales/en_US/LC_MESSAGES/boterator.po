@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-10 09:58+0100\n"
+"PO-Revision-Date: 2016-05-10 15:34+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -38,51 +38,51 @@ msgid_plural "%d hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:592 loco:572f0e8214d7253d068b456d
+#: boterator.py:606 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
 msgid "{votes_received} vote"
 msgid_plural "{votes_received} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:595 loco:572f0e8214d7253d068b456f
+#: boterator.py:609 loco:572f0e8214d7253d068b456f
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:932 loco:572f0e8214d7253d068b4571
+#: boterator.py:952 loco:572f0e8214d7253d068b4571
 msgctxt "Delay between channel messages"
 msgid "%s minute"
 msgid_plural "%s minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:934 loco:572f0e8214d7253d068b4573
+#: boterator.py:954 loco:572f0e8214d7253d068b4573
 msgctxt "Voting timeout"
 msgid "%s hour"
 msgid_plural "%s hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:1203 loco:572f0e8214d7253d068b4575
+#: boterator.py:1223 loco:572f0e8214d7253d068b4575
 msgctxt "Votes count"
 msgid "{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})"
 msgid_plural "{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:1226 loco:572f0e8214d7253d068b4577
+#: boterator.py:1246 loco:572f0e8214d7253d068b4577
 msgctxt "Messages count"
 msgid "{messages_cnt} message"
 msgid_plural "{messages_cnt} messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: boterator.py:962 boterator.py:994 boterator.py:1026 boterator.py:1058 
-#: boterator.py:1108 boterator.py:1263 boterator.py:1347 boterator.py:1447 
-#: boterator.py:1527 boterator.py:1566 loco:572f0e8214d7253d068b4579
+#: boterator.py:982 boterator.py:1014 boterator.py:1046 boterator.py:1078 
+#: boterator.py:1128 boterator.py:1283 boterator.py:1367 boterator.py:1467 
+#: boterator.py:1547 boterator.py:1586 loco:572f0e8214d7253d068b4579
 msgctxt "User not allowed to perform this action"
 msgid "Access denied"
 msgstr "Access denied."
@@ -190,10 +190,10 @@ msgid ""
 msgstr ""
 "And we're ready for some magic!\n"
 "\n"
-"By default the bot will wait for {votes_cnt_msg} to approve the message, "
-"make {delay_msg} delay between publishing messages to the channel, wait "
-"{timeout_msg} before closing a vote for each message and allow only text "
-"messages (no multimedia content at all). To modify these and some other "
+"By default the bot will wait for {votes_cnt_msg} to approve or reject the "
+"message, make {delay_msg} delay between publishing messages to the channel, "
+"wait {timeout_msg} before closing a vote for each message and allow only "
+"text messages (no multimedia content at all). To modify these and some other "
 "settings send /help in PM to @{bot_username}. By default you're the only "
 "user who can change these settings and use /help command."
 
@@ -266,19 +266,19 @@ msgctxt "User banned"
 msgid "Access denied"
 msgstr "Access denied."
 
-#: boterator.py:598 loco:572f0e8214d7253d068b4591
+#: boterator.py:612 loco:572f0e8214d7253d068b4591
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message got only {votes_received_msg} out of required "
 "{votes_required_msg} and won't be published to the channel."
 msgstr ""
 
-#: boterator.py:642 loco:572f0e8214d7253d068b4592
+#: boterator.py:649 loco:572f0e8214d7253d068b4592
 msgctxt "Bot added to a known group"
 msgid "Hi there, @{bot_username}!"
 msgstr ""
 
-#: boterator.py:649 loco:572f0e8214d7253d068b4593
+#: boterator.py:656 loco:572f0e8214d7253d068b4593
 msgctxt "Bot added to an unknown chat when he isn't ready for this"
 msgid ""
 "This bot wasn't registered for group {group_title}, type /start for more info"
@@ -286,7 +286,7 @@ msgstr ""
 "This bot wasn't registered for group {group_title}. In order to get some "
 "additional information send /start to @BoteratorBot."
 
-#: boterator.py:665 loco:572f0e8214d7253d068b4594
+#: boterator.py:672 loco:572f0e8214d7253d068b4594
 msgctxt "New group created with bot and isn't ready for this"
 msgid ""
 "This bot wasn't registered for group {group_title}, type /start for more info"
@@ -294,27 +294,27 @@ msgstr ""
 "This bot wasn't registered for group {group_title}. In order to get some "
 "additional information send /start to @BoteratorBot."
 
-#: boterator.py:682 loco:572f0e8214d7253d068b4595
+#: boterator.py:689 loco:572f0e8214d7253d068b4595
 msgctxt "Bot received /attach command when he isn't ready"
 msgid "Incorrect command"
 msgstr "Sorry, I don’t understand what you want."
 
-#: boterator.py:715 loco:572f0e8214d7253d068b4596
+#: boterator.py:725 loco:572f0e8214d7253d068b4596
 msgctxt "Message sent for verification"
 msgid "Okay, I've sent your message for verification. Fingers crossed!"
 msgstr "Okay, I've sent your message for moderation. Fingers crossed!"
 
-#: boterator.py:725 loco:572f0e8214d7253d068b4597
+#: boterator.py:736 loco:572f0e8214d7253d068b4597
 msgctxt "Message publishing cancelled"
 msgid "Cancelled"
 msgstr "Cancelled."
 
-#: boterator.py:732 loco:572f0e8214d7253d068b4598
+#: boterator.py:744 loco:572f0e8214d7253d068b4598
 msgctxt "Pending command cancelled"
 msgid "Oka-a-a-a-a-ay."
 msgstr ""
 
-#: boterator.py:739 loco:572f0e8214d7253d068b4599
+#: boterator.py:751 loco:572f0e8214d7253d068b4599
 msgctxt "Message received, requesting the user to check the message once again"
 msgid ""
 "Looks good for me. I've printed the message in exact same way as it will be "
@@ -324,22 +324,22 @@ msgstr ""
 "Looks great! Please, take a look on your message one more time. If "
 "everything is fine, tap Confirm button."
 
-#: boterator.py:745 loco:572f0e8214d7253d068b459a
+#: boterator.py:757 loco:572f0e8214d7253d068b459a
 msgctxt "`Confirm` button on message review keyboard"
 msgid "Confirm"
 msgstr ""
 
-#: boterator.py:747 loco:572f0e8214d7253d068b459b
+#: boterator.py:759 loco:572f0e8214d7253d068b459b
 msgctxt "`Cancel` button on message review keyboard"
 msgid "Cancel"
 msgstr ""
 
-#: boterator.py:763 loco:572f0e8214d7253d068b459c
+#: boterator.py:775 loco:572f0e8214d7253d068b459c
 msgctxt "User send text message for verification while texts is disabled"
 msgid "Accepting text messages are disabled"
 msgstr "Sorry, but text messages are disabled."
 
-#: boterator.py:775 loco:572f0e8214d7253d068b459d
+#: boterator.py:787 loco:572f0e8214d7253d068b459d
 msgctxt "Incorrect text message received"
 msgid ""
 "Sorry, but we can proceed only messages with length between {min_msg_length} "
@@ -348,42 +348,42 @@ msgstr ""
 "Sorry, but we can proceed only messages with length between {min_msg_length} "
 "and {max_msg_length} chars."
 
-#: boterator.py:784 loco:572f0e8214d7253d068b459e
+#: boterator.py:796 loco:572f0e8214d7253d068b459e
 msgctxt "User sent empty message"
 msgid "Seriously??? 8===3"
 msgstr "It's too short. Really."
 
-#: boterator.py:797 loco:572f0e8214d7253d068b459f
+#: boterator.py:809 loco:572f0e8214d7253d068b459f
 msgctxt "User sent a sticker for verification while stickers are disabled"
 msgid "Accepting stickers is disabled"
 msgstr "Sorry, but stickers are disabled."
 
-#: boterator.py:801 loco:572f0e8214d7253d068b45a0
+#: boterator.py:813 loco:572f0e8214d7253d068b45a0
 msgctxt "User sent an audio for verification while audios are disabled"
 msgid "Accepting audios is disabled"
 msgstr "Sorry, but audio files are disabled."
 
-#: boterator.py:805 loco:572f0e8214d7253d068b45a1
+#: boterator.py:817 loco:572f0e8214d7253d068b45a1
 msgctxt "User sent a voice for verification while voices are disabled"
 msgid "Accepting voice is disabled"
 msgstr "Sorry, but voice messages are disabled."
 
-#: boterator.py:809 loco:572f0e8214d7253d068b45a2
+#: boterator.py:821 loco:572f0e8214d7253d068b45a2
 msgctxt "User sent a video for verification while videos are disabled"
 msgid "Accepting videos is disabled"
 msgstr "Sorry, but video files are disabled."
 
-#: boterator.py:813 loco:572f0e8214d7253d068b45a3
+#: boterator.py:825 loco:572f0e8214d7253d068b45a3
 msgctxt "User sent a photo for verification while photos are disabled"
 msgid "Accepting photos is disabled"
 msgstr "Sorry, but pictures are disabled."
 
-#: boterator.py:817 loco:572f0e8214d7253d068b45a4
+#: boterator.py:829 loco:572f0e8214d7253d068b45a4
 msgctxt "User sent a document for verification while documents are disabled"
 msgid "Accepting documents is disabled"
 msgstr "Sorry, but documents are disabled."
 
-#: boterator.py:828 loco:572f0e8214d7253d068b45a5
+#: boterator.py:840 loco:572f0e8214d7253d068b45a5
 msgctxt "Verification message"
 msgid ""
 "Say {thumb_up_sign} ({vote_yes_cmd}) or {thumb_down} ({vote_no_cmd}) to this "
@@ -398,20 +398,20 @@ msgstr ""
 "Send a message to user — ({reply_cmd})\n"
 "Ban this bad ass — ({ban_cmd})."
 
-#: boterator.py:896 loco:572f0e8214d7253d068b45a6
+#: boterator.py:909 loco:572f0e8214d7253d068b45a6
 msgctxt "Message verified and queued for publishing"
 msgid "Your message was verified and queued for publishing."
 msgstr "Your message was approved and queued for publishing."
 
-#: boterator.py:938 loco:572f0e8214d7253d068b45a7
+#: boterator.py:958 loco:572f0e8214d7253d068b45a7
 msgctxt "/help command response"
 msgid "bot.help.response"
 msgstr ""
 "Bot owner's help:\n"
 "/setdelay — change the delay between messages (current: "
 "{current_delay_with_minutes})\n"
-"/setvotes — change required amount of {thumb_up_sign} to publish a message "
-"(current: {current_votes_required})\n"
+"/setvotes — change required amount of {thumb_up_sign} to publish or "
+"{thumb_down_sign} to reject a message (current: {current_votes_required})\n"
 "/settimeout — change voting duration (current: {current_timeout_with_hours})"
 "\n"
 "/settextlimits — change text length limits (current: {current_text_limit[min]"
@@ -430,47 +430,47 @@ msgstr ""
 "/setstartmessage — change bot’s welcome message (current: "
 "{current_start_message})"
 
-#: boterator.py:957 loco:572f0e8214d7253d068b45a8
+#: boterator.py:977 loco:572f0e8214d7253d068b45a8
 msgctxt "New delay request"
 msgid "Set new delay value for messages posting (in minutes)"
 msgstr "Set new delay between messages in channel (in minutes)"
 
-#: boterator.py:972 loco:572f0e8214d7253d068b45a9
+#: boterator.py:992 loco:572f0e8214d7253d068b45a9
 msgctxt "Messages delay successfully changed"
 msgid "Delay value updated"
 msgstr "Delay between publishing messages was updated."
 
-#: boterator.py:990 loco:572f0e8214d7253d068b45aa
+#: boterator.py:1010 loco:572f0e8214d7253d068b45aa
 msgctxt "New required votes count request"
 msgid "Set new amount of required votes"
 msgstr "Set new amount of required votes."
 
-#: boterator.py:1004 loco:572f0e8214d7253d068b45ab
+#: boterator.py:1024 loco:572f0e8214d7253d068b45ab
 msgctxt "Required votes count successfully changed"
 msgid "Required votes amount updated"
 msgstr "Required amount of votes was updated."
 
-#: boterator.py:1021 loco:572f0e8214d7253d068b45ac
+#: boterator.py:1041 loco:572f0e8214d7253d068b45ac
 msgctxt "New voting duration request"
 msgid "Set new voting duration value (in hours, only a digits)"
 msgstr "Set new voting duration (in hours, only a digits)."
 
-#: boterator.py:1037 loco:572f0e8214d7253d068b45ad
+#: boterator.py:1057 loco:572f0e8214d7253d068b45ad
 msgctxt "Voting duration successfully changed"
 msgid "Voting duration updated"
 msgstr "Voting duration was updated."
 
-#: boterator.py:1053 loco:572f0e8214d7253d068b45ae
+#: boterator.py:1073 loco:572f0e8214d7253d068b45ae
 msgctxt "New start message request"
 msgid "Set new start message"
 msgstr "Set new start message."
 
-#: boterator.py:1068 loco:572f0e8214d7253d068b45af
+#: boterator.py:1088 loco:572f0e8214d7253d068b45af
 msgctxt "Start message successfully changed"
 msgid "Start message updated"
 msgstr "Start message was updated."
 
-#: boterator.py:1073 loco:572f0e8214d7253d068b45b0
+#: boterator.py:1093 loco:572f0e8214d7253d068b45b0
 msgctxt "Too short start message entered"
 msgid ""
 "Invalid start message, you should write at least 10 symbols. Try again or "
@@ -478,43 +478,43 @@ msgid ""
 msgstr ""
 "Hey, it’s too short (we need at least 10 chars). Try again or type /cancel."
 
-#: boterator.py:1099 loco:572f0e8214d7253d068b45b1
+#: boterator.py:1119 loco:572f0e8214d7253d068b45b1
 msgctxt "Power mode disabled"
 msgid "From now other chat users can not modify bot settings"
 msgstr "Okay. Now only you can modify bot settings."
 
-#: boterator.py:1104 loco:572f0e8214d7253d068b45b2
+#: boterator.py:1124 loco:572f0e8214d7253d068b45b2
 msgctxt "Power mode enabled"
 msgid ""
 "From now other chat users can modify bot settings (only inside moderators "
 "chat)"
 msgstr "Okay. Now all moderators can modify bot's settings."
 
-#: boterator.py:1127 loco:572f0e8214d7253d068b45b3
+#: boterator.py:1147 loco:572f0e8214d7253d068b45b3
 msgctxt "Stats user item"
 msgid "{row_id}. {user} - {rating_details}"
 msgstr "{row_id}. {user} — {rating_details}"
 
-#: boterator.py:1131 loco:572f0e8214d7253d068b45b4
+#: boterator.py:1151 loco:572f0e8214d7253d068b45b4
 msgctxt "No data for stats report"
 msgid "{cross_mark} no data"
 msgstr "{cross_mark} no data availiable."
 
-#: boterator.py:1150 loco:572f0e8214d7253d068b45b5
+#: boterator.py:1170 loco:572f0e8214d7253d068b45b5
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01 2016-01-13`"
 msgstr ""
 "Can’t proceed your request. If you want to get statistics for custom period "
 "use this command: `/stats 2016-01-01 2016-01-13`"
 
-#: boterator.py:1160 loco:572f0e8214d7253d068b45b6
+#: boterator.py:1180 loco:572f0e8214d7253d068b45b6
 msgctxt "Invalid stats request"
 msgid "Invalid period provided, correct value: `/stats 2016-01-01`"
 msgstr ""
 "Can’t proceed your request. If you want to get statistics for some "
 "particular date use this command: `/stats 2016-01-01`"
 
-#: boterator.py:1166 loco:572f0e8214d7253d068b45b7
+#: boterator.py:1186 loco:572f0e8214d7253d068b45b7
 msgctxt "Invalid stats request"
 msgid ""
 "Invalid period provided, correct values: `/stats 2016-01-01 2016-01-13`, "
@@ -524,43 +524,43 @@ msgstr ""
 "commands below: `/stats 2016-01-01 2016-01-13`, `/stats 5` for last 5 days "
 "or `/stats 2016-01-01`"
 
-#: boterator.py:1186 loco:572f0e8214d7253d068b45b8
+#: boterator.py:1206 loco:572f0e8214d7253d068b45b8
 msgctxt "Stats header"
 msgid "Stats for {period}"
 msgstr ""
 
-#: boterator.py:1187 loco:572f0e8214d7253d068b45b9
+#: boterator.py:1207 loco:572f0e8214d7253d068b45b9
 msgctxt "TOP type"
 msgid "TOP5 voters:"
 msgstr ""
 
-#: boterator.py:1211 loco:572f0e8214d7253d068b45ba
+#: boterator.py:1231 loco:572f0e8214d7253d068b45ba
 msgctxt "TOP type"
 msgid "TOP5 users by messages count:"
 msgstr "TOP5 users by messages:"
 
-#: boterator.py:1230 loco:572f0e8214d7253d068b45bb
+#: boterator.py:1250 loco:572f0e8214d7253d068b45bb
 msgctxt "TOP type"
 msgid "TOP5 users by published messages count:"
 msgstr "TOP5 users by published messages:"
 
-#: boterator.py:1245 loco:572f0e8214d7253d068b45bc
+#: boterator.py:1265 loco:572f0e8214d7253d068b45bc
 msgctxt "TOP type"
 msgid "TOP5 users by declined messages count:"
 msgstr "TOP5 users by rejected messages:"
 
-#: boterator.py:1275 loco:572f0e8214d7253d068b45bd
+#: boterator.py:1295 loco:572f0e8214d7253d068b45bd
 msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user"
 msgstr "Please set a ban reason for this user."
 
-#: boterator.py:1292 loco:572f0e8214d7253d068b45be
+#: boterator.py:1312 loco:572f0e8214d7253d068b45be
 msgctxt "Ban reason too short"
 msgid "Reason is too short (5 symbols required), try again or send /cancel"
 msgstr ""
 "Hey, it’s too short (we need at least 5 chars). Try again or type /cancel."
 
-#: boterator.py:1299 loco:572f0e8214d7253d068b45bf
+#: boterator.py:1319 loco:572f0e8214d7253d068b45bf
 msgctxt "Message to user in case of ban"
 msgid ""
 "You've been banned from further communication with this bot. Reason:\n"
@@ -569,93 +569,93 @@ msgstr ""
 "Sorry, but you've been banned. Bot will ignore you. Reason:\\n\n"
 "> {ban_reason}"
 
-#: boterator.py:1310 loco:572f0e8214d7253d068b45c0
+#: boterator.py:1330 loco:572f0e8214d7253d068b45c0
 msgctxt "Ban confirmation"
 msgid "User banned"
 msgstr "User was banned."
 
-#: boterator.py:1333 loco:572f0e8214d7253d068b45c1
+#: boterator.py:1353 loco:572f0e8214d7253d068b45c1
 msgctxt "Ban user item"
 msgid "{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}"
 msgstr "{row_id}. {user} — {ban_reason} (banned {ban_date}) {unban_cmd}"
 
-#: boterator.py:1340 loco:572f0e8214d7253d068b45c2
+#: boterator.py:1360 loco:572f0e8214d7253d068b45c2
 msgctxt "Bot owner notification"
 msgid "You can use /unban command only in moderators group"
 msgstr "You can use /unban command only in moderators group."
 
-#: boterator.py:1344 loco:572f0e8214d7253d068b45c3
+#: boterator.py:1364 loco:572f0e8214d7253d068b45c3
 msgctxt "Ban list is empty"
 msgid "No banned users yet"
 msgstr "No banned users yet."
 
-#: boterator.py:1363 loco:572f0e8214d7253d068b45c4
+#: boterator.py:1383 loco:572f0e8214d7253d068b45c4
 msgctxt "Unban confirmation"
 msgid "User unbanned"
 msgstr "User was unbanned. Amnesty!"
 
-#: boterator.py:1365 loco:572f0e8214d7253d068b45c5
+#: boterator.py:1385 loco:572f0e8214d7253d068b45c5
 msgctxt "User notification in case of unban"
 msgid "Access restored"
 msgstr "You were granted an amnesty. Hurrah!"
 
-#: boterator.py:1378 loco:572f0e8214d7253d068b45c6
+#: boterator.py:1398 loco:572f0e8214d7253d068b45c6
 msgctxt "Reply message request"
 msgid "What message should I send to user?"
 msgstr "What do you want to say to this user?"
 
-#: boterator.py:1392 loco:572f0e8214d7253d068b45c7
+#: boterator.py:1412 loco:572f0e8214d7253d068b45c7
 msgctxt "Reply message is too short"
 msgid "Message is too short (10 symbols required), try again or send /cancel"
 msgstr ""
 "Hey, it’s too short (we need at least 10 chars). Try again or type /cancel."
 
-#: boterator.py:1400 loco:572f0e8214d7253d068b45c8
+#: boterator.py:1420 loco:572f0e8214d7253d068b45c8
 msgctxt "Reply delivery confirmation"
 msgid "Message sent"
 msgstr "Message was succesfully sent."
 
-#: boterator.py:1403 loco:572f0e8214d7253d068b45c9
+#: boterator.py:1423 loco:572f0e8214d7253d068b45c9
 msgctxt "Reply failed"
 msgid "Failed: {reason}"
 msgstr ""
 
-#: boterator.py:1425 boterator.py:1478 loco:572f0e8214d7253d068b45ca
+#: boterator.py:1445 boterator.py:1498 loco:572f0e8214d7253d068b45ca
 msgctxt "Content type"
 msgid "Text"
 msgstr ""
 
-#: boterator.py:1426 boterator.py:1479 loco:572f0e8214d7253d068b45cb
+#: boterator.py:1446 boterator.py:1499 loco:572f0e8214d7253d068b45cb
 msgctxt "Content type"
 msgid "Photo"
 msgstr "Pictures"
 
-#: boterator.py:1427 boterator.py:1480 loco:572f0e8214d7253d068b45cc
+#: boterator.py:1447 boterator.py:1500 loco:572f0e8214d7253d068b45cc
 msgctxt "Content type"
 msgid "Video"
 msgstr ""
 
-#: boterator.py:1428 boterator.py:1481 loco:572f0e8214d7253d068b45cd
+#: boterator.py:1448 boterator.py:1501 loco:572f0e8214d7253d068b45cd
 msgctxt "Content type"
 msgid "Audio"
 msgstr ""
 
-#: boterator.py:1429 boterator.py:1484 loco:572f0e8214d7253d068b45ce
+#: boterator.py:1449 boterator.py:1504 loco:572f0e8214d7253d068b45ce
 msgctxt "Content type"
 msgid "Document"
 msgstr ""
 
-#: boterator.py:1430 boterator.py:1483 loco:572f0e8214d7253d068b45cf
+#: boterator.py:1450 boterator.py:1503 loco:572f0e8214d7253d068b45cf
 msgctxt "Content type"
 msgid "Sticker"
 msgstr ""
 
-#: boterator.py:1432 boterator.py:1482 loco:572f0e8214d7253d068b45d0
+#: boterator.py:1452 boterator.py:1502 loco:572f0e8214d7253d068b45d0
 msgctxt "Content type"
 msgid "Voice"
 msgstr ""
 
-#: boterator.py:1441 loco:572f0e8214d7253d068b45d1
+#: boterator.py:1461 loco:572f0e8214d7253d068b45d1
 msgctxt "/changeallowed response"
 msgid ""
 "You can see current status on keyboard, just click on content type to change "
@@ -664,22 +664,22 @@ msgstr ""
 "You can see the list of supported content types right on your keyboard. "
 "Tapping on any content type will change it's status."
 
-#: boterator.py:1503 boterator.py:1546 loco:572f0e8214d7253d068b45d2
+#: boterator.py:1523 boterator.py:1566 loco:572f0e8214d7253d068b45d2
 msgctxt "Invalid user response"
 msgid "Wrong input"
 msgstr "Wrong input."
 
-#: boterator.py:1523 loco:572f0e8214d7253d068b45d3
+#: boterator.py:1543 loco:572f0e8214d7253d068b45d3
 msgctxt "Change language prompt"
 msgid "Select your language"
 msgstr "Select your language."
 
-#: boterator.py:1542 loco:572f0e8214d7253d068b45d4
+#: boterator.py:1562 loco:572f0e8214d7253d068b45d4
 msgctxt "Language changed"
 msgid "Language changed"
 msgstr "Language changed."
 
-#: boterator.py:1559 loco:572f0e8214d7253d068b45d5
+#: boterator.py:1579 loco:572f0e8214d7253d068b45d5
 msgctxt "New length limits request"
 msgid ""
 "Please enter new value for length limits formatted like `{min_length}.."
@@ -688,22 +688,22 @@ msgstr ""
 "Please set new limits for text messages using format below: `{min_length}.."
 "{max_length}` (e.g. `1..10`)"
 
-#: boterator.py:1580 loco:572f0e8214d7253d068b45d6
+#: boterator.py:1600 loco:572f0e8214d7253d068b45d6
 msgctxt "Bottom limit is too low"
 msgid "Bottom limit must be greater than 0"
 msgstr "The lower limit can not be less than 0."
 
-#: boterator.py:1584 loco:572f0e8214d7253d068b45d7
+#: boterator.py:1604 loco:572f0e8214d7253d068b45d7
 msgctxt "Top limit is too low"
 msgid "Top limit must be greater than bottom one"
 msgstr "The upper limit should be greater than the lower limit."
 
-#: boterator.py:1589 loco:572f0e8214d7253d068b45d8
+#: boterator.py:1609 loco:572f0e8214d7253d068b45d8
 msgctxt "Text limits changed successfully"
 msgid "Limits updated"
 msgstr "Text length limit was updated."
 
-#: boterator.py:1593 loco:572f0e8214d7253d068b45d9
+#: boterator.py:1613 loco:572f0e8214d7253d068b45d9
 msgctxt "Non-well formated text limits provided"
 msgid ""
 "Please use following format: `{min_length}..{max_length}` (e.g. `1..10`), or "
@@ -712,72 +712,72 @@ msgstr ""
 "Please use following format: `{min_length}..{max_length}` (e.g. `1..10`), or "
 "type /cancel."
 
-#: boterator.py:1602 loco:572f0e8214d7253d068b45da
+#: boterator.py:1622 loco:572f0e8214d7253d068b45da
 msgctxt "Moderator's ability to alter settings"
 msgid "yes"
 msgstr ""
 
-#: boterator.py:1603 loco:572f0e8214d7253d068b45db
+#: boterator.py:1623 loco:572f0e8214d7253d068b45db
 msgctxt "Moderator's ability to alter settings"
 msgid "no"
 msgstr ""
 
-#: boterator.py:1605 loco:572f0e8214d7253d068b45dc
+#: boterator.py:1625 loco:572f0e8214d7253d068b45dc
 msgctxt "Content type enabled/disabled"
 msgid "Texts enabled"
 msgstr "Text messages: enabled."
 
-#: boterator.py:1606 loco:572f0e8214d7253d068b45dd
+#: boterator.py:1626 loco:572f0e8214d7253d068b45dd
 msgctxt "Content type enabled/disabled"
 msgid "Texts disabled"
 msgstr "Text messages: disabled."
 
-#: boterator.py:1607 loco:572f0e8214d7253d068b45de
+#: boterator.py:1627 loco:572f0e8214d7253d068b45de
 msgctxt "Content type enabled/disabled"
 msgid "Photos enabled"
 msgstr "Pictures: enabled."
 
-#: boterator.py:1608 loco:572f0e8214d7253d068b45df
+#: boterator.py:1628 loco:572f0e8214d7253d068b45df
 msgctxt "Content type enabled/disabled"
 msgid "Photos disabled"
 msgstr "Pictures: disabled."
 
-#: boterator.py:1609 loco:572f0e8214d7253d068b45e0
+#: boterator.py:1629 loco:572f0e8214d7253d068b45e0
 msgctxt "Content type enabled/disabled"
 msgid "Videos enabled"
 msgstr "Video: enabled."
 
-#: boterator.py:1610 loco:572f0e8214d7253d068b45e1
+#: boterator.py:1630 loco:572f0e8214d7253d068b45e1
 msgctxt "Content type enabled/disabled"
 msgid "Videos disabled"
 msgstr "Video: disabled."
 
-#: boterator.py:1611 loco:572f0e8214d7253d068b45e2
+#: boterator.py:1631 loco:572f0e8214d7253d068b45e2
 msgctxt "Content type enabled/disabled"
 msgid "Audios enabled"
 msgstr "Audio: enabled."
 
-#: boterator.py:1612 loco:572f0e8214d7253d068b45e3
+#: boterator.py:1632 loco:572f0e8214d7253d068b45e3
 msgctxt "Content type enabled/disabled"
 msgid "Audios disabled"
 msgstr "Audio: disabled."
 
-#: boterator.py:1613 loco:572f0e8214d7253d068b45e4
+#: boterator.py:1633 loco:572f0e8214d7253d068b45e4
 msgctxt "Content type enabled/disabled"
 msgid "Voices enabled"
 msgstr "Voice messages: enabled."
 
-#: boterator.py:1614 loco:572f0e8214d7253d068b45e5
+#: boterator.py:1634 loco:572f0e8214d7253d068b45e5
 msgctxt "Content type enabled/disabled"
 msgid "Voices disabled"
 msgstr "Voice messages: disabled."
 
-#: boterator.py:1615 loco:572f0e8214d7253d068b45e6
+#: boterator.py:1635 loco:572f0e8214d7253d068b45e6
 msgctxt "Content type enabled/disabled"
 msgid "Stickers enabled"
 msgstr "Stickers: enabled."
 
-#: boterator.py:1616 loco:572f0e8214d7253d068b45e7
+#: boterator.py:1636 loco:572f0e8214d7253d068b45e7
 msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
 msgstr "Stickers: disabled."
@@ -791,3 +791,8 @@ msgstr "Access denied."
 msgctxt "Boterator: Token check failed"
 msgid "Unable to get bot info: %s"
 msgstr "Token check failed: %s."
+
+#: boterator.py:710 loco:5731ec6e14d7252c468b456a
+msgctxt "User sent a command while another one is processing"
+msgid "Another action is in progress."
+msgstr "Wait a minute, please. I'm thinking."
