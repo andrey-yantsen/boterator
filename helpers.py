@@ -70,10 +70,13 @@ def append_stage_key(f):
         if message:
             user_id = message['from']['id']
             chat_id = message['chat']['id']
-        else:
+            stage_key = '%s-%s' % (chat_id, user_id)
+        elif not kwargs.get('stage_key'):
             assert user_id and chat_id
+            stage_key = '%s-%s' % (chat_id, user_id)
+        else:
+            stage_key = kwargs['stage_key']
 
-        stage_key = '%s-%s' % (chat_id, user_id)
         return f(self, message, *args, stage_key=stage_key, **kwargs)
 
     return wrapper
@@ -123,7 +126,7 @@ class StagesStorage:
 
         for stage_key in drop_list:
             logging.info('Cancelling last action for #%s', stage_key)
-            del self.stages[stage_key]
+            self.drop(stage_key)
 
         return len(drop_list)
 
