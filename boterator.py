@@ -476,7 +476,7 @@ class Slave:
         bot.add_handler(self.switchlang_command, '/switchlang')
         bot.add_handler(self.settextlimits_command, '/settextlimits')
         bot.add_handler(self.cbq_message_review, 'confirm', Api.UPDATE_TYPE_CALLBACK_QUERY)
-        bot.add_handler(self.cbq_cancel, 'cancel', Api.UPDATE_TYPE_CALLBACK_QUERY)
+        bot.add_handler(self.cbq_cancel_publishing, 'cancel_publishing', Api.UPDATE_TYPE_CALLBACK_QUERY)
         bot.add_handler(self.plaintext_cancel_emoji_handler)
         bot.add_handler(self.plaintext_post_handler)
         bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
@@ -707,7 +707,10 @@ class Slave:
         stage = self.stages.get(user_id=user_id, chat_id=user_id)
 
         if stage[0] != self.STAGE_ADDING_MESSAGE:
-            return False
+            yield self.bot.answer_callback_query(message['id'], pgettext('User sent a command while another one is '
+                                                                         'processing', 'Another action is in '
+                                                                                       'progress.'))
+            return
 
         report_botan(message, 'slave_confirm')
         user_message = stage[1]['last_message']
@@ -723,13 +726,15 @@ class Slave:
                                                                                    'verification. Fingers crossed!'),
                                          message['message'])
         self.stages.drop(user_id=user_id, chat_id=user_id)
+        yield self.bot.answer_callback_query(message['id'])
 
     @coroutine
     @append_pgettext
-    def cbq_cancel(self, message, pgettext):
+    def cbq_cancel_publishing(self, message, pgettext):
         user_id = message['from']['id']
         self.stages.drop(user_id=user_id, chat_id=user_id)
         yield self.bot.edit_message_text(pgettext('Message publishing cancelled', 'Cancelled'), message['message'])
+        yield self.bot.answer_callback_query(message['id'])
 
     @coroutine
     @append_pgettext
@@ -752,7 +757,7 @@ class Slave:
                                         [InlineKeyboardButton(pgettext('`Confirm` button on message review keyboard',
                                                                        'Confirm'), callback_data='confirm'),
                                          InlineKeyboardButton(pgettext('`Cancel` button on message review keyboard',
-                                                                       'Cancel'), callback_data='cancel'),
+                                                                       'Cancel'), callback_data='cancel_publishing'),
                                          ]
                                     ]))
         self.stages.set(message, self.STAGE_ADDING_MESSAGE)

@@ -438,10 +438,8 @@ class Api:
                 elif 'chosen_inline_result' in update:
                     yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CHOSEN_INLINE_RESULT), update['chosen_inline_result'])
                 elif 'callback_query' in update:
-                    handled = yield self.__execute_update_handler(default_filter_cb(update['callback_query']['data']),
-                                                                  update['callback_query'])
-                    if handled is False:
-                        yield self.answer_callback_query(update['callback_query']['id'])
+                    yield self.__execute_update_handler(default_filter_cb(update['callback_query']['data']),
+                                                        update['callback_query'])
                 else:
                     logging.info('Unsupported message received: %s', update)
             except:
