@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-09 15:01+0100\n"
+"PO-Revision-Date: 2016-05-10 09:58+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: Russian (Russia)\n"
 "Language: ru-RU\n"
@@ -174,7 +174,7 @@ msgstr ""
 #: boterator.py:196 loco:572f0e8214d7253d068b4585
 msgctxt "Boterator: default start message"
 msgid "Just enter your message, and we're ready."
-msgstr "Просто введите сообщение, и всё готово."
+msgstr "Введите ваше сообщение."
 
 #: boterator.py:248 loco:572f0e8214d7253d068b4586
 msgctxt "Boterator: unable to establish startup connection with bot"
