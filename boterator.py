@@ -958,7 +958,8 @@ class Slave:
             msg = pgettext('/help command response', 'bot.help.response') \
                 .format(current_delay_with_minutes=delay_str, current_votes_required=self.settings['votes'],
                         current_timeout_with_hours=timeout_str, thumb_up_sign=Emoji.THUMBS_UP_SIGN,
-                        current_start_message=self.settings['start'], power_state=power_state_str,
+                        thumb_down_sign=Emoji.THUMBS_DOWN_SIGN, current_start_message=self.settings['start'],
+                        power_state=power_state_str,
                         current_text_limit={'min': self.settings['text_min'], 'max': self.settings['text_max']})
 
             try:
