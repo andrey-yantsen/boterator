@@ -189,7 +189,7 @@ class BotMother:
     def listen(self, pgettext):
         self.default_slave_settings = {
             'delay': 15,
-            'votes': 5,
+            'votes': 2,
             'vote_timeout': 24,
             'text_min': 50,
             'text_max': 1000,
@@ -576,39 +576,45 @@ class Slave:
             logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
     @coroutine
-    @append_pgettext
-    @append_npgettext
-    def check_votes_failures(self, pgettext, npgettext):
+    def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
-        cur = yield get_db().execute('SELECT owner_id, id, original_chat_id, message,'
+        cur = yield get_db().execute('SELECT message,'
                                      '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
                                      'FROM incoming_messages im WHERE bot_id = %s AND '
                                      'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
                                      (self.bot_id, vote_timeout))
 
-        for owner_id, message_id, chat_id, message, votes in cur.fetchall():
+        for message, yes_votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
-                                               '{votes_received} votes',
-                                               votes).format(votes_received=votes)
-                required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
-                                               self.settings['votes']).format(votes_required=self.settings['votes'])
-
-                yield self.bot.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
-                                                                      '{votes_received_msg} out of required '
-                                                                      '{votes_required_msg} and won\'t be published to '
-                                                                      'the channel.')
-                                            .format(votes_received_msg=received_votes_msg,
-                                                    votes_required_msg=required_votes_msg), reply_to_message=message)
+                self.decline_message(message, yes_votes)
             except:
                 pass
 
-        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
-                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
-                               (self.bot_id, vote_timeout))
         if self.bot.consumption_state == Api.STATE_WORKING:
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
+
+    @coroutine
+    @append_npgettext
+    @append_pgettext
+    def decline_message(self, message, yes_votes, npgettext, pgettext):
+        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
+                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND original_chat_id = %s '
+                               'AND id = %s',
+                               (self.bot_id, message['chat']['id'], message['message_id']))
+
+        received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
+                                       '{votes_received} votes',
+                                       yes_votes).format(votes_received=yes_votes)
+        required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
+                                       self.settings['votes']).format(votes_required=self.settings['votes'])
+
+        yield self.bot.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
+                                                              '{votes_received_msg} out of required '
+                                                              '{votes_required_msg} and won\'t be published to '
+                                                              'the channel.')
+                                    .format(votes_received_msg=received_votes_msg,
+                                            votes_required_msg=required_votes_msg), reply_to_message=message)
 
     @coroutine
     def stop(self):
@@ -868,15 +874,16 @@ class Slave:
         voted = yield self.__is_user_voted(user_id, original_chat_id, message_id)
         opened = yield self.__is_voting_opened(original_chat_id, message_id)
 
-        cur = yield get_db().execute('SELECT SUM(vote_yes::INT) FROM votes_history WHERE message_id = %s AND '
+        cur = yield get_db().execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
                                      'original_chat_id = %s',
                                      (message_id, original_chat_id))
-        current_yes = cur.fetchone()[0]
+        current_yes, current_total = cur.fetchone()
         if not current_yes:
             current_yes = 0
 
         if not voted and opened:
             current_yes += int(yes)
+            current_total += 1
 
             yield get_db().execute("""
                                    INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes,
@@ -900,6 +907,13 @@ class Slave:
                     except:
                         pass
                     report_botan(row[1], 'slave_verification_success')
+            elif current_total - current_yes >= self.settings.get('votes', 5):
+                cur = yield get_db().execute('SELECT is_voting_fail, is_voting_success, message FROM incoming_messages '
+                                             'WHERE id = %s AND original_chat_id = %s', (message_id, original_chat_id))
+                row = cur.fetchone()
+
+                if row and not row[0] and not row[1]:
+                    yield self.decline_message(row[2], current_yes)
 
     @coroutine
     def vote_yes(self, message):
