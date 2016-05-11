@@ -121,13 +121,21 @@ class BotMother:
                                                          'It seems like this bot is already registered. Try to create '
                                                          'another one'), reply_to_message=message)
                     return
-                yield self.bot.send_message(pgettext('Boterator: token received',
-                                                     "Ok, I\'ve got basic information for @%s\n"
-                                                     'Now add him to a group of moderators (or copy and paste `@%s '
-                                                     '/attach` to the group, in case you’ve already added him), where '
-                                                     'I should send messages for verification, or type /cancel')
-                                            % (new_bot_me['username'], new_bot_me['username']),
-                                            reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
+
+                msg = pgettext('Boterator: token received',
+                               "Ok, I\'ve got basic information for @%s\n"
+                               'Now add him to a group of moderators (or copy and paste `@%s '
+                               '/attach` to the group, in case you’ve already added him), where '
+                               'I should send messages for verification, or type /cancel') \
+                      % (new_bot_me['username'], new_bot_me['username'])
+
+                try:
+                    yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
+                except ApiError as e:
+                    if e.code == 400:
+                        yield self.bot.send_message(msg, reply_to_message=message)
+                    else:
+                        raise
 
                 hello_message = pgettext('Boterator: default channel-hello message',
                                          'Hi there, guys! Now it is possible to publish messages in this channel by '

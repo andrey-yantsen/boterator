@@ -266,11 +266,8 @@ class Api:
         try:
             return (yield self.__request_api('sendMessage', request))
         except ApiError as e:
-            if e.code == 400 and e.description.startswith("Can't parse"):
+            if e.code == 400 and e.description.startswith("Bad Request: Can\'t parse"):
                 logging.exception('Got exception while sending text: %s', text)
-                if parse_mode == self.PARSE_MODE_MD:
-                    request['parse_mode'] = None
-                    return (yield self.__request_api('sendMessage', request))
             raise
 
     @coroutine
