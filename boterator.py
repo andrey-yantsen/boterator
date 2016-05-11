@@ -225,13 +225,20 @@ class BotMother:
         for bot_id, token, owner_id, moderator_chat_id, target_channel, settings in cur.fetchall():
             slave_settings = update_settings_recursive(self.default_slave_settings, settings)
             slave = Slave(token, self, moderator_chat_id, target_channel, slave_settings, owner_id, bot_id)
-            try:
-                yield slave.bot.get_me()
-                slave.listen()
-                self.slaves[bot_id] = slave
-            except:
-                logging.exception('Bot #%s failed', bot_id, token, owner_id)
-                yield self.slave_revoked(bot_id, token, owner_id)
+            while True:
+                try:
+                    yield slave.bot.get_me()
+                    slave.listen()
+                    self.slaves[bot_id] = slave
+                    break
+                except Exception as e:
+                    if isinstance(e, ApiError) and e.code == 401:
+                        logging.exception('Bot #%s failed to connect', bot_id, token, owner_id)
+                        yield self.slave_revoked(bot_id, token, owner_id)
+                        break
+                    else:
+                        logging.exception('Something bad happened')
+                        yield sleep(10)
 
         logging.info('Waiting for commands')
         yield self.bot.wait_commands()
@@ -529,14 +536,17 @@ class Slave:
     def listen(self):
         IOLoop.current().add_callback(self.check_votes_success)
         IOLoop.current().add_callback(self.check_votes_failures)
-        try:
-            yield self.bot.wait_commands()
-        except ApiError as e:
-            if e.code == 401:
-                logging.warning('Bot #%s is unable to connect to api', self.bot_id)
-                yield self.mother.slave_revoked(self.bot_id, self.bot.token, self.owner_id)
-            else:
-                raise
+        while True:
+            try:
+                yield self.bot.wait_commands()
+            except Exception as e:
+                if isinstance(e, ApiError) and e.code == 401:
+                    logging.warning('Bot #%s is unable to connect to api', self.bot_id)
+                    yield self.mother.slave_revoked(self.bot_id, self.bot.token, self.owner_id)
+                    break
+                else:
+                    logging.exception('Slave got exception')
+                    yield sleep(10)
 
         logging.info('Slave termination')
 
