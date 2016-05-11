@@ -90,11 +90,9 @@ class StagesStorage:
         self.cleaner.start()
 
     @append_stage_key
-    def set(self, message, stage_id, stage_key=None, do_not_validate=False, **kwargs):
+    def set(self, message, stage_id, stage_key=None, **kwargs):
         if stage_key not in self.stages:
             self.stages[stage_key] = {'meta': {}, 'code': 0}
-
-        assert do_not_validate or self.stages[stage_key]['code'] == 0 or stage_id == self.stages[stage_key]['code'] + 1
 
         self.stages[stage_key]['code'] = stage_id
         self.stages[stage_key]['meta'].update(kwargs)
