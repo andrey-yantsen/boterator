@@ -126,16 +126,12 @@ class BotMother:
                                "Ok, I\'ve got basic information for @%s\n"
                                'Now add him to a group of moderators (or copy and paste `@%s '
                                '/attach` to the group, in case you’ve already added him), where '
-                               'I should send messages for verification, or type /cancel') \
-                      % (new_bot_me['username'], new_bot_me['username'])
+                               'I should send messages for verification, or type /cancel')
 
-                try:
-                    yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
-                except ApiError as e:
-                    if e.code == 400:
-                        yield self.bot.send_message(msg, reply_to_message=message)
-                    else:
-                        raise
+                bot_username_escaped = new_bot_me['username'].replace('_', r'\_')
+                msg = msg % (bot_username_escaped, new_bot_me['username'])
+
+                yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
 
                 hello_message = pgettext('Boterator: default channel-hello message',
                                          'Hi there, guys! Now it is possible to publish messages in this channel by '
@@ -1106,7 +1102,7 @@ class Slave:
                 report_botan(message, 'slave_setstartmessage')
                 yield self.__update_settings(start=message['text'].strip())
                 yield self.bot.send_message(pgettext('Start message successfully changed', 'Start message updated'),
-                                            reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
+                                            reply_to_message=message)
                 self.stages.drop(message)
             else:
                 report_botan(message, 'slave_setstartmessage_invalid')
