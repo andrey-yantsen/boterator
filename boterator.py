@@ -125,7 +125,7 @@ class BotMother:
                                                      "Ok, I\'ve got basic information for @%s\n"
                                                      'Now add him to a group of moderators (or copy and paste `@%s '
                                                      '/attach` to the group, in case you’ve already added him), where '
-                                                     'I should send messages for verification, or type /cancel') \
+                                                     'I should send messages for verification, or type /cancel')
                                             % (new_bot_me['username'], new_bot_me['username']),
                                             reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
 

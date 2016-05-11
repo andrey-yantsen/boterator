@@ -263,7 +263,15 @@ class Api:
         if reply_markup is not None:
             request['reply_markup'] = reply_markup
 
-        return (yield self.__request_api('sendMessage', request))
+        try:
+            return (yield self.__request_api('sendMessage', request))
+        except ApiError as e:
+            if e.code == 400 and e.description.startswith("Can't parse"):
+                logging.exception('Got exception while sending text: %s', text)
+                if parse_mode == self.PARSE_MODE_MD:
+                    request['parse_mode'] = None
+                    return (yield self.__request_api('sendMessage', request))
+            raise
 
     @coroutine
     def send_photo(self, chat_id, photo, caption: str=None, disable_notification: bool=False,
