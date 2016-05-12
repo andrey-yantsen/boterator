@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-11 10:47+0100\n"
+"PO-Revision-Date: 2016-05-12 11:43+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: Russian (Russia)\n"
 "Language: ru-RU\n"
@@ -819,7 +819,7 @@ msgstr "Минуточку. Я думаю."
 #: boterator.py:1636 loco:573230ab14d72527048b456f
 msgctxt "/pollslist reply message"
 msgid "There is {polls_msg} in progress:"
-msgstr "Сейчас активны {polls_msg}."
+msgstr "Сейчас активно {polls_msg}."
 
 #: boterator.py:1643 loco:573230ab14d72527048b4570
 msgctxt "/pollslist reply on empty pending-polls list"
