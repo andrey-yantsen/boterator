@@ -124,7 +124,7 @@ class StagesStorage:
 
         for stage_key in drop_list:
             logging.info('Cancelling last action for #%s', stage_key)
-            self.drop(stage_key)
+            self.drop(stage_key=stage_key)
 
         return len(drop_list)
 
