@@ -648,7 +648,7 @@ class Slave:
 
     @coroutine
     def is_moderators_chat(self, chat_id, bot_id):
-        ret = yield get_db().execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s AND bot_id = %s',
+        ret = yield get_db().execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s AND id = %s',
                                      (chat_id, bot_id,))
         return ret.fetchone() is not None
 
