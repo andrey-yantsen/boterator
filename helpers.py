@@ -1,4 +1,5 @@
 import logging
+from functools import wraps
 from time import time
 from ujson import loads, dumps
 from urllib.parse import urlencode
@@ -52,6 +53,7 @@ def is_allowed_user(user, bot_id):
 
 
 def append_pgettext(f):
+    @wraps(f)
     def wrapper(self, *args, **kwargs):
         return f(self, *args, pgettext=self.locale.pgettext, **kwargs)
 
@@ -59,6 +61,7 @@ def append_pgettext(f):
 
 
 def append_npgettext(f):
+    @wraps(f)
     def wrapper(self, *args, **kwargs):
         return f(self, *args, npgettext=self.locale.pgettext, **kwargs)
 
@@ -66,18 +69,17 @@ def append_npgettext(f):
 
 
 def append_stage_key(f):
+    @wraps(f)
     def wrapper(self, message=None, *args, user_id=None, chat_id=None, **kwargs):
         if message:
             user_id = message['from']['id']
             chat_id = message['chat']['id']
-            stage_key = '%s-%s' % (chat_id, user_id)
+            kwargs['stage_key'] = '%s-%s' % (chat_id, user_id)
         elif not kwargs.get('stage_key'):
             assert user_id and chat_id
-            stage_key = '%s-%s' % (chat_id, user_id)
-        else:
-            stage_key = kwargs['stage_key']
+            kwargs['stage_key'] = '%s-%s' % (chat_id, user_id)
 
-        return f(self, message, *args, stage_key=stage_key, **kwargs)
+        return f(self, message, *args, **kwargs)
 
     return wrapper
 
@@ -112,7 +114,7 @@ class StagesStorage:
         return self.get(*args, **kwargs)[0]
 
     @append_stage_key
-    def drop(self, message, stage_key=None):
+    def drop(self, message, stage_key):
         if stage_key in self.stages:
             del self.stages[stage_key]
 
