@@ -550,7 +550,8 @@ class Slave:
                     break
                 else:
                     logging.exception('Slave got exception')
-                    yield sleep(10)
+
+            yield sleep(5)
 
         logging.info('Slave termination')
 
