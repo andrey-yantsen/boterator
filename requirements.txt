@@ -3,3 +3,4 @@ momoko==2.2.3
 ujson==1.35
 future==0.15.2
 babel==2.3.4
+-e git+https://github.com/KosyanMedia/burlesque@master#egg=burlesque&subdirectory=clients/python

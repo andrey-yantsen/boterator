@@ -1,9 +1,7 @@
 import logging
 import re
-from copy import deepcopy
 from datetime import datetime, timedelta
 from itertools import groupby
-from time import time
 from ujson import dumps
 
 from math import floor
@@ -15,461 +13,24 @@ from tornado.ioloop import IOLoop
 from tornado import locale
 from tornado.locale import load_gettext_translations
 
-from emoji import Emoji
-from globals import get_db
+from helpers import pgettext, Emoji
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
     InlineKeyboardButton, ApiError
 
-from helpers import report_botan, is_allowed_user, StagesStorage, append_pgettext, append_npgettext
-from telegram_log_handler import TelegramHandler
+def append_npgettext(f):
+    return f
 
-
-class BotMother:
-    STAGE_WAITING_TOKEN = 1
-    STAGE_MODERATION_GROUP = 2
-    STAGE_WAITING_PUBLIC_CHANNEL = 3
-    STAGE_REGISTERED = 4
-    STAGE_WAITING_HELLO = 6
-    STAGE_WAITING_START_MESSAGE = 8
-
-    def __init__(self, token, logging_user_id):
-        bot = Api(token)
-        bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
-        bot.add_handler(self.start_command, '/start')
-        bot.add_handler(self.reg_command, '/reg')
-        bot.add_handler(self.plaintext_token)
-        bot.add_handler(self.cancel_command, '/cancel')
-        bot.add_handler(self.change_hello_command, '/changehello')
-        bot.add_handler(self.plaintext_set_hello)
-        bot.add_handler(self.change_start_command, '/changestart')
-        bot.add_handler(self.plaintext_set_start_message)
-        bot.add_handler(self.plaintext_channel_name)
-        self.bot = bot
-        self.stages = StagesStorage()
-        self.slaves = {}
-
-        load_gettext_translations('./locales', 'boterator')
-        self.locale = locale.get('en')
-
-        logger = logging.getLogger()
-        logger.addHandler(TelegramHandler(bot, logging_user_id, level=logging.WARNING))
-
-        self.default_slave_settings = {}
-
-    @coroutine
-    @append_pgettext
-    def validate_user(self, message, pgettext):
-        bot_info = yield self.bot.get_me()
-        allowed = is_allowed_user(message['from'], bot_info['id'])
-        if allowed:
-            return False
-
-        yield self.bot.send_message(pgettext('Boterator: User not allowed to perform this action', 'Access denied'),
-                                    reply_to_message=message)
-
-    @coroutine
-    @append_pgettext
-    def start_command(self, message, pgettext):
-        report_botan(message, 'boterator_start')
-        yield self.bot.send_message(pgettext('Boterator: /start response', 'Hello, this is Boterator. In order to '
-                                                                           'start ask @BotFather to create a new bot. '
-                                                                           'Then feel free to use /reg command to '
-                                                                           'register new bot using token.'),
-                                    reply_to_message=message)
-
-    @coroutine
-    @append_pgettext
-    def reg_command(self, message, pgettext):
-        if self.stages.get_id(message):
-            return False
-
-        report_botan(message, 'boterator_reg')
-
-        yield self.bot.send_message(pgettext('Boterator: /reg response', 'Ok, please tell me the token, which you\'ve '
-                                                                         'received from @BotFather'),
-                                    reply_to_message=message)
-        self.stages.set(message, self.STAGE_WAITING_TOKEN)
-
-    @coroutine
-    @append_pgettext
-    def plaintext_token(self, message, pgettext):
-        if self.stages.get_id(message) != self.STAGE_WAITING_TOKEN:
-            return False
-
-        token = message['text'].strip()
-        if token == '':
-            report_botan(message, 'boterator_token_empty')
-            yield self.bot.send_message(pgettext('Boterator: empty token entered', 'I guess you forgot to enter the '
-                                                                                   'token :)'),
-                                        reply_to_message=message)
-        else:
-            if len(token.split(':')) != 2:
-                report_botan(message, 'boterator_token_invalid')
-                yield self.bot.send_message(pgettext('Boterator: non-well formatted token', 'Token is incorrect. And I '
-                                                                                            'can do nothing with that.'),
-                                            reply_to_message=message)
-                return
-
-            yield self.bot.send_chat_action(message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
-
-            try:
-                new_bot = Api(token)
-                new_bot_me = yield new_bot.get_me()
-                if new_bot_me['id'] in self.slaves:
-                    report_botan(message, 'boterator_token_duplicate')
-                    yield self.bot.send_message(pgettext('Boterator: provided token is already registered and alive',
-                                                         'It seems like this bot is already registered. Try to create '
-                                                         'another one'), reply_to_message=message)
-                    return
-
-                msg = pgettext('Boterator: token received',
-                               "Ok, I\'ve got basic information for @%s\n"
-                               'Now add him to a group of moderators (or copy and paste `@%s '
-                               '/attach` to the group, in case you’ve already added him), where '
-                               'I should send messages for verification, or type /cancel')
-
-                bot_username_escaped = new_bot_me['username'].replace('_', r'\_')
-                msg = msg % (bot_username_escaped, new_bot_me['username'])
-
-                yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
-
-                hello_message = pgettext('Boterator: default channel-hello message',
-                                         'Hi there, guys! Now it is possible to publish messages in this channel by '
-                                         'any of you. All you need to do — is to write a message to me (bot named '
-                                         '@%s), and it will be published after verification by our team.') \
-                                % new_bot_me['username']
-
-                self.stages.set(message, self.STAGE_MODERATION_GROUP, token=token, bot_info=new_bot_me,
-                                hello=hello_message, start_message=self.default_slave_settings['start'])
-
-                self.__wait_for_registration_complete(message)
-                report_botan(message, 'boterator_token')
-            except Exception as e:
-                report_botan(message, 'boterator_token_failure')
-                logging.exception(e)
-                yield self.bot.send_message(pgettext('Boterator: Token check failed', 'Unable to get bot info: %s') % str(e),
-                                            reply_to_message=message)
-
-    @coroutine
-    @append_pgettext
-    def cancel_command(self, message, pgettext):
-        report_botan(message, 'boterator_cancel')
-        self.stages.drop(message)
-        yield self.bot.send_message(pgettext('Boterator: /cancel response', 'Oka-a-a-a-a-ay.'),
-                                    reply_to_message=message)
-
-    @coroutine
-    @append_pgettext
-    def plaintext_channel_name(self, message, pgettext):
-        stage = self.stages.get(message)
-        if stage[0] == self.STAGE_WAITING_PUBLIC_CHANNEL:
-            channel_name = message['text'].strip()
-            if message['text'][0] != '@' or ' ' in channel_name:
-                report_botan(message, 'boterator_channel_invalid')
-                yield self.bot.send_message(pgettext('Boterator: invalid channel name received',
-                                                     'Invalid channel name. Try again or type /cancel'),
-                                            reply_to_message=message)
-            else:
-                try:
-                    new_bot = Api(stage[1]['token'])
-                    try:
-                        yield new_bot.send_message(stage[1]['hello'], chat_id=channel_name,
-                                                   parse_mode=Api.PARSE_MODE_MD)
-                    except:
-                        yield new_bot.send_message(stage[1]['hello'], chat_id=channel_name)
-                    self.stages.set(message, self.STAGE_REGISTERED, channel=channel_name)
-                    report_botan(message, 'boterator_registered')
-                except Exception as e:
-                    report_botan(message, 'boterator_channel_failure')
-                    yield self.bot.send_message(pgettext('Boterator: sending channel-hello message failed',
-                                                         'Hey, I\'m unable to send hello message, is everything ready '
-                                                         'for me? Here is an error from Telegram api: %s') % str(e),
-                                                reply_to_message=message)
-        else:
-            return False
-
-    @coroutine
-    @append_pgettext
-    def listen(self, pgettext):
-        self.default_slave_settings = {
-            'delay': 15,
-            'votes': 2,
-            'vote_timeout': 24,
-            'text_min': 50,
-            'text_max': 1000,
-            'start': pgettext('Boterator: default start message', "Just enter your message, and we're ready."),
-            'content_status': {
-                'text': True,
-                'photo': False,
-                'voice': False,
-                'video': False,
-                'audio': False,
-                'document': False,
-                'sticker': False,
-            },
-        }
-
-        logging.info('Initializing slaves')
-        self.slaves = dict()
-
-        cur = yield get_db().execute('SELECT id, token, owner_id, moderator_chat_id, target_channel, settings FROM '
-                                     'registered_bots WHERE active = TRUE')
-
-        def update_settings_recursive(base_settings, bot_settings):
-            base_settings = deepcopy(base_settings)
-
-            for key, value in bot_settings.items():
-                if type(value) is dict:
-                    base_settings[key] = update_settings_recursive(base_settings[key], value)
-                else:
-                    base_settings[key] = value
-
-            return base_settings
-
-        for bot_id, token, owner_id, moderator_chat_id, target_channel, settings in cur.fetchall():
-            slave_settings = update_settings_recursive(self.default_slave_settings, settings)
-            slave = Slave(token, self, moderator_chat_id, target_channel, slave_settings, owner_id, bot_id)
-            while True:
-                try:
-                    yield slave.bot.get_me()
-                    slave.listen()
-                    self.slaves[bot_id] = slave
-                    break
-                except Exception as e:
-                    if isinstance(e, ApiError) and e.code == 401:
-                        logging.exception('Bot #%s failed to connect', bot_id, token, owner_id)
-                        yield self.slave_revoked(bot_id, token, owner_id)
-                        break
-                    else:
-                        logging.exception('Something bad happened')
-                        yield sleep(10)
-
-        logging.info('Waiting for commands')
-        yield self.bot.wait_commands()
-        logging.info('Mother termination')
-
-    @coroutine
-    @append_pgettext
-    def slave_revoked(self, bot_id, token, owner_id, pgettext):
-        yield get_db().execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (bot_id,))
-        if bot_id in self.slaves:
-            del self.slaves[bot_id]
-
-        try:
-            yield self.bot.send_message(pgettext('Boterator: unable to establish startup connection with bot',
-                                                 'I\'m failed to establish connection to your bot with token %s. Your '
-                                                 'bot was deactivated, to enable it again - perform registration '
-                                                 'process from the beginning.') % token, chat_id=owner_id)
-        except:
-            pass
-
-    @coroutine
-    @append_pgettext
-    @append_npgettext
-    def __wait_for_registration_complete(self, original_message, npgettext=None, pgettext=None, timeout=3600):
-        stage = self.stages.get(original_message)
-        slave = Slave(stage[1]['token'], self, None, None, {}, original_message['from']['id'], None)
-        slave.listen()
-        while True:
-            stage_id, stage_meta, stage_begin = self.stages.get(original_message)
-
-            if stage_id == self.STAGE_REGISTERED:
-                settings = deepcopy(self.default_slave_settings)
-                settings['start'] = stage_meta['start_message']
-
-                yield slave.stop()
-
-                yield self.bot.send_chat_action(original_message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
-                yield get_db().execute("""
-                                      INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
-                                      VALUES (%s, %s, %s, %s, %s, TRUE, %s)
-                                      ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, owner_id = EXCLUDED.owner_id,
-                                      moderator_chat_id = EXCLUDED.moderator_chat_id, target_channel=EXCLUDED.target_channel,
-                                      active = EXCLUDED.active, settings = EXCLUDED.settings
-                                      """, (stage_meta['bot_info']['id'], stage_meta['token'],
-                                            original_message['from']['id'], stage_meta['moderation'],
-                                            stage_meta['channel'], dumps(settings)))
-                slave = Slave(stage_meta['token'], self, stage_meta['moderation'], stage_meta['channel'],
-                              settings, original_message['from']['id'], stage_meta['bot_info']['id'])
-                slave.listen()
-                self.slaves[stage_meta['bot_info']['id']] = slave
-
-                votes_cnt_msg = npgettext('Boterator: default votes cnt', '%d vote', '%d votes',
-                                          self.default_slave_settings['votes']) % self.default_slave_settings['votes']
-
-                delay_msg = npgettext('Boterator: default delay', '%d minute', '%d minutes',
-                                      self.default_slave_settings['delay']) % self.default_slave_settings['delay']
-
-                timeout_msg = npgettext('Boterator: default timeout', '%d hour', '%d hours',
-                                        self.default_slave_settings['vote_timeout']) \
-                              % self.default_slave_settings['vote_timeout']
-
-                msg = pgettext('Boterator: new bot registered',
-                               "And we're ready for some magic!\n"
-                               'By default the bot will wait for {votes_cnt_msg} to approve the '
-                               'message, perform {delay_msg} delay between channel messages, '
-                               'wait {timeout_msg} before closing a voting for each message and '
-                               'allow only text messages (no multimedia content at all). To '
-                               'modify this (and few other) settings send /help in PM to @{bot_username}. '
-                               'By default you\'re the only user who can change these '
-                               'settings and use /help command').format(votes_cnt_msg=votes_cnt_msg,
-                                                                        delay_msg=delay_msg, timeout_msg=timeout_msg,
-                                                                        bot_username=stage_meta['bot_info']['username'])
-
-                try:
-                    yield self.bot.send_message(msg, reply_to_message=original_message)
-                except:
-                    pass
-                break
-            elif time() - stage_begin >= timeout:
-                yield slave.stop()
-                try:
-                    yield self.bot.send_message(pgettext('Boterator: registration cancelled due to timeout',
-                                                         '@%s registration aborted due to timeout')
-                                                % stage_meta['bot_info']['username'],
-                                                reply_to_message=original_message)
-                except:
-                    pass
-                break
-            elif stage_id is None:
-                # Action cancelled
-                yield slave.stop()
-                break
-
-            yield sleep(0.05)
-
-        self.stages.drop(original_message)
-
-    @coroutine
-    def stop(self):
-        for slave in self.slaves.values():
-            yield slave.stop()
-        yield self.bot.stop()
-
-    @coroutine
-    @append_pgettext
-    def set_slave_attached(self, message, chat, pgettext=None):
-        stage = self.stages.get(message)
-        yield self.bot.send_chat_action(message['chat']['id'], self.bot.CHAT_ACTION_TYPING)
-
-        if 'title' not in chat:
-            chat['title'] = '@' + message['from']['username']
-
-        msg = pgettext('Boterator: slave attached to moderator`s channel',
-                       "Ok, I'll be sending moderation requests to %s %s\n"
-                       "Now you need to add your bot (@%s) to a channel as administrator and tell me the channel name "
-                       "(e.g. @mobilenewsru)\n"
-                       "As soon as I will receive the channel name I'll send a message with following text:\n> %s\n"
-                       "You can change the message, if you mind, just send me /changehello.\n"
-                       "Also there is 'start' message for your new bot:\n> %s\n"
-                       "You can change it with /changestart") \
-              % (chat['type'], chat['title'], stage[1]['bot_info']['username'], stage[1]['hello'],
-                 stage[1]['start_message'])
-
-        try:
-            yield self.bot.send_message(msg, reply_to_message=message, parse_mode=Api.PARSE_MODE_MD)
-        except:
-            yield self.bot.send_message(msg, reply_to_message=message)
-
-        self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, moderation=chat['id'])
-
-    @coroutine
-    @append_pgettext
-    def change_hello_command(self, message, pgettext):
-        if self.stages.get_id(message) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            return False
-        else:
-            report_botan(message, 'boterator_change_hello_cmd')
-            yield self.bot.send_message(pgettext('Boterator: /changehello response',
-                                                 'Ok, I\'m listening to you. How I should say hello to your '
-                                                 'subscribers?'),
-                                        reply_to_message=message)
-            self.stages.set(message, self.STAGE_WAITING_HELLO, do_not_validate=True)
-
-    @coroutine
-    @append_pgettext
-    def plaintext_set_hello(self, message, pgettext):
-        if self.stages.get_id(message) != self.STAGE_WAITING_HELLO:
-            return False
-        else:
-            text = message['text'].strip()
-            if len(text) >= 10:
-                report_botan(message, 'boterator_change_hello_success')
-                yield self.bot.send_message(pgettext('Boterator: channel-hello message updated',
-                                                     'Ok, noted, now tell me the channel name'),
-                                            reply_to_message=message)
-                self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, hello=text)
-            else:
-                report_botan(message, 'boterator_change_hello_short')
-                yield self.bot.send_message(pgettext('Boterator: channel-hello message is too short',
-                                                     'Hey, you should write at least 10 symbols'),
-                                            reply_to_message=message)
-
-    @coroutine
-    @append_pgettext
-    def change_start_command(self, message, pgettext):
-        if self.stages.get_id(message) != self.STAGE_WAITING_PUBLIC_CHANNEL:
-            return False
-        else:
-            report_botan(message, 'boterator_change_start_cmd')
-            yield self.bot.send_message(pgettext('Boterator: /changestart response',
-                                                 'Ok, I\'m listening to you. How I should say hello to your authors?'),
-                                        reply_to_message=message)
-            self.stages.set(message, self.STAGE_WAITING_START_MESSAGE, do_not_validate=True)
-
-    @coroutine
-    @append_pgettext
-    def plaintext_set_start_message(self, message, pgettext):
-        if self.stages.get_id(message) != self.STAGE_WAITING_START_MESSAGE:
-            return False
-        else:
-            text = message['text'].strip()
-            if len(text) >= 10:
-                report_botan(message, 'boterator_change_start_success')
-                yield self.bot.send_message(pgettext('Boterator: /start message updated',
-                                                     'Ok, noted, now tell me the channel name'),
-                                            reply_to_message=message)
-                self.stages.set(message, self.STAGE_WAITING_PUBLIC_CHANNEL, do_not_validate=True, start_message=text)
-            else:
-                report_botan(message, 'boterator_change_start_short')
-                yield self.bot.send_message(pgettext('Boterator: /start message is too short',
-                                                     'Hey, you should write at least 10 symbols'),
-                                            reply_to_message=message)
-
+def append_pgettext(f):
+    return f
 
 class Slave:
-    STAGE_ADDING_MESSAGE = 1
-
-    STAGE_WAIT_DELAY_VALUE = 3
-
-    STAGE_WAIT_VOTES_VALUE = 5
-
-    STAGE_WAIT_VOTE_TIMEOUT_VALUE = 7
-
-    STAGE_WAIT_START_MESSAGE_VALUE = 9
-
-    STAGE_WAIT_BAN_MESSAGE = 11
-
-    STAGE_WAIT_REPLY_MESSAGE = 13
-
-    STAGE_WAIT_CONTENT_TYPE = 15
-
-    STAGE_WAIT_LANGUAGE = 17
-
-    STAGE_WAIT_TEXT_LIMITS = 19
-
-    LANGUAGE_LIST = (
-        ('en_US', '%s English' % Emoji.FLAG_USA),
-        ('ru_RU', '%s Русский' % Emoji.FLAG_RUSSIA),
-    )
-
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
     RE_UNBAN = re.compile(r'/unban_(?P<user_id>\d+)')
     RE_REPLY = re.compile(r'/reply_(?P<chat_id>\d+)_(?P<message_id>\d+)')
 
-    def __init__(self, token, m: BotMother, moderator_chat_id, channel_name, settings, owner_id, bot_id):
+    def __init__(self, token, m, moderator_chat_id, channel_name, settings, owner_id, bot_id):
         bot = Api(token)
         bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
         bot.add_handler(self.start_command, '/start')
@@ -527,7 +88,6 @@ class Slave:
         self.locale = locale.get(self.language)
 
     @coroutine
-    @append_pgettext
     def validate_user(self, message, pgettext):
         bot_info = yield self.bot.get_me()
         allowed = yield is_allowed_user(message['from'], bot_info['id'])
@@ -550,15 +110,14 @@ class Slave:
                     break
                 else:
                     logging.exception('Slave got exception')
-
-            yield sleep(5)
+                    yield sleep(10)
 
         logging.info('Slave termination')
 
     @coroutine
     def check_votes_success(self):
-        cur = yield get_db().execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s',
-                                     (self.bot_id,))
+        cur = yield DB.execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s',
+                               (self.bot_id,))
         row = cur.fetchone()
         if row and row[0]:
             allowed_time = row[0] + timedelta(minutes=self.settings.get('delay', 15))
@@ -566,9 +125,9 @@ class Slave:
             allowed_time = datetime.now()
 
         if datetime.now() >= allowed_time:
-            cur = yield get_db().execute('SELECT message FROM incoming_messages WHERE bot_id = %s '
-                                         'AND is_voting_success = TRUE AND is_published = FALSE '
-                                         'ORDER BY created_at LIMIT 1', (self.bot_id,))
+            cur = yield DB.execute('SELECT message FROM incoming_messages WHERE bot_id = %s '
+                                   'AND is_voting_success = TRUE AND is_published = FALSE '
+                                   'ORDER BY created_at LIMIT 1', (self.bot_id,))
 
             row = cur.fetchone()
 
@@ -583,22 +142,22 @@ class Slave:
         report_botan(message, 'slave_publish')
         try:
             yield self.bot.forward_message(self.channel_name, message['chat']['id'], message['message_id'])
-            yield get_db().execute(
+            yield DB.execute(
                 'UPDATE incoming_messages SET is_published = TRUE WHERE id = %s AND original_chat_id = %s',
                 (message['message_id'], message['chat']['id']))
-            yield get_db().execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
-                                   (self.bot_id,))
+            yield DB.execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
+                             (self.bot_id,))
         except:
             logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
     @coroutine
     def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
-        cur = yield get_db().execute('SELECT message,'
-                                     '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
-                                     'FROM incoming_messages im WHERE bot_id = %s AND '
-                                     'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
-                                     (self.bot_id, vote_timeout))
+        cur = yield DB.execute('SELECT message,'
+                               '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+                               'FROM incoming_messages im WHERE bot_id = %s AND '
+                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
+                               (self.bot_id, vote_timeout))
 
         for message, yes_votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
@@ -614,10 +173,10 @@ class Slave:
     @append_npgettext
     @append_pgettext
     def decline_message(self, message, yes_votes, npgettext, pgettext):
-        yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
-                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND original_chat_id = %s '
-                               'AND id = %s',
-                               (self.bot_id, message['chat']['id'], message['message_id']))
+        yield DB.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
+                         'is_voting_success = FALSE AND is_voting_fail = FALSE AND original_chat_id = %s '
+                         'AND id = %s',
+                         (self.bot_id, message['chat']['id'], message['message_id']))
 
         received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
                                        '{votes_received} votes',
@@ -649,8 +208,8 @@ class Slave:
 
     @coroutine
     def is_moderators_chat(self, chat_id, bot_id):
-        ret = yield get_db().execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s AND id = %s',
-                                     (chat_id, bot_id,))
+        ret = yield DB.execute('SELECT 1 FROM registered_bots WHERE moderator_chat_id = %s AND id = %s',
+                               (chat_id, bot_id,))
         return ret.fetchone() is not None
 
     @coroutine
@@ -661,7 +220,7 @@ class Slave:
         if message['new_chat_member']['id'] == me['id']:
             known_chat = yield self.is_moderators_chat(message['chat']['id'], me['id'])
             if known_chat:
-                yield get_db().execute('UPDATE registered_bots SET active = TRUE WHERE id = %s', (me['id'],))
+                yield DB.execute('UPDATE registered_bots SET active = TRUE WHERE id = %s', (me['id'],))
                 yield self.bot.send_message(pgettext('Bot added to a known group', 'Hi there, @{bot_username}!').format(
                     bot_username=message['from']['username']), chat_id=message['chat']['id'])
             else:
@@ -673,7 +232,7 @@ class Slave:
                                                          'This bot wasn\'t registered for group {group_title}, type '
                                                          '/start for more info').format(
                         group_title=message['chat']['title']),
-                                                chat_id=message['chat']['id'])
+                        chat_id=message['chat']['id'])
         else:
             return False
 
@@ -712,7 +271,7 @@ class Slave:
         me = yield self.bot.get_me()
         if message['left_chat_member']['id'] == me['id']:
             report_botan(message, 'slave_left_chat')
-            yield get_db().execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (me['id'],))
+            yield DB.execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (me['id'],))
         else:
             return False
 
@@ -732,7 +291,7 @@ class Slave:
         user_message = stage[1]['last_message']
         yield self.bot.send_chat_action(user_id, Api.CHAT_ACTION_TYPING)
         bot_info = yield self.bot.get_me()
-        yield get_db().execute("""
+        yield DB.execute("""
         INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
         VALUES (%s, %s, %s, %s, NOW(), %s)
         """, (user_message['message_id'], user_message['chat']['id'], user_id, bot_info['id'], dumps(user_message)))
@@ -864,14 +423,14 @@ class Slave:
         yield self.bot.send_message(msg, chat_id=self.moderator_chat_id)
 
         bot_info = yield self.bot.get_me()
-        yield get_db().execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
-                               (bot_info['id'],))
+        yield DB.execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
+                         (bot_info['id'],))
 
     @coroutine
     def __is_user_voted(self, user_id, original_chat_id, message_id):
-        cur = yield get_db().execute('SELECT 1 FROM votes_history WHERE user_id = %s AND message_id = %s AND '
-                                     'original_chat_id = %s',
-                                     (user_id, message_id, original_chat_id))
+        cur = yield DB.execute('SELECT 1 FROM votes_history WHERE user_id = %s AND message_id = %s AND '
+                               'original_chat_id = %s',
+                               (user_id, message_id, original_chat_id))
 
         if cur.fetchone():
             return True
@@ -880,9 +439,9 @@ class Slave:
 
     @coroutine
     def __is_voting_opened(self, original_chat_id, message_id):
-        cur = yield get_db().execute('SELECT is_voting_fail, is_published FROM incoming_messages WHERE id = %s AND '
-                                     'original_chat_id = %s',
-                                     (message_id, original_chat_id))
+        cur = yield DB.execute('SELECT is_voting_fail, is_published FROM incoming_messages WHERE id = %s AND '
+                               'original_chat_id = %s',
+                               (message_id, original_chat_id))
         row = cur.fetchone()
         if not row or (row[0] != row[1]):
             return False
@@ -895,9 +454,9 @@ class Slave:
         voted = yield self.__is_user_voted(user_id, original_chat_id, message_id)
         opened = yield self.__is_voting_opened(original_chat_id, message_id)
 
-        cur = yield get_db().execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
-                                     'original_chat_id = %s',
-                                     (message_id, original_chat_id))
+        cur = yield DB.execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
+                               'original_chat_id = %s',
+                               (message_id, original_chat_id))
         current_yes, current_total = cur.fetchone()
         if not current_yes:
             current_yes = 0
@@ -906,21 +465,21 @@ class Slave:
             current_yes += int(yes)
             current_total += 1
 
-            yield get_db().execute("""
+            yield DB.execute("""
                                    INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes,
                                                               created_at)
                                    VALUES (%s, %s, %s, %s, NOW())
                                    """, (user_id, message_id, original_chat_id, yes))
 
             if current_yes >= self.settings.get('votes', 5):
-                cur = yield get_db().execute('SELECT is_voting_success, message FROM incoming_messages WHERE id = %s '
-                                             'AND original_chat_id = %s',
-                                             (message_id, original_chat_id))
+                cur = yield DB.execute('SELECT is_voting_success, message FROM incoming_messages WHERE id = %s '
+                                       'AND original_chat_id = %s',
+                                       (message_id, original_chat_id))
                 row = cur.fetchone()
                 if not row[0]:
-                    yield get_db().execute('UPDATE incoming_messages SET is_voting_success = TRUE WHERE id = %s AND '
-                                           'original_chat_id = %s',
-                                           (message_id, original_chat_id))
+                    yield DB.execute('UPDATE incoming_messages SET is_voting_success = TRUE WHERE id = %s AND '
+                                     'original_chat_id = %s',
+                                     (message_id, original_chat_id))
                     try:
                         yield self.bot.send_message(pgettext('Message verified and queued for publishing',
                                                              'Your message was verified and queued for publishing.'),
@@ -929,8 +488,8 @@ class Slave:
                         pass
                     report_botan(row[1], 'slave_verification_success')
             elif current_total - current_yes >= self.settings.get('votes', 5):
-                cur = yield get_db().execute('SELECT is_voting_fail, is_voting_success, message FROM incoming_messages '
-                                             'WHERE id = %s AND original_chat_id = %s', (message_id, original_chat_id))
+                cur = yield DB.execute('SELECT is_voting_fail, is_voting_success, message FROM incoming_messages '
+                                       'WHERE id = %s AND original_chat_id = %s', (message_id, original_chat_id))
                 row = cur.fetchone()
 
                 if row and not row[0] and not row[1]:
@@ -1121,8 +680,8 @@ class Slave:
             self.locale = locale.get(kwargs['locale'])
 
         self.settings.update(kwargs)
-        yield get_db().execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings),
-                                                                                          self.bot_id))
+        yield DB.execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings),
+                                                                                    self.bot_id))
 
     @coroutine
     @append_pgettext
@@ -1233,8 +792,8 @@ class Slave:
             LIMIT 5
             """
 
-            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
+            cur = yield DB.execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                           period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             def format_top_votes(row):
                 return npgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
@@ -1256,8 +815,8 @@ class Slave:
             LIMIT 5
             """
 
-            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
+            cur = yield DB.execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                           period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             def format_top_messages(row):
                 return npgettext('Messages count', '{messages_cnt} message', '{messages_cnt} messages', row[0]) \
@@ -1275,8 +834,8 @@ class Slave:
             LIMIT 5
             """
 
-            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
+            cur = yield DB.execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                           period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), format_top_messages) + "\n"
             msg += pgettext('TOP type', 'TOP5 users by declined messages count:') + "\n"
@@ -1290,8 +849,8 @@ class Slave:
             LIMIT 5
             """
 
-            cur = yield get_db().execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
-                                                 period_end.strftime('%Y-%m-%d %H:%M:%S')))
+            cur = yield DB.execute(query, (self.bot_id, period_begin.strftime('%Y-%m-%d'),
+                                           period_end.strftime('%Y-%m-%d %H:%M:%S')))
 
             msg += format_top(cur.fetchall(), format_top_messages)
 
@@ -1339,11 +898,11 @@ class Slave:
                                             chat_id=stage[1]['ban_user_id'])
             except:
                 pass
-            yield get_db().execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
-                                   'owner_id = %s AND is_voting_success = FALSE',
-                                   (self.bot_id, stage[1]['ban_user_id'],))
-            yield get_db().execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
-                                   'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
+            yield DB.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
+                             'owner_id = %s AND is_voting_success = FALSE',
+                             (self.bot_id, stage[1]['ban_user_id'],))
+            yield DB.execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
+                             'bot_id = %s', (msg, stage[1]['ban_user_id'], self.bot_id))
             yield self.bot.send_message(pgettext('Ban confirmation', 'User banned'), reply_to_message=message)
 
     @coroutine
@@ -1353,9 +912,9 @@ class Slave:
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
             report_botan(message, 'slave_ban_list_cmd')
             yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
-            cur = yield get_db().execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
-                                         'FROM users WHERE bot_id = %s AND '
-                                         'banned_at IS NOT NULL ORDER BY banned_at DESC', (self.bot_id,))
+            cur = yield DB.execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
+                                   'FROM users WHERE bot_id = %s AND '
+                                   'banned_at IS NOT NULL ORDER BY banned_at DESC', (self.bot_id,))
 
             msg = ''
 
@@ -1395,8 +954,8 @@ class Slave:
         yield self.bot.send_chat_action(chat_id, Api.CHAT_ACTION_TYPING)
         match = self.RE_UNBAN.match(message['text'])
         user_id = match.group('user_id')
-        yield get_db().execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
-                               'bot_id = %s', (user_id, self.bot_id))
+        yield DB.execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
+                         'bot_id = %s', (user_id, self.bot_id))
         yield self.bot.send_message(pgettext('Unban confirmation', 'User unbanned'), reply_to_message=message)
         try:
             yield self.bot.send_message(pgettext('User notification in case of unban', 'Access restored'),
@@ -1640,15 +1199,15 @@ class Slave:
     def polls_list_command(self, message, pgettext, npgettext):
         chat_id = message['chat']['id']
         if message['from']['id'] == self.owner_id or chat_id == self.moderator_chat_id:
-            cur = yield get_db().execute('SELECT message FROM incoming_messages WHERE is_voting_success = False AND '
-                                         'is_voting_fail = False AND is_published = False AND bot_id = %s',
-                                         (self.bot_id, ))
+            cur = yield DB.execute('SELECT message FROM incoming_messages WHERE is_voting_success = False AND '
+                                   'is_voting_fail = False AND is_published = False AND bot_id = %s',
+                                   (self.bot_id, ))
 
             pending = cur.fetchall()
 
             if len(pending):
                 polls_cnt_msg = npgettext('Polls count', '%d poll', '%d polls', len(pending)) % len(pending)
-                reply_part_one = pgettext('/pollslist reply message', 'There is {polls_msg} in progress:')\
+                reply_part_one = pgettext('/pollslist reply message', 'There is {polls_msg} in progress:') \
                     .format(polls_msg=polls_cnt_msg)
                 yield self.bot.send_message(reply_part_one, reply_to_message=message)
 

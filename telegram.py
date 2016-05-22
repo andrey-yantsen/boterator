@@ -2,11 +2,15 @@ import logging
 from time import time
 
 from os.path import basename
+
+from functools import partial
 from tornado.concurrent import Future
-from tornado.gen import coroutine, Return, sleep
+from tornado.gen import coroutine, Return, sleep, maybe_future, Task
 from tornado.httpclient import AsyncHTTPClient, HTTPError
 import ujson
 
+from tornado.ioloop import IOLoop
+from tornado.locks import Event
 from tornado.queues import Queue
 from hashlib import md5
 
@@ -15,27 +19,6 @@ class Api:
     STATE_WORKING = 0
     STATE_STOP_PENDING = 1
     STATE_STOPPED = 2
-
-    UPDATE_TYPE_MSG_ANY = 'message_any'
-    UPDATE_TYPE_MSG_TEXT = 'message_text'
-    UPDATE_TYPE_MSG_AUDIO = 'message_audio'
-    UPDATE_TYPE_MSG_PHOTO = 'message_photo'
-    UPDATE_TYPE_MSG_DOC = 'message_document'
-    UPDATE_TYPE_MSG_STICKER = 'message_sticker'
-    UPDATE_TYPE_MSG_VIDEO = 'message_video'
-    UPDATE_TYPE_MSG_VOICE = 'message_voice'
-    UPDATE_TYPE_MSG_CONTACT = 'message_contact'
-    UPDATE_TYPE_MSG_LOCATION = 'message_location'
-    UPDATE_TYPE_MSG_VENUE = 'message_venue'
-    UPDATE_TYPE_MSG_NEW_CHAT_MEMBER = 'new_chat_member'
-    UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
-    UPDATE_TYPE_MSG_GROUP_CHAT_CREATED = 'group_chat_created'
-    UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED = 'supergroup_chat_created'
-    UPDATE_TYPE_MSG_UNKNOWN = 'message_unknown'
-
-    UPDATE_TYPE_INLINE_QUERY = 'inline_query'
-    UPDATE_TYPE_CHOSEN_INLINE_RESULT = 'chosen_inline_result'
-    UPDATE_TYPE_CALLBACK_QUERY = 'callback_query'
 
     CHAT_ACTION_TYPING = 'typing'
     CHAT_ACTION_UPLOAD_PHOTO = 'upload_photo'
@@ -50,17 +33,22 @@ class Api:
     PARSE_MODE_MD = 'Markdown'
     PARSE_MODE_HTML = 'HTML'
 
-    def __init__(self, token, processing_threads_cnt=5):
-        self.token = token
-        self.callbacks = []
-        self.consumption_state = self.STATE_STOPPED
-        self.processing_threads = []
-        self.processing_threads_cnt = processing_threads_cnt
-        self.processing_queue = Queue(processing_threads_cnt * 10)
-        self.__me = None
+    def __init__(self, token, processor):
+        if ':' in token:
+            self.bot_id, _ = token.split(':')
+            if self.bot_id.isdigit():
+                self.bot_id = int(self.bot_id)
+            else:
+                raise ValueError('Non well-formatted token given')
+        else:
+            raise ValueError('Non well-formatted token given')
 
-    def add_handler(self, handler, cmd=None, msg_type: str=UPDATE_TYPE_MSG_TEXT):
-        self.callbacks.append((msg_type, cmd, handler))
+        self.token = token
+        self.consumption_state = self.STATE_STOPPED
+        self.processor = processor
+        self.__me = None
+        self._finished = Event()
+        self._finished.set()
 
     @coroutine
     def get_me(self):
@@ -69,19 +57,9 @@ class Api:
 
         return self.__me
 
-    @coroutine
     def stop(self):
-        self.consumption_state = self.STATE_STOP_PENDING
-
-        while self.consumption_state != self.STATE_STOPPED:
-            yield sleep(0.05)
-
-        yield self.processing_queue.join()
-
-        [pt.set_exception(Return(None)) for pt in self.processing_threads]
-        self.processing_threads = []
-
-        return True
+        assert not self._finished.is_set()
+        self._finished.set()
 
     @coroutine
     def __request_api(self, method, body=None, request_timeout=10, retry_on_nonuser_error=False):
@@ -187,14 +165,9 @@ class Api:
 
     @coroutine
     def wait_commands(self, last_update_id=None):
-        if self.consumption_state != self.STATE_STOPPED:
-            logging.warning('Another handler still active')
-            return False
+        assert self._finished.is_set()
 
-        if len(self.callbacks) == 0:
-            logging.warning('Starting updates consumption without any message handler set')
-
-        self.processing_threads = [self._process_update() for _ in range(self.processing_threads_cnt)]
+        self._finished.clear()
 
         self.consumption_state = self.STATE_WORKING
 
@@ -203,27 +176,15 @@ class Api:
 
         yield self.get_me()
 
-        while self.consumption_state == self.STATE_WORKING:
-            get_updates_f = self.get_updates(last_update_id, retry_on_nonuser_error=True)
-
-            while get_updates_f.running():
-                yield sleep(0.05)
-
-            if self.consumption_state == self.STATE_STOP_PENDING:
-                self.consumption_state = self.STATE_STOPPED
-                break
-
-            if get_updates_f.exception():
-                # Actually it's better to stop right now because of some strange shit happened
-                self.stop()
-                self.consumption_state = self.STATE_STOPPED
-                get_updates_f.result()  # This one will raise the exception and cancel future execution
-                raise ApiInternalError('Downloading future failure')
-
-            updates = yield get_updates_f
+        while not self._finished.is_set():
+            try:
+                updates = yield self.get_updates(last_update_id, retry_on_nonuser_error=True)
+            except:
+                self._finished.set()
+                raise
 
             for update in updates:
-                yield self.processing_queue.put(update)
+                yield maybe_future(self.processor(update))
                 last_update_id = update['update_id']
 
             if len(updates):
@@ -299,23 +260,6 @@ class Api:
             'message_id': message_id,
         }))
 
-    @coroutine
-    def __execute_update_handler(self, handler_filter: callable, update):
-        handled = False
-        for required_message_type, required_cmd, handler in self.callbacks:
-            if handler_filter(required_message_type, required_cmd):
-                ret = handler(update)
-                if isinstance(ret, Future):
-                    ret = yield ret
-
-                if ret is None or ret is True:
-                    handled = True
-                    break
-
-        if not handled:
-            logging.info('Handler not found: %s', update)
-            return False
-
     @staticmethod
     def _prepare_inline_message(message=None, chat_id=None, message_id=None, inline_message_id=None):
         request = {}
@@ -373,6 +317,74 @@ class Api:
 
         return (yield self.__request_api('answerCallbackQuery', request))
 
+
+class ApiWithHandlers(Api):
+    UPDATE_TYPE_MSG_ANY = 'message_any'
+    UPDATE_TYPE_MSG_TEXT = 'message_text'
+    UPDATE_TYPE_MSG_AUDIO = 'message_audio'
+    UPDATE_TYPE_MSG_PHOTO = 'message_photo'
+    UPDATE_TYPE_MSG_DOC = 'message_document'
+    UPDATE_TYPE_MSG_STICKER = 'message_sticker'
+    UPDATE_TYPE_MSG_VIDEO = 'message_video'
+    UPDATE_TYPE_MSG_VOICE = 'message_voice'
+    UPDATE_TYPE_MSG_CONTACT = 'message_contact'
+    UPDATE_TYPE_MSG_LOCATION = 'message_location'
+    UPDATE_TYPE_MSG_VENUE = 'message_venue'
+    UPDATE_TYPE_MSG_NEW_CHAT_MEMBER = 'new_chat_member'
+    UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
+    UPDATE_TYPE_MSG_GROUP_CHAT_CREATED = 'group_chat_created'
+    UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED = 'supergroup_chat_created'
+    UPDATE_TYPE_MSG_UNKNOWN = 'message_unknown'
+
+    UPDATE_TYPE_INLINE_QUERY = 'inline_query'
+    UPDATE_TYPE_CHOSEN_INLINE_RESULT = 'chosen_inline_result'
+    UPDATE_TYPE_CALLBACK_QUERY = 'callback_query'
+
+    def __init__(self, token, processing_threads_cnt=5):
+        super().__init__(token, processor=self._queue_update)
+        self.callbacks = []
+        self.consumption_state = self.STATE_STOPPED
+        self.processing_threads = []
+        self.processing_threads_cnt = processing_threads_cnt
+        self.processing_queue = Queue(100)
+
+    @coroutine
+    def stop(self):
+        ret = yield super().stop()
+        yield self.processing_queue.join()
+        for pt in self.processing_threads:
+            pt.set_exception(Return(None))
+
+        for pt in self.processing_threads:
+            yield Task(partial(IOLoop.current().add_future, pt))
+
+        self.processing_threads = []
+        return ret
+
+    def add_handler(self, handler, cmd=None, msg_type: str=UPDATE_TYPE_MSG_TEXT):
+        self.callbacks.append((msg_type, cmd, handler))
+
+    @coroutine
+    def _queue_update(self, update):
+        yield self.processing_queue.put(update)
+
+    @coroutine
+    def __execute_update_handler(self, handler_filter: callable, update):
+        handled = False
+        for required_message_type, required_cmd, handler in self.callbacks:
+            if handler_filter(required_message_type, required_cmd):
+                ret = handler(update)
+                if isinstance(ret, Future):
+                    ret = yield ret
+
+                if ret is None or ret is True:
+                    handled = True
+                    break
+
+        if not handled:
+            logging.info('Handler not found: %s', update)
+            return False
+
     @coroutine
     def _process_update(self):
         def default_filter_text_msg(cmd):
@@ -386,7 +398,7 @@ class Api:
             return lambda r, _: r == msg_type
 
         def default_filter_cb(cmd):
-            return lambda r, c: r == self.UPDATE_TYPE_CALLBACK_QUERY and\
+            return lambda r, c: r == self.UPDATE_TYPE_CALLBACK_QUERY and \
                                 (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)) or c is False)
 
         bot_info = yield self.get_me()
@@ -451,6 +463,23 @@ class Api:
                 logging.exception('Error while processing message')
 
             self.processing_queue.task_done()
+
+    @coroutine
+    def wait_commands(self, last_update_id=None):
+        if self.consumption_state != self.STATE_STOPPED:
+            logging.warning('Another handler still active')
+            return False
+
+        if len(self.callbacks) == 0:
+            logging.warning('Starting updates consumption without any message handler set')
+
+        self.processing_threads = [self._process_update() for _ in range(self.processing_threads_cnt)]
+
+        try:
+            return (yield super().wait_commands(last_update_id))
+        finally:
+            self.consumption_state = self.STATE_STOPPED
+            yield self.stop()
 
 
 class ReplyMarkup(dict):

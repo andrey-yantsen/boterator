@@ -881,5 +881,8 @@ class Emoji(object):
     CLOCK_FACE_TWELVE_THIRTY = n(b'\xF0\x9F\x95\xA7')
     CIRCLED_BULLET = n(b'\xE2\xA6\xBF')
     MEDIUM_SMALL_WHITE_CIRCLE = n(b'\xE2\x9A\xAC')
-    FLAG_USA = n(b'\xF0\x9F\x87\xBA\xF0\x9F\x87\xB8')
-    FLAG_RUSSIA = n(b'\xF0\x9F\x87\xB7\xF0\x9F\x87\xBA')
+
+    FLAGS = {
+        'en_US': n(b'\xF0\x9F\x87\xBA\xF0\x9F\x87\xB8'),
+        'ru_RU': n(b'\xF0\x9F\x87\xB7\xF0\x9F\x87\xBA'),
+    }
