@@ -1,16 +1,16 @@
 import logging
-from ujson import loads
+from ujson import loads, dumps
 
 from datetime import timedelta
 from tornado.concurrent import Future
-from tornado.gen import coroutine, Return, sleep, with_timeout
+from tornado.gen import coroutine, with_timeout
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 
 from core.bot import CommandFilterTextCmd
-from core.queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, queue_reply, \
-    QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP
-from telegram import Api
+from core.queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
+    QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, QUEUE_BOTERATOR_BOT_REVOKE
+from telegram import Api, ApiError
 from .slave import Slave
 
 
@@ -36,7 +36,7 @@ class SlaveHolder:
                 break
 
             row = dict(zip(columns, row))
-            # self._start_bot(**row)
+            self._start_bot(**row)
 
         listen_future = self.queue.listen(slaveholder_queues(), self.queue_handler)
 
@@ -47,17 +47,32 @@ class SlaveHolder:
             yield listen_future
 
     def _start_bot(self, **kwargs):
-        slave = Slave(**kwargs)
-        self.slaves[kwargs['id']] = {
-            'future': slave.listen(),
-            'instance': slave
-        }
+        @coroutine
+        def listen_done(f: Future):
+            logging.debug('Bot #%s terminated', kwargs['id'])
+            e = f.exception()
+            if e:
+                logging.debug('Got exception with bot #%d: %s', kwargs['id'], f.exception())
+                if isinstance(e, ApiError) and e.code == 401:
+                    logging.warning('Disabling bot #%d due to connection error', kwargs['id'])
+                    yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
+                else:
+                    IOLoop.current().add_timeout(timedelta(seconds=5), self._start_bot, **kwargs)
 
-    @coroutine
+            del self.slaves[kwargs['id']]
+
+        slave = Slave(db=self.db, **kwargs)
+        slave_listen_f = slave.start()
+        self.slaves[kwargs['id']] = {
+            'future': slave_listen_f,
+            'instance': slave,
+        }
+        IOLoop.current().add_future(slave_listen_f, listen_done)
+
     def stop(self):
         logging.info('Stopping slave-holder')
         for slave in self.slaves.values():
-            yield slave.stop()
+            slave.stop()
 
         self._finished.set()
 
@@ -66,20 +81,20 @@ class SlaveHolder:
         body = loads(body.decode('utf-8'))
 
         if queue_name == QUEUE_SLAVEHOLDER_NEW_BOT:
-            self.register_new_bot(**body)
+            self._start_bot(**body)
         elif queue_name == QUEUE_SLAVEHOLDER_GET_BOT_INFO:
             bot = Api(body['token'], lambda x: None)
 
             if bot.bot_id in self.slaves:
-                yield queue_reply(self.queue, error='duplicate', **body)
+                yield self.queue.send(body['reply_to'], dumps(dict(error='duplicate')))
 
             try:
                 ret = yield bot.get_me()
             except Exception as e:
-                yield queue_reply(self.queue, error=str(e), **body)
+                yield self.queue.send(body['reply_to'], dumps(dict(error=str(e))))
                 return
 
-            yield queue_reply(self.queue, body['reply_to'], **ret)
+            yield self.queue.send(body['reply_to'], dumps(ret))
         elif queue_name == QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP:
             update_with_command_f = Future()
             timeout_f = with_timeout(timedelta(seconds=body['timeout']), update_with_command_f)
@@ -96,8 +111,8 @@ class SlaveHolder:
             def handle_finish(f):
                 if not f.exception():
                     update = f.result()
-                    yield queue_reply(self.queue, body['reply_to'], sender=update['message']['from'],
-                                      **update['message']['chat'])
+                    yield self.queue.send(body['reply_to'], dumps(dict(sender=update['message']['from'],
+                                                                       **update['message']['chat'])))
                 logging.debug('[bot#%s] Done', bot.bot_id)
                 bot.stop()
 
@@ -107,7 +122,5 @@ class SlaveHolder:
 
             logging.debug('[bot#%s] Waiting for commands', bot.bot_id)
             bot.wait_commands()
-
-    @coroutine
-    def register_new_bot(self, token, settings):
-        pass
+        else:
+            raise Exception('Unknown queue: %s', queue_name)

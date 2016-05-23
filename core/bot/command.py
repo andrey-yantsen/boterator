@@ -5,14 +5,10 @@ from helpers import pgettext
 
 
 class Command:
-    def __init__(self, bot, handler: callable, cmd_filter: CommandFilterBase, name: pgettext=None):
-        self.filter = cmd_filter
+    def __init__(self, bot, handler: callable, name: pgettext=None):
         self.handler = handler
         self._name = name
         self.bot = bot
-
-    def test(self, update, **kwargs):
-        return self.filter(update, **kwargs)
 
     @coroutine
     def __call__(self, **kwargs):

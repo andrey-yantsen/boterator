@@ -4,6 +4,7 @@ from math import floor
 
 from tornado.gen import coroutine
 
+from core.bot import CommandFilterTextCmd, CommandFilterTextAny
 from core.settings import LANGUAGE_LIST
 from helpers import Emoji
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardHide
@@ -26,6 +27,7 @@ def get_keyboard(with_back: bool):
 
 
 @coroutine
+@CommandFilterTextCmd('/setlanguage')
 def setlanguage(bot, message):
     yield bot.send_message(pgettext('Change language prompt', 'Select your language'),
                            reply_to_message=message, reply_markup=get_keyboard(True))
@@ -33,6 +35,7 @@ def setlanguage(bot, message):
 
 
 @coroutine
+@CommandFilterTextAny()
 def setlanguage_plaintext(bot, message, **kwargs):
     languages = {
         lang_name: lang_code

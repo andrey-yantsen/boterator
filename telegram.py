@@ -3,15 +3,11 @@ from time import time
 
 from os.path import basename
 
-from functools import partial
-from tornado.concurrent import Future
-from tornado.gen import coroutine, Return, sleep, maybe_future, Task
+from tornado.gen import coroutine, sleep, maybe_future
 from tornado.httpclient import AsyncHTTPClient, HTTPError
 import ujson
 
-from tornado.ioloop import IOLoop
 from tornado.locks import Event
-from tornado.queues import Queue
 from hashlib import md5
 
 
@@ -60,6 +56,9 @@ class Api:
     def stop(self):
         assert not self._finished.is_set()
         self._finished.set()
+
+    def is_alive(self):
+        return not self._finished.is_set()
 
     @coroutine
     def __request_api(self, method, body=None, request_timeout=10, retry_on_nonuser_error=False):
@@ -316,170 +315,6 @@ class Api:
             request['text'] = text
 
         return (yield self.__request_api('answerCallbackQuery', request))
-
-
-class ApiWithHandlers(Api):
-    UPDATE_TYPE_MSG_ANY = 'message_any'
-    UPDATE_TYPE_MSG_TEXT = 'message_text'
-    UPDATE_TYPE_MSG_AUDIO = 'message_audio'
-    UPDATE_TYPE_MSG_PHOTO = 'message_photo'
-    UPDATE_TYPE_MSG_DOC = 'message_document'
-    UPDATE_TYPE_MSG_STICKER = 'message_sticker'
-    UPDATE_TYPE_MSG_VIDEO = 'message_video'
-    UPDATE_TYPE_MSG_VOICE = 'message_voice'
-    UPDATE_TYPE_MSG_CONTACT = 'message_contact'
-    UPDATE_TYPE_MSG_LOCATION = 'message_location'
-    UPDATE_TYPE_MSG_VENUE = 'message_venue'
-    UPDATE_TYPE_MSG_NEW_CHAT_MEMBER = 'new_chat_member'
-    UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER = 'left_chat_member'
-    UPDATE_TYPE_MSG_GROUP_CHAT_CREATED = 'group_chat_created'
-    UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED = 'supergroup_chat_created'
-    UPDATE_TYPE_MSG_UNKNOWN = 'message_unknown'
-
-    UPDATE_TYPE_INLINE_QUERY = 'inline_query'
-    UPDATE_TYPE_CHOSEN_INLINE_RESULT = 'chosen_inline_result'
-    UPDATE_TYPE_CALLBACK_QUERY = 'callback_query'
-
-    def __init__(self, token, processing_threads_cnt=5):
-        super().__init__(token, processor=self._queue_update)
-        self.callbacks = []
-        self.consumption_state = self.STATE_STOPPED
-        self.processing_threads = []
-        self.processing_threads_cnt = processing_threads_cnt
-        self.processing_queue = Queue(100)
-
-    @coroutine
-    def stop(self):
-        ret = yield super().stop()
-        yield self.processing_queue.join()
-        for pt in self.processing_threads:
-            pt.set_exception(Return(None))
-
-        for pt in self.processing_threads:
-            yield Task(partial(IOLoop.current().add_future, pt))
-
-        self.processing_threads = []
-        return ret
-
-    def add_handler(self, handler, cmd=None, msg_type: str=UPDATE_TYPE_MSG_TEXT):
-        self.callbacks.append((msg_type, cmd, handler))
-
-    @coroutine
-    def _queue_update(self, update):
-        yield self.processing_queue.put(update)
-
-    @coroutine
-    def __execute_update_handler(self, handler_filter: callable, update):
-        handled = False
-        for required_message_type, required_cmd, handler in self.callbacks:
-            if handler_filter(required_message_type, required_cmd):
-                ret = handler(update)
-                if isinstance(ret, Future):
-                    ret = yield ret
-
-                if ret is None or ret is True:
-                    handled = True
-                    break
-
-        if not handled:
-            logging.info('Handler not found: %s', update)
-            return False
-
-    @coroutine
-    def _process_update(self):
-        def default_filter_text_msg(cmd):
-            return lambda r, c: (r == self.UPDATE_TYPE_MSG_TEXT or r == self.UPDATE_TYPE_MSG_ANY) \
-                                and (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)) or c is False)
-
-        def default_filter_msg(msg_type):
-            return lambda r, c: (r == msg_type or r == self.UPDATE_TYPE_MSG_ANY) and c is None
-
-        def default_filter(msg_type):
-            return lambda r, _: r == msg_type
-
-        def default_filter_cb(cmd):
-            return lambda r, c: r == self.UPDATE_TYPE_CALLBACK_QUERY and \
-                                (c == cmd or (cmd and hasattr(c, 'match') and c.match(cmd)) or c is False)
-
-        bot_info = yield self.get_me()
-        while True:
-            update = yield self.processing_queue.get()
-
-            try:
-                if 'message' in update:
-                    if 'text' in update['message']:
-                        if update['message']['text'].startswith('@' + bot_info['username']):
-                            update['message']['text'] = update['message']['text'][len(bot_info['username'])+1:].strip()
-                        elif update['message']['text'].endswith('@' + bot_info['username']):
-                            update['message']['text'] = update['message']['text'][:-len(bot_info['username'])-1].strip()
-
-                        # Got bot command
-                        if len(update['message']['text']) and update['message']['text'][0] == '/':
-                            if update['message']['text'].find(' ') > -1:
-                                cmd = update['message']['text'][:update['message']['text'].find(' ')]
-                            else:
-                                cmd = update['message']['text']
-                        else:
-                            cmd = None
-
-                        yield self.__execute_update_handler(default_filter_text_msg(cmd), update['message'])
-                    elif 'left_chat_member' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER), update['message'])
-                    elif 'new_chat_member' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER), update['message'])
-                    elif 'audio' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_AUDIO), update['message'])
-                    elif 'document' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_DOC), update['message'])
-                    elif 'photo' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_PHOTO), update['message'])
-                    elif 'sticker' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_STICKER), update['message'])
-                    elif 'video' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_VIDEO), update['message'])
-                    elif 'voice' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_VOICE), update['message'])
-                    elif 'location' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_LOCATION), update['message'])
-                    elif 'venue' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER), update['message'])
-                    elif 'group_chat_created' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED), update['message'])
-                    elif 'supergroup_chat_created' in update['message']:
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED), update['message'])
-                    else:
-                        logging.info('Unsupported message received: %s', update)
-                        yield self.__execute_update_handler(default_filter_msg(self.UPDATE_TYPE_MSG_UNKNOWN), update['message'])
-                elif 'inline_query' in update:
-                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_INLINE_QUERY), update['inline_query'])
-                elif 'chosen_inline_result' in update:
-                    yield self.__execute_update_handler(default_filter(self.UPDATE_TYPE_CHOSEN_INLINE_RESULT), update['chosen_inline_result'])
-                elif 'callback_query' in update:
-                    yield self.__execute_update_handler(default_filter_cb(update['callback_query']['data']),
-                                                        update['callback_query'])
-                else:
-                    logging.info('Unsupported message received: %s', update)
-            except:
-                logging.exception('Error while processing message')
-
-            self.processing_queue.task_done()
-
-    @coroutine
-    def wait_commands(self, last_update_id=None):
-        if self.consumption_state != self.STATE_STOPPED:
-            logging.warning('Another handler still active')
-            return False
-
-        if len(self.callbacks) == 0:
-            logging.warning('Starting updates consumption without any message handler set')
-
-        self.processing_threads = [self._process_update() for _ in range(self.processing_threads_cnt)]
-
-        try:
-            return (yield super().wait_commands(last_update_id))
-        finally:
-            self.consumption_state = self.STATE_STOPPED
-            yield self.stop()
 
 
 class ReplyMarkup(dict):

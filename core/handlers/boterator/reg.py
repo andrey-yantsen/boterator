@@ -1,18 +1,21 @@
+import logging
 from copy import deepcopy
 from tornado.gen import coroutine
 from ujson import dumps
 
+from core.bot import CommandFilterTextCmd, CommandFilterTextAny
 from core.queues import queue_request, QUEUE_SLAVEHOLDER_GET_BOT_INFO, QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, \
     QUEUE_SLAVEHOLDER_NEW_BOT
 from core.settings import DEFAULT_SLAVE_SETTINGS
 from helpers import report_botan
-from helpers.lazy_gettext import pgettext
+from helpers.lazy_gettext import pgettext, npgettext
 import tornado.locale
 
 from telegram import Api
 
 
 @coroutine
+@CommandFilterTextCmd('/reg')
 def reg_command(bot, message):
     report_botan(message, 'boterator_reg')
 
@@ -28,11 +31,13 @@ def reg_command(bot, message):
     slave_settings['start'] = str(slave_settings['start'])
 
     return {
-        'settings': slave_settings
+        'settings': slave_settings,
+        'owner_id': message['from']['id'],
     }
 
 
 @coroutine
+@CommandFilterTextAny()
 def plaintext_token(bot, message, **kwargs):
     token = message['text'].strip()
     if token == '':
@@ -126,13 +131,17 @@ def plaintext_token(bot, message, **kwargs):
         report_botan(message, 'boterator_slave_attached_to_channel')
 
         return {
+            'id': new_bot_info['id'],
+            'moderator_chat_id': chat['id'],
             'chat': chat,
             'token': token,
             'settings': kwargs['settings'],
+            'bot_info': new_bot_info,
         }
 
 
 @coroutine
+@CommandFilterTextAny()
 def plaintext_channel_name(bot, message, **kwargs):
     channel_name = message['text'].strip()
     if message['text'][0] != '@' or ' ' in channel_name:
@@ -141,7 +150,9 @@ def plaintext_channel_name(bot, message, **kwargs):
                                         'Invalid channel name. Try again or type /cancel'),
                                reply_to_message=message)
     else:
+        settings, bot_info = kwargs['settings'], kwargs['bot_info']
         try:
+            yield bot.send_chat_action(message['chat']['id'], bot.CHAT_ACTION_TYPING)
             new_bot = Api(kwargs['token'], lambda x: None)
             try:
                 yield new_bot.send_message(kwargs['settings']['hello'], chat_id=channel_name,
@@ -150,7 +161,40 @@ def plaintext_channel_name(bot, message, **kwargs):
                 yield new_bot.send_message(kwargs['settings']['hello'], chat_id=channel_name)
             report_botan(message, 'boterator_registered')
             kwargs['channel'] = channel_name
-            yield bot.queue.send(QUEUE_SLAVEHOLDER_NEW_BOT, dumps(kwargs))
+            yield bot.queue.send(QUEUE_SLAVEHOLDER_NEW_BOT, dumps(dict(target_channel=channel_name, **kwargs)))
+
+            votes_cnt_msg = npgettext('Boterator: default votes cnt', '{votes_cnt} vote', '{votes_cnt} votes',
+                                      settings['votes']).format(votes_cnt=settings['votes'])
+
+            delay_msg = npgettext('Boterator: default delay', '{delay} minute', '{delay} minutes',
+                                  settings['delay']).format(delay=settings['delay'])
+
+            timeout_msg = npgettext('Boterator: default timeout', '{timeout} hour', '{timeout} hours',
+                                    settings['vote_timeout']).format(timeout=settings['vote_timeout'])
+
+            msg = pgettext('Boterator: new bot registered',
+                           "And we're ready for some magic!\n"
+                           'By default the bot will wait for {votes_cnt_msg} to approve the '
+                           'message, perform {delay_msg} delay between channel messages, '
+                           'wait {timeout_msg} before closing a voting for each message and '
+                           'allow only text messages (no multimedia content at all). To '
+                           'modify this (and few other) settings send /help in PM to @{bot_username}. '
+                           'By default you\'re the only user who can change these '
+                           'settings and use /help command').format(votes_cnt_msg=votes_cnt_msg,
+                                                                    delay_msg=delay_msg, timeout_msg=timeout_msg,
+                                                                    bot_username=bot_info['username'])
+
+            try:
+                yield bot.send_message(msg, reply_to_message=message)
+                yield bot.db.execute("""INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
+                                        VALUES (%s, %s, %s, %s, %s, TRUE, %s)
+                                        ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, owner_id = EXCLUDED.owner_id
+                                        moderator_chat_id = EXCLUDED.moderator_chat_id, target_channel = EXCLUDED.target_channel
+                                        active = EXCLUDED.active""",
+                                     (kwargs['id'], kwargs['token'], kwargs['owner_id'], kwargs['moderator_chat_id'],
+                                      kwargs['target_channel'], dumps(kwargs['settings'])))
+            except:
+                logging.exception('Exception while finishing bot registration')
             return True
         except Exception as e:
             report_botan(message, 'boterator_channel_failure')
@@ -161,9 +205,10 @@ def plaintext_channel_name(bot, message, **kwargs):
 
 
 @coroutine
+@CommandFilterTextCmd('/sethello')
 def change_hello_command(bot, message, **kwargs):
     report_botan(message, 'boterator_change_hello_cmd')
-    yield bot.send_message(pgettext('Boterator: /changehello response',
+    yield bot.send_message(pgettext('Boterator: /sethello response',
                                     'Ok, I\'m listening to you. How I should say hello to your '
                                     'subscribers?'),
                            reply_to_message=message)
@@ -171,6 +216,7 @@ def change_hello_command(bot, message, **kwargs):
 
 
 @coroutine
+@CommandFilterTextAny()
 def plaintext_set_hello(bot, message, **kwargs):
     text = message['text'].strip()
     if len(text) >= 10:
@@ -190,15 +236,17 @@ def plaintext_set_hello(bot, message, **kwargs):
 
 
 @coroutine
+@CommandFilterTextCmd('/setstart')
 def change_start_command(bot, message, **kwargs):
     report_botan(message, 'boterator_change_start_cmd')
-    yield bot.send_message(pgettext('Boterator: /changestart response',
+    yield bot.send_message(pgettext('Boterator: /setstart response',
                                     'Ok, I\'m listening to you. How I should say hello to your authors?'),
                            reply_to_message=message)
     return True
 
 
 @coroutine
+@CommandFilterTextAny()
 def plaintext_set_start_message(bot, message, **kwargs):
     text = message['text'].strip()
     if len(text) >= 10:

@@ -1,3 +1,4 @@
+import logging
 import signal
 
 from burlesque import Burlesque
@@ -28,7 +29,9 @@ if __name__ == '__main__':
     bm = Boterator(options.token, db, Burlesque(options.burlesque))
     try:
         ioloop.run_sync(bm.start)
-    except:
+    except Exception as e:
+        if not isinstance(e, KeyboardInterrupt):
+            logging.exception('Got exception')
         bm.stop()
 
     signal.signal(signal.SIGTERM, bm.stop)

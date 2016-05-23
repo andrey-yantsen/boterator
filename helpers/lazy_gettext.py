@@ -22,9 +22,13 @@ class pgettext:
 
     def __str__(self):
         ret = self.locale.pgettext(self.context, self.message)
+        return self._apply_format(ret)
+
+    def _apply_format(self, text):
         if self.format_args or self.format_kwargs:
-            return ret.format(*self.format_args, **self.format_kwargs)
-        return ret
+            return text.format(*set_locale_recursive(self.format_args, self._locale),
+                               **set_locale_recursive(self.format_kwargs, self._locale))
+        return text
 
     def format(self, *args, **kwargs):
         self.format_args = args
@@ -40,9 +44,7 @@ class npgettext(pgettext):
 
     def __str__(self):
         ret = self.locale.pgettext(self.context, self.message, self.plural_message, self.count)
-        if self.format_args or self.format_kwargs:
-            return ret.format(*self.format_args, **self.format_kwargs)
-        return ret
+        return self._apply_format(ret)
 
 
 def set_locale_recursive(data, l):

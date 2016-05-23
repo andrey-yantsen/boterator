@@ -13,106 +13,29 @@ from tornado.ioloop import IOLoop
 from tornado import locale
 from tornado.locale import load_gettext_translations
 
+from core.bot import Base
 from helpers import pgettext, Emoji
 from telegram import Api, ForceReply, ReplyKeyboardHide, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
     InlineKeyboardButton, ApiError
 
-def append_npgettext(f):
-    return f
 
-def append_pgettext(f):
-    return f
+def append_npgettext(*args):
+    pass
 
-class Slave:
+
+def append_pgettext(*args):
+    pass
+
+
+class Slave(Base):
     RE_VOTE_YES = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_yes')
     RE_VOTE_NO = re.compile(r'/vote_(?P<chat_id>\d+)_(?P<message_id>\d+)_no')
     RE_BAN = re.compile(r'/ban_(?P<user_id>\d+)')
     RE_UNBAN = re.compile(r'/unban_(?P<user_id>\d+)')
     RE_REPLY = re.compile(r'/reply_(?P<chat_id>\d+)_(?P<message_id>\d+)')
 
-    def __init__(self, token, m, moderator_chat_id, channel_name, settings, owner_id, bot_id):
-        bot = Api(token)
-        bot.add_handler(self.validate_user, False, Api.UPDATE_TYPE_MSG_ANY)
-        bot.add_handler(self.start_command, '/start')
-        bot.add_handler(self.cancel_command, '/cancel')
-        bot.add_handler(self.help_command, '/help')
-        bot.add_handler(self.setdelay_command, '/setdelay')
-        bot.add_handler(self.setvotes_command, '/setvotes')
-        bot.add_handler(self.settimeout_command, '/settimeout')
-        bot.add_handler(self.setstartmessage_command, '/setstartmessage')
-        bot.add_handler(self.attach_command, '/attach')
-        bot.add_handler(self.togglepower_command, '/togglepower')
-        bot.add_handler(self.stats_command, '/stats')
-        bot.add_handler(self.ban_list_command, '/banlist')
-        bot.add_handler(self.polls_list_command, '/pollslist')
-        bot.add_handler(self.change_allowed_command, '/changeallowed')
-        bot.add_handler(self.switchlang_command, '/switchlang')
-        bot.add_handler(self.settextlimits_command, '/settextlimits')
-        bot.add_handler(self.cbq_message_review, 'confirm', Api.UPDATE_TYPE_CALLBACK_QUERY)
-        bot.add_handler(self.cbq_cancel_publishing, 'cancel_publishing', Api.UPDATE_TYPE_CALLBACK_QUERY)
-        bot.add_handler(self.plaintext_cancel_emoji_handler)
-        bot.add_handler(self.plaintext_post_handler)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_AUDIO)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VIDEO)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_PHOTO)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_VOICE)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_DOC)
-        bot.add_handler(self.multimedia_post_handler, msg_type=Api.UPDATE_TYPE_MSG_STICKER)
-        bot.add_handler(self.plaintext_delay_handler)
-        bot.add_handler(self.plaintext_votes_handler)
-        bot.add_handler(self.plaintext_timeout_handler)
-        bot.add_handler(self.plaintext_textlimits_handler)
-        bot.add_handler(self.plaintext_startmessage_handler)
-        bot.add_handler(self.plaintext_switchlang_handler)
-        bot.add_handler(self.vote_yes, self.RE_VOTE_YES)
-        bot.add_handler(self.vote_no, self.RE_VOTE_NO)
-        bot.add_handler(self.ban_command, self.RE_BAN)
-        bot.add_handler(self.unban_command, self.RE_UNBAN)
-        bot.add_handler(self.plaintext_ban_handler)
-        bot.add_handler(self.reply_command, self.RE_REPLY)
-        bot.add_handler(self.plaintext_reply_handler)
-        bot.add_handler(self.plaintext_contenttype_handler)
-        bot.add_handler(self.new_chat, msg_type=bot.UPDATE_TYPE_MSG_NEW_CHAT_MEMBER)
-        bot.add_handler(self.left_chat, msg_type=bot.UPDATE_TYPE_MSG_LEFT_CHAT_MEMBER)
-        bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_GROUP_CHAT_CREATED)
-        bot.add_handler(self.group_created, msg_type=bot.UPDATE_TYPE_MSG_SUPERGROUP_CHAT_CREATED)
-        self.bot = bot
-        self.mother = m
-        self.moderator_chat_id = moderator_chat_id
-        self.channel_name = channel_name
-        self.stages = StagesStorage()
-        self.settings = settings
-        self.owner_id = owner_id
-        self.bot_id = bot_id
-        load_gettext_translations('./locales', 'boterator')
-        self.locale = locale.get(self.language)
-
-    @coroutine
-    def validate_user(self, message, pgettext):
-        bot_info = yield self.bot.get_me()
-        allowed = yield is_allowed_user(message['from'], bot_info['id'])
-        if allowed:
-            return False
-
-        yield self.bot.send_message(pgettext('User banned', 'Access denied'), reply_to_message=message)
-
-    @coroutine
-    def listen(self):
-        IOLoop.current().add_callback(self.check_votes_success)
-        IOLoop.current().add_callback(self.check_votes_failures)
-        while True:
-            try:
-                yield self.bot.wait_commands()
-            except Exception as e:
-                if isinstance(e, ApiError) and e.code == 401:
-                    logging.warning('Bot #%s is unable to connect to api', self.bot_id)
-                    yield self.mother.slave_revoked(self.bot_id, self.bot.token, self.owner_id)
-                    break
-                else:
-                    logging.exception('Slave got exception')
-                    yield sleep(10)
-
-        logging.info('Slave termination')
+    def _init_handlers(self):
+        pass
 
     @coroutine
     def check_votes_success(self):

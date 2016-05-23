@@ -1,5 +1,6 @@
 from tornado.gen import coroutine
 
+from core.bot import CommandFilterAny
 from helpers import pgettext
 
 
@@ -24,6 +25,7 @@ def is_allowed_user(db, user, bot_id):
 
 
 @coroutine
+@CommandFilterAny()
 def validate_user(bot, message):
     allowed = is_allowed_user(bot.db, message['from'], bot.bot_id)
     if allowed:

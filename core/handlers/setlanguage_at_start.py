@@ -1,11 +1,13 @@
 from tornado.gen import coroutine
 
+from core.bot import CommandFilterTextCmd, CommandFilterTextAny
 from core.handlers.boterator.start import start_command
 from core.handlers.setlanguage import get_keyboard, setlanguage_plaintext
 from helpers import pgettext
 
 
 @coroutine
+@CommandFilterTextCmd('/start')
 def setlanguage_at_start(bot, message):
     if bot.get_settings(message['from']['id']) != {}:
         return False
@@ -16,6 +18,7 @@ def setlanguage_at_start(bot, message):
 
 
 @coroutine
+@CommandFilterTextAny()
 def setlanguage_at_start_plaintext(bot, message):
     ret = yield setlanguage_plaintext(bot, message)
     if ret is True:

@@ -1,9 +1,11 @@
 from tornado.gen import coroutine
 
+from core.bot import CommandFilterTextCmd
 from helpers import pgettext, report_botan
 
 
 @coroutine
+@CommandFilterTextCmd('/start')
 def start_command(bot, message):
     report_botan(message, 'boterator_start')
     yield bot.send_message(pgettext('Boterator: /start response', 'Hello, this is Boterator. In order to start ask '

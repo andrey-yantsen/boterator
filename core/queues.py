@@ -3,7 +3,7 @@ from tornado.concurrent import Future
 from tornado.gen import coroutine, with_timeout
 from ujson import dumps, loads
 
-QUEUE_BOTERATOR_BOT_INFO = 'boterator_bot_info'
+QUEUE_BOTERATOR_BOT_REVOKE = 'boterator_bot_revoke'
 QUEUE_SLAVEHOLDER_NEW_BOT = 'slaveholder_new_bot'
 QUEUE_SLAVEHOLDER_GET_BOT_INFO = 'slaveholder_get_bot_info'
 QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP = 'slaveholder_get_moderation_group'
@@ -36,8 +36,3 @@ def queue_request(queue, queue_name, **kwargs):
     f.add_done_callback(lambda f: queue.stop([kwargs['reply_to']]))
 
     return (yield with_timeout(timedelta(seconds=kwargs['timeout']), f))
-
-
-@coroutine
-def queue_reply(queue, reply_to, **kwargs):
-    yield queue.send(reply_to, dumps(kwargs))

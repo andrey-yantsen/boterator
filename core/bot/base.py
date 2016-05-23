@@ -27,9 +27,8 @@ class Base:
         self.api = telegram.Api(token, self.process_update)
         self.db = db
         self.user_settings = {}
-        self.raw_commands = []
+        self.commands = {}
         self.raw_commands_tree = {}
-        self.commands = []
         self.cancellation_handler = None
         self.unknown_command_handler = None
         self.updates_queue = Queue(kwargs.get('updates_queue_handlers', 4) * 10)
@@ -41,13 +40,11 @@ class Base:
     def _init_handlers(self):
         raise NotImplementedError()
 
-    def _add_handler(self, handler: callable, cmd_filter: CommandFilterBase, name: pgettext=None,
-                     previous_handler: callable=None, is_final=True):
-        if handler not in self.raw_commands:
-            self.raw_commands.append(handler)
-            self.commands.append(Command(self, handler, cmd_filter, name))
+    def _add_handler(self, handler: callable, name: pgettext=None, previous_handler: callable=None, is_final=True):
+        if handler not in self.commands:
+            self.commands[handler] = Command(self, handler, name)
 
-        if previous_handler and previous_handler not in self.raw_commands:
+        if previous_handler and previous_handler not in self.commands:
             raise BotError('Previous command is unknown')
 
         previous_handler_name = previous_handler.__name__ if previous_handler else 'none'
@@ -56,16 +53,15 @@ class Base:
             self.raw_commands_tree[previous_handler_name] = []
         else:
             for h, _ in self.raw_commands_tree[previous_handler_name]:
-                if h == handler and handler != self.cancellation_handler:
+                if h.handler == handler and handler != self.cancellation_handler:
                     raise BotError('Command already registered')
-                elif h == handler:
+                elif h.handler == handler:
                     return
 
-        self.raw_commands_tree[previous_handler_name].append((handler, is_final))
+        self.raw_commands_tree[previous_handler_name].append((self.commands[handler], is_final))
 
         if not is_final and self.cancellation_handler:
-            self._add_handler(self.cancellation_handler, CommandFilterTextCmd('/cancel'), previous_handler=handler,
-                              is_final=True)
+            self._add_handler(self.cancellation_handler, previous_handler=handler, is_final=True)
 
     def _load_user_settings_per_user(self):
         return {}
@@ -105,8 +101,11 @@ class Base:
             yield handlers_f
 
     def stop(self):
+        assert not self._finished.is_set()
         logging.debug('[bot#%s] Terminating', self.bot_id)
-        self.api.stop()
+        self._finished.set()
+        if self.api.is_alive():
+            self.api.stop()
 
     @coroutine
     def process_update(self, update):
@@ -148,22 +147,20 @@ class Base:
                     commands_tree = self.raw_commands_tree['none']
 
                 processing_result = False
-                for command in self.commands:
-                    if command.test(received_update):
-                        for command_in_tree in commands_tree:
-                            if command_in_tree[0] == command.handler:
-                                processing_result = yield command(**received_update)
-                                if processing_result is not False:
-                                    if not command_in_tree[1] and processing_result is not None:
-                                        if processing_result is True:
-                                            processing_result = {}
-                                        self._stages[stage_key] = command.handler, processing_result
-                                    elif processing_result is not None:
-                                        del self._stages[stage_key]
-                                    break
+                for command_in_tree in commands_tree:
+                    processing_result = yield command_in_tree[0](**received_update)
+                    if processing_result is not False:
+                        if not command_in_tree[1] and processing_result is not None:
+                            if processing_result is True:
+                                processing_result = {}
+                            self._stages[stage_key] = command_in_tree[0].handler, processing_result
+                        elif processing_result is not None:
+                            del self._stages[stage_key]
+                        break
 
-                        if processing_result is not False:
-                            break
+                    if processing_result is not False:
+                        break
+
                 if processing_result is False:
                     logging.debug('Handler not found: %s', dumps(received_update, indent=2))
                     if self.unknown_command_handler:

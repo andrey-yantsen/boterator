@@ -1,3 +1,4 @@
+import logging
 import signal
 
 from burlesque import Burlesque
@@ -21,7 +22,12 @@ if __name__ == '__main__':
     ioloop.run_sync(db.connect)
 
     sh = SlaveHolder(db, Burlesque(options.burlesque))
-    ioloop.run_sync(sh.start)
+    try:
+        ioloop.run_sync(sh.start)
+    except Exception as e:
+        if not isinstance(e, KeyboardInterrupt):
+            logging.exception('Got exception')
+        sh.stop()
 
     signal.signal(signal.SIGTERM, sh.stop)
     signal.signal(signal.SIGINT, sh.stop)

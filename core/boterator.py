@@ -1,7 +1,7 @@
 import logging
 from copy import deepcopy
 from time import time
-from ujson import dumps
+from ujson import dumps, loads
 
 from tornado.gen import coroutine, sleep
 
@@ -15,7 +15,7 @@ from core.handlers.setlanguage import setlanguage, setlanguage_plaintext
 from core.handlers.setlanguage_at_start import setlanguage_at_start, setlanguage_at_start_plaintext
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
-from core.queues import boterator_queues, QUEUE_SLAVEHOLDER_GET_BOT_INFO, QUEUE_BOTERATOR_BOT_INFO
+from core.queues import boterator_queues, QUEUE_BOTERATOR_BOT_REVOKE
 from helpers import pgettext
 from telegram import Api
 
@@ -30,7 +30,7 @@ class Boterator(Base):
     @coroutine
     def _load_user_settings_per_user(self):
         ret = {}
-        cur = yield self.db.execute('SELECT user_id, settings FROM users WHERE bot_id = %s', (self.bot_id, ))
+        cur = yield self.db.execute('SELECT user_id, settings FROM users WHERE bot_id = %s', (self.bot_id,))
         while True:
             row = cur.fetchone()
             if not row:
@@ -42,45 +42,31 @@ class Boterator(Base):
     def _init_handlers(self):
         self.cancellation_handler = cancel_command
         self.unknown_command_handler = unknown_command
-        self._add_handler(validate_user, CommandFilterTextAny())
-        self._add_handler(setlanguage, CommandFilterTextCmd('/setlanguage'), is_final=False)
-        self._add_handler(emoji_end, CommandFilterTextAny(), None, setlanguage)
-        self._add_handler(setlanguage_plaintext, CommandFilterTextAny(), None, setlanguage)
-        self._add_handler(setlanguage_at_start, CommandFilterTextCmd('/start'), is_final=False)
-        self._add_handler(setlanguage_at_start_plaintext, CommandFilterTextAny(), None, setlanguage_at_start)
-        self._add_handler(start_command, CommandFilterTextCmd('/start'))
-        self._add_handler(cancel_command, CommandFilterTextCmd('/cancel'))
-        self._add_handler(reg_command, CommandFilterTextCmd('/reg'), pgettext('Command name',
-                                                                              '/reg — register a new bot'),
-                          is_final=False)
-        self._add_handler(plaintext_token, CommandFilterTextAny(), pgettext('Action description', 'Waiting for the '
-                                                                                                  'token'),
+        self._add_handler(validate_user)
+        self._add_handler(setlanguage, is_final=False)
+        self._add_handler(emoji_end, None, setlanguage)
+        self._add_handler(setlanguage_plaintext, None, setlanguage)
+        self._add_handler(setlanguage_at_start, is_final=False)
+        self._add_handler(setlanguage_at_start_plaintext, None, setlanguage_at_start)
+        self._add_handler(start_command)
+        self._add_handler(cancel_command)
+        self._add_handler(reg_command, pgettext('Command name', '/reg — register a new bot'), is_final=False)
+        self._add_handler(plaintext_token, pgettext('Action description', 'Waiting for the token'),
                           previous_handler=reg_command, is_final=False)
 
-        self._add_handler(change_hello_command, CommandFilterTextCmd('/sethello'), None,
-                          previous_handler=plaintext_token, is_final=False)
-        self._add_handler(plaintext_set_hello, CommandFilterTextAny(), None,
-                          previous_handler=change_hello_command, is_final=False)
-        self._add_handler(change_hello_command, CommandFilterTextCmd('/sethello'), None,
-                          previous_handler=plaintext_set_hello, is_final=False)
-        self._add_handler(change_start_command, CommandFilterTextCmd('/setstart'), None,
-                          previous_handler=plaintext_set_hello, is_final=False)
-        self._add_handler(plaintext_channel_name, CommandFilterTextAny(), None,
-                          previous_handler=plaintext_set_hello, is_final=True)
+        self._add_handler(change_hello_command, None, previous_handler=plaintext_token, is_final=False)
+        self._add_handler(plaintext_set_hello, None, previous_handler=change_hello_command, is_final=False)
+        self._add_handler(change_hello_command, None, previous_handler=plaintext_set_hello, is_final=False)
+        self._add_handler(change_start_command, None, previous_handler=plaintext_set_hello, is_final=False)
+        self._add_handler(plaintext_channel_name, None, previous_handler=plaintext_set_hello, is_final=True)
 
-        self._add_handler(change_start_command, CommandFilterTextCmd('/setstart'), None,
-                          previous_handler=plaintext_token, is_final=False)
-        self._add_handler(plaintext_set_start_message, CommandFilterTextAny(), None,
-                          previous_handler=change_start_command, is_final=False)
-        self._add_handler(change_start_command, CommandFilterTextCmd('/setstart'), None,
-                          previous_handler=plaintext_set_start_message, is_final=False)
-        self._add_handler(change_hello_command, CommandFilterTextCmd('/sethello'), None,
-                          previous_handler=plaintext_set_start_message, is_final=False)
-        self._add_handler(plaintext_channel_name, CommandFilterTextAny(), None,
-                          previous_handler=plaintext_set_start_message, is_final=True)
+        self._add_handler(change_start_command, None, previous_handler=plaintext_token, is_final=False)
+        self._add_handler(plaintext_set_start_message, None, previous_handler=change_start_command, is_final=False)
+        self._add_handler(change_start_command, None, previous_handler=plaintext_set_start_message, is_final=False)
+        self._add_handler(change_hello_command, None, previous_handler=plaintext_set_start_message, is_final=False)
+        self._add_handler(plaintext_channel_name, None, previous_handler=plaintext_set_start_message, is_final=True)
 
-        self._add_handler(plaintext_channel_name, CommandFilterTextAny(), pgettext('Action description',
-                                                                                   'Waiting for the channel name'),
+        self._add_handler(plaintext_channel_name, pgettext('Action description', 'Waiting for the channel name'),
                           previous_handler=plaintext_token, is_final=True)
 
     @coroutine
@@ -94,18 +80,19 @@ class Boterator(Base):
 
     @coroutine
     def queue_handler(self, queue_name, body):
-        pass
+        body = loads(body.decode('utf-8'))
+        if queue_name == QUEUE_BOTERATOR_BOT_REVOKE:
+            yield self.db.execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (body['id'],))
 
-    @coroutine
-    def slave_revoked(self, bot_id, token, owner_id, pgettext):
-        yield DB.execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (bot_id,))
-        if bot_id in self.slaves:
-            del self.slaves[bot_id]
-
-        try:
-            yield self.bot.send_message(pgettext('Boterator: unable to establish startup connection with bot',
-                                                 'I\'m failed to establish connection to your bot with token %s. Your '
-                                                 'bot was deactivated, to enable it again - perform registration '
-                                                 'process from the beginning.') % token, chat_id=owner_id)
-        except:
-            pass
+            try:
+                yield self.send_message(pgettext('Boterator: unable to establish startup connection with bot',
+                                                 'I\'m failed to establish connection to your bot with token `{token}`'
+                                                 ', received error: `{error}`.\n'
+                                                 'Your bot was deactivated, to enable it again - perform registration '
+                                                 'process from the beginning.').format(token=body['token'],
+                                                                                       error=body['error']),
+                                        chat_id=body['owner_id'], parse_mode=Api.PARSE_MODE_MD)
+            except:
+                logging.exception('Got exception while notifying user on bot disable')
+        else:
+            raise Exception('Unknown queue: %s', queue_name)
