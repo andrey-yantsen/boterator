@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.2
--- Dumped by pg_dump version 9.5.2
+-- Dumped from database version 9.5.3
+-- Dumped by pg_dump version 9.5.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -34,7 +34,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: incoming_messages; Type: TABLE; Schema: public; Owner: boterator
+-- Name: incoming_messages; Type: TABLE; Schema: public; Owner: virus
 --
 
 CREATE TABLE incoming_messages (
@@ -51,10 +51,10 @@ CREATE TABLE incoming_messages (
 );
 
 
-ALTER TABLE incoming_messages OWNER TO boterator;
+ALTER TABLE incoming_messages OWNER TO virus;
 
 --
--- Name: registered_bots; Type: TABLE; Schema: public; Owner: boterator
+-- Name: registered_bots; Type: TABLE; Schema: public; Owner: virus
 --
 
 CREATE TABLE registered_bots (
@@ -70,10 +70,25 @@ CREATE TABLE registered_bots (
 );
 
 
-ALTER TABLE registered_bots OWNER TO boterator;
+ALTER TABLE registered_bots OWNER TO virus;
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: boterator
+-- Name: stages; Type: TABLE; Schema: public; Owner: virus
+--
+
+CREATE TABLE stages (
+    bot_id integer NOT NULL,
+    key character varying NOT NULL,
+    stage character varying NOT NULL,
+    data jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE stages OWNER TO virus;
+
+--
+-- Name: users; Type: TABLE; Schema: public; Owner: virus
 --
 
 CREATE TABLE users (
@@ -90,10 +105,10 @@ CREATE TABLE users (
 );
 
 
-ALTER TABLE users OWNER TO boterator;
+ALTER TABLE users OWNER TO virus;
 
 --
--- Name: votes_history; Type: TABLE; Schema: public; Owner: boterator
+-- Name: votes_history; Type: TABLE; Schema: public; Owner: virus
 --
 
 CREATE TABLE votes_history (
@@ -106,10 +121,10 @@ CREATE TABLE votes_history (
 );
 
 
-ALTER TABLE votes_history OWNER TO boterator;
+ALTER TABLE votes_history OWNER TO virus;
 
 --
--- Name: votes_history_id_seq; Type: SEQUENCE; Schema: public; Owner: boterator
+-- Name: votes_history_id_seq; Type: SEQUENCE; Schema: public; Owner: virus
 --
 
 CREATE SEQUENCE votes_history_id_seq
@@ -120,24 +135,24 @@ CREATE SEQUENCE votes_history_id_seq
     CACHE 1;
 
 
-ALTER TABLE votes_history_id_seq OWNER TO boterator;
+ALTER TABLE votes_history_id_seq OWNER TO virus;
 
 --
--- Name: votes_history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: boterator
+-- Name: votes_history_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: virus
 --
 
 ALTER SEQUENCE votes_history_id_seq OWNED BY votes_history.id;
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: boterator
+-- Name: id; Type: DEFAULT; Schema: public; Owner: virus
 --
 
 ALTER TABLE ONLY votes_history ALTER COLUMN id SET DEFAULT nextval('votes_history_id_seq'::regclass);
 
 
 --
--- Name: incoming_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: incoming_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: virus
 --
 
 ALTER TABLE ONLY incoming_messages
@@ -145,7 +160,7 @@ ALTER TABLE ONLY incoming_messages
 
 
 --
--- Name: registered_bots_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: registered_bots_pkey; Type: CONSTRAINT; Schema: public; Owner: virus
 --
 
 ALTER TABLE ONLY registered_bots
@@ -153,7 +168,15 @@ ALTER TABLE ONLY registered_bots
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: stages_pkey; Type: CONSTRAINT; Schema: public; Owner: virus
+--
+
+ALTER TABLE ONLY stages
+    ADD CONSTRAINT stages_pkey PRIMARY KEY (bot_id, key);
+
+
+--
+-- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: virus
 --
 
 ALTER TABLE ONLY users
@@ -161,7 +184,7 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: votes_history_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: votes_history_pkey; Type: CONSTRAINT; Schema: public; Owner: virus
 --
 
 ALTER TABLE ONLY votes_history
@@ -169,61 +192,61 @@ ALTER TABLE ONLY votes_history
 
 
 --
--- Name: im_pending_die_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: im_pending_die_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX im_pending_die_idx ON incoming_messages USING btree (bot_id, is_voting_success, is_voting_fail, created_at DESC);
 
 
 --
--- Name: im_pending_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: im_pending_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX im_pending_idx ON incoming_messages USING btree (bot_id, is_voting_success, is_published, created_at);
 
 
 --
--- Name: rb_active_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: rb_active_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX rb_active_idx ON registered_bots USING btree (active);
 
 
 --
--- Name: rb_moderator_chat_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: rb_moderator_chat_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX rb_moderator_chat_idx ON registered_bots USING btree (moderator_chat_id);
 
 
 --
--- Name: users_banned_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: users_banned_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX users_banned_idx ON users USING btree (bot_id, banned_at);
 
 
 --
--- Name: votes_history_mo_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: votes_history_mo_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX votes_history_mo_idx ON votes_history USING btree (message_id, original_chat_id);
 
 
 --
--- Name: votes_history_umo_idx; Type: INDEX; Schema: public; Owner: boterator
+-- Name: votes_history_umo_idx; Type: INDEX; Schema: public; Owner: virus
 --
 
 CREATE INDEX votes_history_umo_idx ON votes_history USING btree (user_id, message_id, original_chat_id);
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: postgres
+-- Name: public; Type: ACL; Schema: -; Owner: virus
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM postgres;
-GRANT ALL ON SCHEMA public TO postgres;
+REVOKE ALL ON SCHEMA public FROM virus;
+GRANT ALL ON SCHEMA public TO virus;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
