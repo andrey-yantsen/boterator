@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from datetime import datetime, timedelta
 
 from tornado.gen import coroutine
@@ -31,12 +32,15 @@ from core.handlers.slave.toggle_power import togglepower_command
 from core.handlers.slave.vote import vote_yes, vote_no
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
+from core.settings import DEFAULT_SLAVE_SETTINGS
 from helpers import report_botan, npgettext, pgettext
 
 
 class Slave(Base):
     def __init__(self, token, db, **kwargs):
-        super().__init__(token, db, **kwargs)
+        settings = deepcopy(DEFAULT_SLAVE_SETTINGS)
+        settings.update(kwargs.pop('settings', {}))
+        super().__init__(token, db, settings=settings, **kwargs)
         self.administrators = [kwargs['owner_id']]
 
     def _init_handlers(self):

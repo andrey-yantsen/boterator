@@ -1,3 +1,5 @@
+import os
+
 from tornado.locale import get_supported_locales, load_gettext_translations
 from babel import Locale
 from helpers import pgettext, Emoji
@@ -24,7 +26,6 @@ DEFAULT_SLAVE_SETTINGS = {
     },
 }
 
-load_gettext_translations('./locales', 'boterator')
 supported_locales = sorted(get_supported_locales())
 LANGUAGE_LIST = []
 for locale in supported_locales:

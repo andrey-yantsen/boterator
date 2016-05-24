@@ -1,7 +1,8 @@
-from ujson import dumps
-
+from os import path
 from tornado import locale
-from tornado.locale import Locale
+from tornado.locale import Locale, load_gettext_translations
+
+load_gettext_translations(path.join(path.dirname(__file__), '../locales'), 'boterator')
 
 
 class pgettext:
