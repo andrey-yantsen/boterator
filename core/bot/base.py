@@ -23,7 +23,11 @@ class Base:
 
     def __init__(self, token, db, **kwargs):
         self.token = token
-        self.settings = kwargs
+        self.settings = kwargs.pop('settings', {})
+
+        for key, value in kwargs.items():
+            self.__dict__[key] = value
+
         self.api = telegram.Api(token, self.process_update)
         self.db = db
         self.user_settings = {}
@@ -118,7 +122,7 @@ class Base:
             user_id = update['message']['from']['id']
         elif 'callback_query' in update:
             if 'message' in update['callback_query']:
-                chat_id = update['callback_query']['chat']['id']
+                chat_id = update['callback_query']['message']['chat']['id']
             else:
                 chat_id = update['callback_query']['from']['id']
             user_id = update['callback_query']['from']['id']
@@ -141,9 +145,11 @@ class Base:
                 stage_key = self.get_stage_key(received_update)
                 current_stage = self._stages[stage_key]
                 if current_stage:
+                    stage_data = current_stage[1]
                     received_update.update(current_stage[1])
                     commands_tree = self.raw_commands_tree[current_stage[0]]
                 else:
+                    stage_data = {}
                     commands_tree = self.raw_commands_tree['none']
 
                 processing_result = False
@@ -153,7 +159,8 @@ class Base:
                         if not command_in_tree[1] and processing_result is not None:
                             if processing_result is True:
                                 processing_result = {}
-                            self._stages[stage_key] = command_in_tree[0].handler, processing_result
+                            stage_data.update(processing_result)
+                            self._stages[stage_key] = command_in_tree[0].handler, stage_data
                         elif processing_result is not None:
                             del self._stages[stage_key]
                         break

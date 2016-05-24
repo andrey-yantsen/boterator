@@ -316,6 +316,14 @@ class Api:
 
         return (yield self.__request_api('answerCallbackQuery', request))
 
+    @coroutine
+    def get_chat_administrators(self, chat_id):
+        return (yield self.__request_api('getChatAdministrators', {'chat_id': chat_id}))
+
+    @coroutine
+    def get_chat(self, chat_id):
+        return (yield self.__request_api('getChat', {'chat_id': chat_id}))
+
 
 class ReplyMarkup(dict):
     def __init__(self, **kwargs):

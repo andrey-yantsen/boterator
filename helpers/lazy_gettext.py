@@ -48,7 +48,7 @@ class npgettext(pgettext):
 
 
 def set_locale_recursive(data, l):
-    if type(data) is dict:
+    if isinstance(data, dict):
         for k, v in data.items():
             data[k] = set_locale_recursive(v, l)
     elif type(data) is list:

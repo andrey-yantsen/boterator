@@ -7,7 +7,8 @@ from tornado.gen import coroutine, with_timeout
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 
-from core.bot import CommandFilterTextCmd
+from core.bot import CommandFilterTextCmd, CommandFilterNewChatMember, CommandFilterGroupChatCreated, \
+    CommandFilterSupergroupChatCreated
 from core.queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
     QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, QUEUE_BOTERATOR_BOT_REVOKE
 from telegram import Api, ApiError
@@ -49,12 +50,12 @@ class SlaveHolder:
     def _start_bot(self, **kwargs):
         @coroutine
         def listen_done(f: Future):
-            logging.debug('Bot #%s terminated', kwargs['id'])
+            logging.debug('[bot#%s] Terminated', kwargs['id'])
             e = f.exception()
             if e:
-                logging.debug('Got exception with bot #%d: %s', kwargs['id'], f.exception())
+                logging.debug('[bot#%s] Got exception: %s', kwargs['id'], f.exception())
                 if isinstance(e, ApiError) and e.code == 401:
-                    logging.warning('Disabling bot #%d due to connection error', kwargs['id'])
+                    logging.warning('[bot#%d] Disabling due to connection error', kwargs['id'])
                     yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
                 else:
                     IOLoop.current().add_timeout(timedelta(seconds=5), self._start_bot, **kwargs)
@@ -72,7 +73,7 @@ class SlaveHolder:
     def stop(self):
         logging.info('Stopping slave-holder')
         for slave in self.slaves.values():
-            slave.stop()
+            slave['instance'].stop()
 
         self._finished.set()
 
@@ -86,11 +87,14 @@ class SlaveHolder:
             bot = Api(body['token'], lambda x: None)
 
             if bot.bot_id in self.slaves:
+                logging.debug('[bot#%s] Already registered', bot.bot_id)
                 yield self.queue.send(body['reply_to'], dumps(dict(error='duplicate')))
 
             try:
                 ret = yield bot.get_me()
+                logging.debug('[bot#%s] Ok', bot.bot_id)
             except Exception as e:
+                logging.debug('[bot#%s] Failed', bot.bot_id)
                 yield self.queue.send(body['reply_to'], dumps(dict(error=str(e))))
                 return
 
@@ -102,25 +106,41 @@ class SlaveHolder:
             @coroutine
             def slave_update_handler(update):
                 logging.debug('[bot#%s] Received update', bot.bot_id)
-                if cmd_filter(update):
+                if attach_cmd_filter.test(**update):
+                    logging.debug('[bot#%s] /attach', bot.bot_id)
                     update_with_command_f.set_result(update)
+                elif bot_added.test(**update):
+                    logging.debug('[bot#%s] bot added to a group', bot.bot_id)
+                    update_with_command_f.set_result(update)
+                elif CommandFilterGroupChatCreated.test(**update) or CommandFilterSupergroupChatCreated.test(**update):
+                    logging.debug('[bot#%s] group created', bot.bot_id)
+                    update_with_command_f.set_result(update)
+                else:
+                    logging.debug('[bot#%s] unsupported update: %s', dumps(update, indent=2))
 
             bot = Api(body['token'], slave_update_handler)
 
             @coroutine
             def handle_finish(f):
+                bot.stop()
                 if not f.exception():
+                    logging.debug('[bot#%s] Done', bot.bot_id)
                     update = f.result()
                     yield self.queue.send(body['reply_to'], dumps(dict(sender=update['message']['from'],
                                                                        **update['message']['chat'])))
-                logging.debug('[bot#%s] Done', bot.bot_id)
-                bot.stop()
+
+                    # Mark last update as read
+                    f2 = bot.get_updates(update['update_id'] + 1, timeout=0, retry_on_nonuser_error=True)
+                    f2.add_done_callback(lambda x: x.exception())  # Ignore any exceptions
+                else:
+                    logging.debug('[bot#%s] Failed: %s', bot.bot_id, f.exception())
 
             timeout_f.add_done_callback(handle_finish)
 
-            cmd_filter = CommandFilterTextCmd('/attach')
+            attach_cmd_filter = CommandFilterTextCmd('/attach')
+            bot_added = CommandFilterNewChatMember(bot.bot_id)
 
-            logging.debug('[bot#%s] Waiting for commands', bot.bot_id)
+            logging.debug('[bot#%s] Waiting for moderation group', bot.bot_id)
             bot.wait_commands()
         else:
             raise Exception('Unknown queue: %s', queue_name)

@@ -26,9 +26,12 @@ def is_allowed_user(db, user, bot_id):
 
 @coroutine
 @CommandFilterAny()
-def validate_user(bot, message):
-    allowed = is_allowed_user(bot.db, message['from'], bot.bot_id)
+def validate_user(bot, **kwargs):
+    if 'message' not in kwargs:
+        return False
+
+    allowed = is_allowed_user(bot.db, kwargs['message']['from'], bot.bot_id)
     if allowed:
         return False
 
-    yield bot.send_message(pgettext('Boterator: User banned', 'Access denied'), reply_to_message=update['message'])
+    yield bot.send_message(pgettext('User banned', 'Access denied'), reply_to_message=kwargs['message'])

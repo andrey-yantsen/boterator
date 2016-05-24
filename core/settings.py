@@ -8,8 +8,8 @@ DEFAULT_SLAVE_SETTINGS = {
     'vote_timeout': 24,
     'text_min': 50,
     'text_max': 1000,
-    'start': pgettext('Boterator: default start message', "Just enter your message, and we're ready."),
-    'hello': pgettext('Boterator: default channel-hello message',
+    'start': pgettext('Default start message', "Just enter your message, and we're ready."),
+    'hello': pgettext('Default channel-hello message',
                       'Hi there, guys! Now it is possible to publish messages in this channel by '
                       'any of you. All you need to do — is to write a message to me (bot named '
                       '@{bot_username}), and it will be published after verification by our team.'),

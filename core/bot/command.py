@@ -11,8 +11,8 @@ class Command:
         self.bot = bot
 
     @coroutine
-    def __call__(self, **kwargs):
-        return (yield maybe_future(self.handler(self.bot, **kwargs)))
+    def __call__(self, *args, **kwargs):
+        return (yield maybe_future(self.handler(self.bot, *args, **kwargs)))
 
     @property
     def name(self):

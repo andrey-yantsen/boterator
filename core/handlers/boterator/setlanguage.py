@@ -14,7 +14,7 @@ from helpers.lazy_gettext import pgettext
 def get_keyboard(with_back: bool):
     keyboard_rows = []
 
-    for row_id, languages in groupby(enumerate(LANGUAGE_LIST), lambda l: floor(l[0] / 4)):
+    for row_id, languages in groupby(enumerate(LANGUAGE_LIST), lambda l: floor(l[0] / 2)):
         keyboard_rows.append([
                                  KeyboardButton(lang_name)
                                  for lang_idx, (lang_code, lang_name) in languages

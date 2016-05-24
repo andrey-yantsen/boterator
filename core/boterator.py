@@ -1,18 +1,16 @@
 import logging
-from copy import deepcopy
-from time import time
-from ujson import dumps, loads
+from ujson import loads
 
-from tornado.gen import coroutine, sleep
+from tornado.gen import coroutine
 
-from core.bot import Base, CommandFilterTextCmd, CommandFilterTextAny
-from core.handlers.boterator.cancel import cancel_command
+from core.bot import Base
+from core.handlers.cancel import cancel_command
 from core.handlers.boterator.reg import reg_command, plaintext_token, plaintext_channel_name, \
     plaintext_set_start_message, change_start_command, plaintext_set_hello, change_hello_command
 from core.handlers.boterator.start import start_command
 from core.handlers.emoji_end import emoji_end
-from core.handlers.setlanguage import setlanguage, setlanguage_plaintext
-from core.handlers.setlanguage_at_start import setlanguage_at_start, setlanguage_at_start_plaintext
+from core.handlers.boterator.setlanguage import setlanguage, setlanguage_plaintext
+from core.handlers.boterator.setlanguage_at_start import setlanguage_at_start, setlanguage_at_start_plaintext
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
 from core.queues import boterator_queues, QUEUE_BOTERATOR_BOT_REVOKE
@@ -85,7 +83,7 @@ class Boterator(Base):
             yield self.db.execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (body['id'],))
 
             try:
-                yield self.send_message(pgettext('Boterator: unable to establish startup connection with bot',
+                yield self.send_message(pgettext('Unable to establish startup connection with bot',
                                                  'I\'m failed to establish connection to your bot with token `{token}`'
                                                  ', received error: `{error}`.\n'
                                                  'Your bot was deactivated, to enable it again - perform registration '
