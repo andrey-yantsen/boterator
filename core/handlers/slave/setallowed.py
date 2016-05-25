@@ -9,7 +9,7 @@ from helpers import Emoji, pgettext, report_botan
 from telegram import ReplyKeyboardMarkup, KeyboardButton
 
 
-TYPES = ('text', 'photo', 'video', 'audio', 'document', 'sticker', 'voice')
+TYPES = ('text', 'photo', 'video', 'audio', 'document', 'sticker', 'voice', 'gif')
 
 
 def types_translations(bot):
@@ -99,6 +99,7 @@ def __messages():
     pgettext('Content type', 'Document')
     pgettext('Content type', 'Sticker')
     pgettext('Content type', 'Voice')
+    pgettext('Content type', 'Gif')
 
     pgettext('Content type enabled/disabled', 'Texts enabled')
     pgettext('Content type enabled/disabled', 'Texts disabled')
@@ -114,3 +115,5 @@ def __messages():
     pgettext('Content type enabled/disabled', 'Stickers disabled')
     pgettext('Content type enabled/disabled', 'Documents enabled')
     pgettext('Content type enabled/disabled', 'Documents disabled')
+    pgettext('Content type enabled/disabled', 'Gifs enabled')
+    pgettext('Content type enabled/disabled', 'Gifs disabled')

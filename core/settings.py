@@ -25,6 +25,7 @@ DEFAULT_SLAVE_SETTINGS = {
         'audio': False,
         'document': False,
         'sticker': False,
+        'gif': False,
     },
 }
 

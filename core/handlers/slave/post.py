@@ -63,28 +63,34 @@ def plaintext_post_handler(bot, message):
 @CommandFilterPrivate()
 def multimedia_post_handler(bot, message):
     if 'sticker' in message and bot.settings['content_status']['sticker'] is False:
-        yield bot.bot.send_message(pgettext('User sent a sticker for verification while stickers are disabled',
-                                            'Accepting stickers is disabled'), reply_to_message=message)
+        yield bot.send_message(pgettext('User sent a sticker for verification while stickers are disabled',
+                                        'Accepting stickers is disabled'), reply_to_message=message)
         return
     elif 'audio' in message and bot.settings['content_status']['audio'] is False:
-        yield bot.bot.send_message(pgettext('User sent an audio for verification while audios are disabled',
-                                            'Accepting audios is disabled'), reply_to_message=message)
+        yield bot.send_message(pgettext('User sent an audio for verification while audios are disabled',
+                                        'Accepting audios is disabled'), reply_to_message=message)
         return
     elif 'voice' in message and bot.settings['content_status']['voice'] is False:
-        yield bot.bot.send_message(pgettext('User sent a voice for verification while voices are disabled',
-                                            'Accepting voice is disabled'), reply_to_message=message)
+        yield bot.send_message(pgettext('User sent a voice for verification while voices are disabled',
+                                        'Accepting voice is disabled'), reply_to_message=message)
         return
     elif 'video' in message and bot.settings['content_status']['video'] is False:
-        yield bot.bot.send_message(pgettext('User sent a video for verification while videos are disabled',
-                                            'Accepting videos is disabled'), reply_to_message=message)
+        yield bot.send_message(pgettext('User sent a video for verification while videos are disabled',
+                                        'Accepting videos is disabled'), reply_to_message=message)
         return
     elif 'photo' in message and bot.settings['content_status']['photo'] is False:
-        yield bot.bot.send_message(pgettext('User sent a photo for verification while photos are disabled',
-                                            'Accepting photos is disabled'), reply_to_message=message)
+        yield bot.send_message(pgettext('User sent a photo for verification while photos are disabled',
+                                        'Accepting photos is disabled'), reply_to_message=message)
         return
-    elif 'document' in message and bot.settings['content_status']['document'] is False:
-        yield bot.bot.send_message(pgettext('User sent a document for verification while documents are disabled',
-                                            'Accepting documents is disabled'), reply_to_message=message)
+    elif 'document' in message and bot.settings['content_status']['document'] is False and \
+                    message['document'].get('mime_type') != 'video/mp4':
+        yield bot.send_message(pgettext('User sent a document for verification while documents are disabled',
+                                        'Accepting documents is disabled'), reply_to_message=message)
+        return
+    elif 'document' in message and bot.settings['content_status']['gif'] is False and \
+                    message['document'].get('mime_type') == 'video/mp4':
+        yield bot.send_message(pgettext('User sent a gif for verification while gifs are disabled',
+                                        'Accepting gifs is disabled'), reply_to_message=message)
         return
 
     report_botan(message, 'slave_message_multimedia')
