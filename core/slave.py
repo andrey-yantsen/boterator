@@ -58,17 +58,13 @@ class Slave(Base):
                               (dumps(self.user_settings[user_id]), self.bot_id, user_id))
 
     def merge_settings_recursive(self, base_settings, bot_settings):
-        base_settings = deepcopy(base_settings)
-
-        for key, value in bot_settings.items():
+        for key, value in base_settings.items():
             if type(value) is dict:
-                base_settings[key] = self.merge_settings_recursive(base_settings[key], value)
+                bot_settings[key] = self.merge_settings_recursive(value, bot_settings.get(key, {}))
             else:
-                if key in base_settings:
-                    del base_settings[key]
-                base_settings[key] = value
+                bot_settings.setdefault(key, value)
 
-        return base_settings
+        return bot_settings
 
     def _init_handlers(self):
         self.cancellation_handler = cancel_command
