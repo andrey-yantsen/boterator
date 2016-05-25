@@ -185,9 +185,9 @@ class Slave(Base):
         for message, yes_votes in cur.fetchall():
             report_botan(message, 'slave_verification_failed')
             try:
-                self.decline_message(message, yes_votes)
+                yield self.decline_message(message, yes_votes)
             except:
-                pass
+                logging.exception('Got exception while declining message')
 
         if not self._finished.is_set():
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
