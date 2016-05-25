@@ -5,10 +5,9 @@ from burlesque import Burlesque
 from momoko import Pool
 from tornado import autoreload
 from tornado.ioloop import IOLoop
-from tornado.locale import load_gettext_translations
-from tornado.options import define, options, parse_command_line, print_help
+from tornado.options import define, options, parse_command_line
 
-from core import SlaveHolder
+from core.slave_holder import SlaveHolder
 
 
 if __name__ == '__main__':

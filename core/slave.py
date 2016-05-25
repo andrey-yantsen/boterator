@@ -36,7 +36,7 @@ from core.handlers.validate_user import validate_user
 from core.settings import DEFAULT_SLAVE_SETTINGS
 from helpers import report_botan, npgettext, pgettext, Emoji
 from helpers.lazy_gettext import set_locale_recursive
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ApiError
 
 
 class Slave(Base):
@@ -204,8 +204,13 @@ class Slave(Base):
             moderation_message_id = row[0]
 
             msg, keyboard = yield self.get_verification_message(message['message_id'], message['chat']['id'], True)
-            yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
-                                         reply_markup=keyboard)
+            try:
+                yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
+                                             reply_markup=keyboard)
+            except Exception as e:
+                # Ignore `message is not modified` errors
+                if not isinstance(e, ApiError) or not e.code == 400 or 'message is not modified' not in e.description:
+                    raise
 
         yield self.db.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
                               'is_voting_success = FALSE AND is_voting_fail = FALSE AND original_chat_id = %s '

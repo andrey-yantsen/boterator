@@ -7,7 +7,7 @@ from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line, print_help
 from tornado import autoreload
 
-from core import Boterator
+from core.boterator import Boterator
 
 
 if __name__ == '__main__':
