@@ -15,6 +15,8 @@ DEFAULT_SLAVE_SETTINGS = {
                       'Hi there, guys! Now it is possible to publish messages in this channel by '
                       'any of you. All you need to do — is to write a message to me (bot named '
                       '@{bot_username}), and it will be published after verification by our team.'),
+    'public_vote': True,
+    'power': False,
     'content_status': {
         'text': True,
         'photo': False,

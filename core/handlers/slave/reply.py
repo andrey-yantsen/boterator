@@ -1,6 +1,6 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextRegexp, CommandFilterTextAny
+from core.bot import CommandFilterTextRegexp, CommandFilterTextAny, CommandFilterCallbackQueryRegexp
 from core.slave_command_filters import CommandFilterIsModerationChat
 from helpers import pgettext, report_botan
 from telegram import ForceReply
@@ -8,11 +8,13 @@ from telegram import ForceReply
 
 @coroutine
 @CommandFilterIsModerationChat()
-@CommandFilterTextRegexp(r'/reply_(?P<chat_id>\d+)_(?P<message_id>\d+)')
-def reply_command(bot, message, chat_id, message_id):
-    report_botan(message, 'slave_reply_cmd')
-    yield bot.send_message(pgettext('Reply message request', 'What message should I send to user?'),
-                           reply_to_message=message, reply_markup=ForceReply(True))
+@CommandFilterCallbackQueryRegexp(r'reply_(?P<chat_id>\d+)_(?P<message_id>\d+)')
+def reply_command(bot, callback_query, chat_id, message_id):
+    report_botan(callback_query, 'slave_reply_cmd')
+    msg = pgettext('Reply message request', 'What message should I send to user, @{moderator_username}?') \
+        .format(moderator_username=callback_query['from']['username'])
+    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
+    yield bot.answer_callback_query(callback_query['id'])
     return {
         'chat_id': chat_id,
         'message_id': message_id,

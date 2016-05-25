@@ -106,17 +106,7 @@ def cbq_message_review(bot, callback_query, sent_message):
     VALUES (%s, %s, %s, %s, NOW(), %s)
     """, (sent_message['message_id'], sent_message['chat']['id'], user_id, bot.bot_id, dumps(sent_message)))
 
-    yield bot.forward_message(bot.moderator_chat_id, sent_message['chat']['id'], sent_message['message_id'])
-    msg = pgettext('Verification message', 'Say {thumb_up_sign} ({vote_yes_cmd}) or {thumb_down} ({vote_no_cmd}) '
-                                           'to this amazing message. Also you can just send a message to the user '
-                                           '({reply_cmd}). Or even can BAN him ({ban_cmd}).') \
-        .format(thumb_up_sign=Emoji.THUMBS_UP_SIGN, thumb_down=Emoji.THUMBS_DOWN_SIGN,
-                vote_yes_cmd='/vote_%s_%s_yes' % (sent_message['chat']['id'], sent_message['message_id']),
-                vote_no_cmd='/vote_%s_%s_no' % (sent_message['chat']['id'], sent_message['message_id']),
-                reply_cmd='/reply_%s_%s' % (sent_message['chat']['id'], sent_message['message_id']),
-                ban_cmd='/ban_%s' % (sent_message['from']['id'],))
-
-    yield bot.send_message(msg, chat_id=bot.moderator_chat_id)
+    bot.send_moderation_request(sent_message['from']['id'], sent_message['chat']['id'], sent_message['message_id'])
 
     yield bot.db.execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
                          (bot.bot_id,))

@@ -1,6 +1,6 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextRegexp
+from core.bot import CommandFilterTextRegexp, CommandFilterCallbackQueryRegexp
 from core.slave_command_filters import CommandFilterIsModerationChat
 from helpers import pgettext, report_botan
 
@@ -30,9 +30,10 @@ def __is_voting_opened(db, original_chat_id, message_id):
 
 
 @coroutine
-def __vote(bot, user_id, message_id, original_chat_id, yes: bool):
+def __vote(bot, callback_query, message_id, original_chat_id, yes: bool):
+    user_id = callback_query['from']['id']
     voted = yield __is_user_voted(bot.db, user_id, original_chat_id, message_id)
-    opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)
+    opened = yield __is_voting_opened(bot.db, user_id, message_id)
 
     cur = yield bot.db.execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
                                'original_chat_id = %s',
@@ -50,6 +51,9 @@ def __vote(bot, user_id, message_id, original_chat_id, yes: bool):
                              (user_id, message_id, original_chat_id, yes))
 
         if current_yes >= bot.settings.get('votes', 5):
+            msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, True)
+            yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
+
             cur = yield bot.db.execute('SELECT is_voting_success, message FROM incoming_messages WHERE id = %s '
                                        'AND original_chat_id = %s',
                                        (message_id, original_chat_id))
@@ -72,25 +76,32 @@ def __vote(bot, user_id, message_id, original_chat_id, yes: bool):
 
             if row and not row[0] and not row[1]:
                 yield bot.decline_message(row[2], current_yes)
+        else:
+            msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, False)
+            yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
+
+        yield bot.answer_callback_query(callback_query['id'], pgettext('User`s vote successfully counted', 'Counted.'))
+    elif not opened:
+        msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, True)
+        yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
+        yield bot.answer_callback_query(callback_query['id'])
+    elif voted:
+        yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
+                                                                       'Your vote is already counted. You changed '
+                                                                       'nothing this time.'))
 
 
 @coroutine
 @CommandFilterIsModerationChat()
-@CommandFilterTextRegexp(r'/vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_yes')
-def vote_yes(bot, message, original_chat_id, message_id):
-    if message['chat']['id'] != bot.moderator_chat_id:
-        return False
-
-    report_botan(message, 'slave_vote_yes')
-    yield __vote(bot, message['from']['id'], message_id, original_chat_id, True)
+@CommandFilterCallbackQueryRegexp(r'vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_yes')
+def vote_yes(bot, callback_query, original_chat_id, message_id):
+    report_botan(callback_query, 'slave_vote_yes')
+    yield __vote(bot, callback_query, message_id, original_chat_id, True)
 
 
 @coroutine
 @CommandFilterIsModerationChat()
-@CommandFilterTextRegexp(r'/vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_no')
-def vote_no(bot, message, message_id, original_chat_id):
-    if message['chat']['id'] != bot.moderator_chat_id:
-        return False
-
-    report_botan(message, 'slave_vote_no')
-    yield __vote(bot, message['from']['id'], message_id, original_chat_id, False)
+@CommandFilterCallbackQueryRegexp(r'vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_no')
+def vote_no(bot, callback_query, message_id, original_chat_id):
+    report_botan(callback_query, 'slave_vote_no')
+    yield __vote(bot, callback_query, message_id, original_chat_id, False)

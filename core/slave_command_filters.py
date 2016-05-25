@@ -4,7 +4,8 @@ from core.bot import CommandFilterAny
 class CommandFilterIsModerationChat(CommandFilterAny):
     @staticmethod
     def test(bot, *args, **kwargs):
-        return bot.moderator_chat_id == kwargs.get('message', {}).get('chat', {}).get('id')
+        return bot.moderator_chat_id == kwargs.get('message', kwargs.get('callback_query', {}).get('message', {}))\
+            .get('chat', {}).get('id')
 
 
 class CommandFilterIsBotOwner(CommandFilterAny):

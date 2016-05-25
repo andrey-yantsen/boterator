@@ -1,6 +1,7 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextRegexp, CommandFilterTextCmd, CommandFilterTextAny
+from core.bot import CommandFilterTextRegexp, CommandFilterTextCmd, CommandFilterTextAny, \
+    CommandFilterCallbackQueryRegexp
 from core.slave_command_filters import CommandFilterIsModerationChat
 from helpers import report_botan, pgettext
 from telegram import ForceReply
@@ -8,12 +9,13 @@ from telegram import ForceReply
 
 @coroutine
 @CommandFilterIsModerationChat()
-@CommandFilterTextRegexp(r'/ban_(?P<user_id>\d+)')
-def ban_command(bot, message, user_id):
-    report_botan(message, 'slave_ban_cmd')
-    yield bot.send_message(pgettext('Ban reason request', 'Please enter a ban reason for the user'),
-                           reply_to_message=message, reply_markup=ForceReply(True))
-
+@CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)')
+def ban_command(bot, callback_query, user_id):
+    report_botan(callback_query, 'slave_ban_cmd')
+    msg = pgettext('Ban reason request', 'Please enter a ban reason for the user, @{moderator_username}')\
+        .format(moderator_username=callback_query['from']['username'])
+    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
+    yield bot.answer_callback_query(callback_query['id'])
     return {
         'user_id': user_id
     }
