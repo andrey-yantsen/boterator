@@ -1,9 +1,10 @@
 import logging
-from ujson import loads
+from ujson import loads, dumps
 
 from tornado.gen import coroutine
 
 from core.bot import Base
+from core.bot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.boterator.reg import reg_command, plaintext_token, plaintext_channel_name, \
     plaintext_set_start_message, change_start_command, plaintext_set_hello, change_hello_command
@@ -22,7 +23,8 @@ class Boterator(Base):
     SETTINGS_TYPE = Base.SETTINGS_PER_USER
 
     def __init__(self, token, db, queue, **kwargs):
-        super().__init__(token, db, **kwargs)
+        self.db = db
+        super().__init__(token, stages_builder=lambda bot_id: PersistentStages(bot_id, db), **kwargs)
         self.queue = queue
 
     @coroutine
@@ -66,6 +68,10 @@ class Boterator(Base):
 
         self._add_handler(plaintext_channel_name, pgettext('Action description', 'Waiting for the channel name'),
                           previous_handler=plaintext_token, is_final=True)
+
+    @coroutine
+    def _update_settings_fot_bot(self, settings):
+        yield self.db.execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(settings), self.bot_id))
 
     @coroutine
     def start(self):

@@ -100,7 +100,6 @@ def cbq_message_review(bot, callback_query, sent_message):
     user_id = callback_query['from']['id']
 
     report_botan(callback_query, 'slave_confirm')
-    yield bot.send_chat_action(user_id, bot.CHAT_ACTION_TYPING)
     yield bot.db.execute("""
     INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
     VALUES (%s, %s, %s, %s, NOW(), %s)

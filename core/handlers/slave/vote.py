@@ -33,7 +33,7 @@ def __is_voting_opened(db, original_chat_id, message_id):
 def __vote(bot, callback_query, message_id, original_chat_id, yes: bool):
     user_id = callback_query['from']['id']
     voted = yield __is_user_voted(bot.db, user_id, original_chat_id, message_id)
-    opened = yield __is_voting_opened(bot.db, user_id, message_id)
+    opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)
 
     cur = yield bot.db.execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
                                'original_chat_id = %s',

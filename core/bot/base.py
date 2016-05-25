@@ -21,7 +21,7 @@ class Base:
     SETTINGS_PER_USER = 2
     SETTINGS_TYPE = SETTINGS_PER_BOT
 
-    def __init__(self, token, db, **kwargs):
+    def __init__(self, token, stages_builder: callable, **kwargs):
         self.token = token
         self.settings = kwargs.pop('settings', {})
 
@@ -29,7 +29,6 @@ class Base:
             self.__dict__[key] = value
 
         self.api = telegram.Api(token, self.process_update)
-        self.db = db
         self.user_settings = {}
         self.commands = {}
         self.raw_commands_tree = {}
@@ -37,7 +36,7 @@ class Base:
         self.unknown_command_handler = None
         self.updates_queue = Queue(kwargs.get('updates_queue_handlers', 4) * 10)
         self._init_handlers()
-        self._stages = Stages(self.bot_id, db)
+        self._stages = stages_builder(bot_id=self.bot_id)
         self._finished = Event()
         self._supported_languages = tuple([])
 
@@ -70,20 +69,23 @@ class Base:
     def _load_user_settings_per_user(self):
         return {}
 
+    def _update_settings_fot_bot(self, settings):
+        pass
+
+    def _update_settings_for_user(self, user_id, settings):
+        pass
+
     @coroutine
     def update_settings(self, user_id, **kwargs):
+        logging.info('[bot#%s] Updating settings to %s by user#%s', self.bot_id, kwargs, user_id)
         if self.SETTINGS_TYPE == self.SETTINGS_PER_BOT:
             self.settings.update(kwargs)
-            yield self.db.execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(self.settings),
-                                                                                             self.bot_id))
+            yield maybe_future(self._update_settings_fot_bot(self.settings))
         else:
             if user_id not in self.user_settings:
                 self.user_settings[user_id] = kwargs
             else:
                 self.user_settings[user_id].update(kwargs)
-
-            yield self.db.execute('UPDATE users SET settings = %s WHERE bot_id = %s AND user_id = %s',
-                                  (dumps(self.user_settings[user_id]), self.bot_id, user_id))
 
     def get_settings(self, user_id):
         if self.SETTINGS_TYPE == self.SETTINGS_PER_BOT:
@@ -97,7 +99,7 @@ class Base:
         self._finished.clear()
         self.user_settings = yield maybe_future(self._load_user_settings_per_user())
         handlers_f = [self._update_processor() for _ in range(self.settings.get('updates_queue_handlers', 4))]
-        yield self._stages.restore()
+        yield maybe_future(self._stages.restore())
         try:
             yield self.api.wait_commands()
         finally:

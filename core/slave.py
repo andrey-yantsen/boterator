@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 from tornado.gen import coroutine
 from tornado.ioloop import IOLoop
 from tornado import locale
+from ujson import dumps
 
 from core.bot import Base
+from core.bot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.emoji_end import emoji_end
 from core.handlers.slave.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
@@ -45,8 +47,15 @@ class Slave(Base):
         if 'hello' in bot_settings:
             del bot_settings['hello']
         bot_settings = self.merge_settings_recursive(DEFAULT_SLAVE_SETTINGS, bot_settings)
-        super().__init__(token, db, settings=bot_settings, **kwargs)
+        self.db = db
+        super().__init__(token, stages_builder=lambda bot_id: PersistentStages(bot_id, db), settings=bot_settings,
+                         **kwargs)
         self.administrators = [kwargs['owner_id']]
+
+    @coroutine
+    def _update_settings_for_user(self, user_id, settings):
+        yield self.db.execute('UPDATE users SET settings = %s WHERE bot_id = %s AND user_id = %s',
+                              (dumps(self.user_settings[user_id]), self.bot_id, user_id))
 
     def merge_settings_recursive(self, base_settings, bot_settings):
         base_settings = deepcopy(base_settings)
@@ -248,8 +257,8 @@ class Slave(Base):
                                     'original_chat_id = %s AND bot_id = %s', (message_id, chat_id, self.bot_id))
         row = cur.fetchone()
         if row and row[0]:
-            self.edit_message_text('_Outdated_', chat_id=self.moderator_chat_id, message_id=row[0],
-                                   parse_mode=self.PARSE_MODE_MD)
+            self.edit_message_text(pgettext('Newer poll for this message posted below', '_Outdated_'),
+                                   chat_id=self.moderator_chat_id, message_id=row[0], parse_mode=self.PARSE_MODE_MD)
 
         yield self.db.execute('UPDATE incoming_messages SET moderation_message_id = %s WHERE id = %s AND '
                               'original_chat_id = %s AND bot_id = %s',
@@ -267,6 +276,7 @@ class Slave(Base):
         if total_votes == 0:
             percent_yes = 0
             percent_no = 0
+            approves = 0
         else:
             percent_yes = approves / total_votes
             percent_no = 1 - percent_yes
