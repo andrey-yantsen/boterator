@@ -52,9 +52,8 @@ class Slave(Base):
         self.administrators = [kwargs['owner_id']]
 
     @coroutine
-    def _update_settings_for_user(self, user_id, settings):
-        yield self.db.execute('UPDATE users SET settings = %s WHERE bot_id = %s AND user_id = %s',
-                              (dumps(self.user_settings[user_id]), self.bot_id, user_id))
+    def _update_settings_for_bot(self, settings):
+        yield self.db.execute('UPDATE registered_bots SET settings = %s WHERE id = %s', (dumps(settings), self.bot_id))
 
     def merge_settings_recursive(self, base_settings, bot_settings):
         for key, value in base_settings.items():

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-25 14:55+0100\n"
+"PO-Revision-Date: 2016-05-26 06:34+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Generator: Loco https://localise.biz\n"
 "X-Loco-Source-Locale: en\n"
 "X-Loco-Project-Id: 15312\n"
-"X-Loco-Api-Version: 1.0.14 20160519-2"
+"X-Loco-Api-Version: 1.0.14 20160525-1"
 
 #: boterator.py:286 loco:572f0e8214d7253d068b4567
 msgctxt "Boterator: default votes cnt"
@@ -906,7 +906,7 @@ msgstr ""
 #: core/handlers/boterator/reg.py:22 loco:5744824d14d7254f3e8b4571
 msgctxt "/reg response"
 msgid "Ok, please tell me the token, which you've received from @BotFather"
-msgstr ""
+msgstr "@BotFather gave you the token. Please send it to me."
 
 #: core/handlers/boterator/reg.py:45 loco:5744824d14d7254f3e8b4572
 msgctxt "Empty token entered"
@@ -931,7 +931,7 @@ msgstr ""
 #: core/handlers/boterator/reg.py:74 loco:5744824d14d7254f3e8b4576
 msgctxt "Token check failed"
 msgid "Unable to get bot info: {}"
-msgstr ""
+msgstr "Token check failed: {}."
 
 #: core/handlers/boterator/reg.py:79 loco:5744824d14d7254f3e8b4577
 msgctxt "Token received"
@@ -1020,7 +1020,7 @@ msgstr ""
 #: core/handlers/boterator/reg.py:211 loco:5744824d14d7254f3e8b4583
 msgctxt "/sethello response"
 msgid "Ok, I'm listening to you. How I should say hello to your subscribers?"
-msgstr ""
+msgstr "Ok, I'm listening to you. How should I welcome your subscribers?"
 
 #: core/handlers/boterator/reg.py:224 loco:5744824d14d7254f3e8b4584
 msgctxt "Channel-hello message updated"
@@ -1070,12 +1070,12 @@ msgstr ""
 #: core/handlers/slave/ban.py:15 loco:57453bae14d7253e058b4569
 msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user, @{moderator_username}"
-msgstr ""
+msgstr "Please enter a ban reason for this user, @{moderator_username}."
 
 #: core/handlers/slave/reply.py:14 loco:57453bae14d7253e058b456a
 msgctxt "Reply message request"
 msgid "What message should I send to user, @{moderator_username}?"
-msgstr ""
+msgstr "What do you want to say to this user, @{moderator_username}?"
 
 #: core/handlers/slave/toggle_vote.py:15 loco:57453bae14d7253e058b456b
 msgctxt "Vote status displaying disabled"
