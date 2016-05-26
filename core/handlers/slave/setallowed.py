@@ -3,10 +3,10 @@ from itertools import groupby
 from math import floor
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
+from tobot import CommandFilterTextCmd
 from core.slave_command_filters import CommandFilterIsPowerfulUser
-from helpers import Emoji, pgettext, report_botan
-from telegram import ReplyKeyboardMarkup, KeyboardButton
+from tobot.helpers import Emoji, pgettext, report_botan
+from tobot.telegram import ReplyKeyboardMarkup, KeyboardButton
 
 
 TYPES = ('text', 'photo', 'video', 'audio', 'document', 'sticker', 'voice', 'gif')

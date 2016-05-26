@@ -1,8 +1,8 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
-from helpers import pgettext
-from telegram import ReplyKeyboardHide
+from tobot import CommandFilterTextCmd
+from tobot.helpers import pgettext
+from tobot.telegram import ReplyKeyboardHide
 
 
 @coroutine

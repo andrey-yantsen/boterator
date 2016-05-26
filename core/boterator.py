@@ -3,8 +3,8 @@ from ujson import loads, dumps
 
 from tornado.gen import coroutine
 
-from core.bot import Base
-from core.bot.stages import PersistentStages
+from tobot import Base
+from tobot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.boterator.reg import reg_command, plaintext_token, plaintext_channel_name, \
     plaintext_set_start_message, change_start_command, plaintext_set_hello, change_hello_command
@@ -15,8 +15,8 @@ from core.handlers.boterator.setlanguage_at_start import setlanguage_at_start, s
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
 from core.queues import boterator_queues, QUEUE_BOTERATOR_BOT_REVOKE
-from helpers import pgettext
-from telegram import Api
+from tobot.helpers import pgettext
+from tobot.telegram import Api
 
 
 class Boterator(Base):

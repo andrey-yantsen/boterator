@@ -4,10 +4,10 @@ from babel.dates import format_date
 from babel.numbers import format_number
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
+from tobot import CommandFilterTextCmd
 from core.slave_command_filters import CommandFilterIsModerator
-from helpers import pgettext, Emoji, npgettext, report_botan
-from helpers.lazy_gettext import set_locale_recursive
+from tobot.helpers import pgettext, Emoji, npgettext, report_botan
+from tobot.helpers.lazy_gettext import set_locale_recursive
 
 
 @coroutine

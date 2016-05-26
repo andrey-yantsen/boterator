@@ -1,8 +1,8 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
+from tobot import CommandFilterTextCmd
 from core.slave_command_filters import CommandFilterIsPowerfulUser
-from helpers import report_botan, pgettext
+from tobot.helpers import report_botan, pgettext
 
 
 @coroutine

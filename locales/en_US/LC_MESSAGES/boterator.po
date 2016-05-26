@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-25 08:45+0100\n"
+"PO-Revision-Date: 2016-05-25 14:55+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -37,14 +37,14 @@ msgid_plural "%d hours"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:215 loco:572f0e8214d7253d068b456d
+#: core/slave.py:229 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
 msgid "{votes_received} vote"
 msgid_plural "{votes_received} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:218 loco:572f0e8214d7253d068b456f
+#: core/slave.py:232 loco:572f0e8214d7253d068b456f
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
@@ -267,7 +267,7 @@ msgctxt "User banned"
 msgid "Access denied"
 msgstr "Access denied."
 
-#: core/slave.py:221 loco:572f0e8214d7253d068b4591
+#: core/slave.py:235 loco:572f0e8214d7253d068b4591
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message got only {votes_received_msg} out of required "
@@ -300,12 +300,12 @@ msgctxt "Bot received /attach command when he isn't ready"
 msgid "Incorrect command"
 msgstr "Sorry, I don’t understand what you want."
 
-#: core/handlers/slave/post.py:114 loco:572f0e8214d7253d068b4596
+#: core/handlers/slave/post.py:119 loco:572f0e8214d7253d068b4596
 msgctxt "Message sent for verification"
 msgid "Okay, I've sent your message for verification. Fingers crossed!"
 msgstr "Okay, I've sent your message for moderation. Fingers crossed!"
 
-#: core/handlers/slave/post.py:124 loco:572f0e8214d7253d068b4597
+#: core/handlers/slave/post.py:129 loco:572f0e8214d7253d068b4597
 msgctxt "Message publishing cancelled"
 msgid "Cancelled"
 msgstr "Cancelled."
@@ -379,7 +379,7 @@ msgctxt "User sent a photo for verification while photos are disabled"
 msgid "Accepting photos is disabled"
 msgstr "Sorry, but pictures are disabled."
 
-#: core/handlers/slave/post.py:86 loco:572f0e8214d7253d068b45a4
+#: core/handlers/slave/post.py:87 loco:572f0e8214d7253d068b45a4
 msgctxt "User sent a document for verification while documents are disabled"
 msgid "Accepting documents is disabled"
 msgstr "Sorry, but documents are disabled."
@@ -731,62 +731,62 @@ msgctxt "Moderator's ability to alter settings"
 msgid "no"
 msgstr ""
 
-#: core/handlers/slave/setallowed.py:103 loco:572f0e8214d7253d068b45dc
+#: core/handlers/slave/setallowed.py:104 loco:572f0e8214d7253d068b45dc
 msgctxt "Content type enabled/disabled"
 msgid "Texts enabled"
 msgstr "Text messages: enabled."
 
-#: core/handlers/slave/setallowed.py:104 loco:572f0e8214d7253d068b45dd
+#: core/handlers/slave/setallowed.py:105 loco:572f0e8214d7253d068b45dd
 msgctxt "Content type enabled/disabled"
 msgid "Texts disabled"
 msgstr "Text messages: disabled."
 
-#: core/handlers/slave/setallowed.py:105 loco:572f0e8214d7253d068b45de
+#: core/handlers/slave/setallowed.py:106 loco:572f0e8214d7253d068b45de
 msgctxt "Content type enabled/disabled"
 msgid "Photos enabled"
 msgstr "Pictures: enabled."
 
-#: core/handlers/slave/setallowed.py:106 loco:572f0e8214d7253d068b45df
+#: core/handlers/slave/setallowed.py:107 loco:572f0e8214d7253d068b45df
 msgctxt "Content type enabled/disabled"
 msgid "Photos disabled"
 msgstr "Pictures: disabled."
 
-#: core/handlers/slave/setallowed.py:107 loco:572f0e8214d7253d068b45e0
+#: core/handlers/slave/setallowed.py:108 loco:572f0e8214d7253d068b45e0
 msgctxt "Content type enabled/disabled"
 msgid "Videos enabled"
 msgstr "Video: enabled."
 
-#: core/handlers/slave/setallowed.py:108 loco:572f0e8214d7253d068b45e1
+#: core/handlers/slave/setallowed.py:109 loco:572f0e8214d7253d068b45e1
 msgctxt "Content type enabled/disabled"
 msgid "Videos disabled"
 msgstr "Video: disabled."
 
-#: core/handlers/slave/setallowed.py:109 loco:572f0e8214d7253d068b45e2
+#: core/handlers/slave/setallowed.py:110 loco:572f0e8214d7253d068b45e2
 msgctxt "Content type enabled/disabled"
 msgid "Audios enabled"
 msgstr "Audio: enabled."
 
-#: core/handlers/slave/setallowed.py:110 loco:572f0e8214d7253d068b45e3
+#: core/handlers/slave/setallowed.py:111 loco:572f0e8214d7253d068b45e3
 msgctxt "Content type enabled/disabled"
 msgid "Audios disabled"
 msgstr "Audio: disabled."
 
-#: core/handlers/slave/setallowed.py:111 loco:572f0e8214d7253d068b45e4
+#: core/handlers/slave/setallowed.py:112 loco:572f0e8214d7253d068b45e4
 msgctxt "Content type enabled/disabled"
 msgid "Voices enabled"
 msgstr "Voice messages: enabled."
 
-#: core/handlers/slave/setallowed.py:112 loco:572f0e8214d7253d068b45e5
+#: core/handlers/slave/setallowed.py:113 loco:572f0e8214d7253d068b45e5
 msgctxt "Content type enabled/disabled"
 msgid "Voices disabled"
 msgstr "Voice messages: disabled."
 
-#: core/handlers/slave/setallowed.py:113 loco:572f0e8214d7253d068b45e6
+#: core/handlers/slave/setallowed.py:114 loco:572f0e8214d7253d068b45e6
 msgctxt "Content type enabled/disabled"
 msgid "Stickers enabled"
 msgstr "Stickers: enabled."
 
-#: core/handlers/slave/setallowed.py:114 loco:572f0e8214d7253d068b45e7
+#: core/handlers/slave/setallowed.py:115 loco:572f0e8214d7253d068b45e7
 msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
 msgstr "Stickers: disabled."
@@ -823,17 +823,17 @@ msgid_plural "%d polls"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/boterator.py:51 loco:5744814014d725223c8b456b
+#: core/boterator.py:53 loco:5744814014d725223c8b456b
 msgctxt "Command name"
 msgid "/reg â register a new bot"
 msgstr ""
 
-#: core/boterator.py:52 loco:5744814014d725223c8b456c
+#: core/boterator.py:54 loco:5744814014d725223c8b456c
 msgctxt "Action description"
 msgid "Waiting for the token"
 msgstr ""
 
-#: core/boterator.py:67 loco:5744814014d725223c8b456d
+#: core/boterator.py:69 loco:5744814014d725223c8b456d
 msgctxt "Action description"
 msgid "Waiting for the channel name"
 msgstr ""
@@ -864,12 +864,12 @@ msgid_plural "{cnt} polls"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/handlers/slave/setallowed.py:115 loco:5744814014d725223c8b4582
+#: core/handlers/slave/setallowed.py:116 loco:5744814014d725223c8b4582
 msgctxt "Content type enabled/disabled"
 msgid "Documents enabled"
 msgstr ""
 
-#: core/handlers/slave/setallowed.py:116 loco:5744814014d725223c8b4583
+#: core/handlers/slave/setallowed.py:117 loco:5744814014d725223c8b4583
 msgctxt "Content type enabled/disabled"
 msgid "Documents disabled"
 msgstr ""
@@ -894,7 +894,7 @@ msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
 msgstr ""
 
-#: core/boterator.py:86 loco:5744824d14d7254f3e8b4570
+#: core/boterator.py:92 loco:5744824d14d7254f3e8b4570
 msgctxt "Unable to establish startup connection with bot"
 msgid ""
 "I'm failed to establish connection to your bot with token `{token}`, "
@@ -1097,49 +1097,49 @@ msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
 msgstr ""
 
-#: core/slave.py:274 loco:57453bae14d7253e058b456f
+#: core/slave.py:289 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
 msgid "Current poll progress:"
 msgstr ""
 
-#: core/slave.py:275 loco:57453bae14d7253e058b4570
+#: core/slave.py:290 loco:57453bae14d7253e058b4570
 msgctxt "Count of voted moderators"
 msgid "{cnt} vote"
 msgid_plural "{cnt} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:288 loco:57453bae14d7253e058b4572
+#: core/slave.py:303 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr ""
 
-#: core/slave.py:295 loco:57453bae14d7253e058b4573
+#: core/slave.py:310 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr ""
 
-#: core/slave.py:297 loco:57453bae14d7253e058b4574
+#: core/slave.py:312 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr ""
 
-#: core/slave.py:299 loco:57453bae14d7253e058b4575
+#: core/slave.py:314 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr ""
 
-#: core/slave.py:313 loco:57453bae14d7253e058b4576
+#: core/slave.py:328 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr ""
 
-#: core/slave.py:315 loco:57453bae14d7253e058b4577
+#: core/slave.py:330 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr ""
 
-#: core/slave.py:334 loco:57453bae14d7253e058b4578
+#: core/slave.py:349 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr ""
@@ -1152,4 +1152,29 @@ msgstr ""
 #: core/handlers/slave/help.py:36 loco:57453dba14d725df0a8b4568
 msgctxt "Boolean settings"
 msgid "off"
+msgstr ""
+
+#: core/slave.py:260 loco:5745a3d314d72539698b4567
+msgctxt "Newer poll for this message posted below"
+msgid "_Outdated_"
+msgstr ""
+
+#: core/handlers/slave/post.py:92 loco:5745a9be14d725aa6f8b4567
+msgctxt "User sent a gif for verification while gifs are disabled"
+msgid "Accepting gifs is disabled"
+msgstr ""
+
+#: core/handlers/slave/setallowed.py:102 loco:5745a9be14d725aa6f8b4568
+msgctxt "Content type"
+msgid "Gif"
+msgstr ""
+
+#: core/handlers/slave/setallowed.py:118 loco:5745a9be14d725aa6f8b4569
+msgctxt "Content type enabled/disabled"
+msgid "Gifs enabled"
+msgstr ""
+
+#: core/handlers/slave/setallowed.py:119 loco:5745a9be14d725aa6f8b456a
+msgctxt "Content type enabled/disabled"
+msgid "Gifs disabled"
 msgstr ""

@@ -1,9 +1,9 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterText
-from helpers import Emoji
-from helpers import pgettext
-from telegram import ReplyKeyboardHide
+from tobot import CommandFilterText
+from tobot.helpers import Emoji
+from tobot.helpers import pgettext
+from tobot.telegram import ReplyKeyboardHide
 
 
 @coroutine

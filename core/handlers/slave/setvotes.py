@@ -1,9 +1,9 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
+from tobot import CommandFilterTextCmd
 from core.slave_command_filters import CommandFilterIsPowerfulUser
-from helpers import pgettext, report_botan
-from telegram import ForceReply
+from tobot.helpers import pgettext, report_botan
+from tobot.telegram import ForceReply
 
 
 @coroutine

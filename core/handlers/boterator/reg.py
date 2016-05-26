@@ -3,15 +3,15 @@ from copy import deepcopy
 from tornado.gen import coroutine
 from ujson import dumps
 
-from core.bot import CommandFilterTextCmd, CommandFilterTextAny
+from tobot import CommandFilterTextCmd, CommandFilterTextAny
 from core.queues import queue_request, QUEUE_SLAVEHOLDER_GET_BOT_INFO, QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, \
     QUEUE_SLAVEHOLDER_NEW_BOT
 from core.settings import DEFAULT_SLAVE_SETTINGS
-from helpers import report_botan
-from helpers.lazy_gettext import pgettext, npgettext
+from tobot.helpers import report_botan
+from tobot.helpers.lazy_gettext import pgettext, npgettext
 import tornado.locale
 
-from telegram import Api
+from tobot.telegram import Api
 
 
 @coroutine

@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterAny
-from helpers import pgettext
+from tobot import CommandFilterAny
+from tobot.helpers import pgettext
 
 
 @coroutine

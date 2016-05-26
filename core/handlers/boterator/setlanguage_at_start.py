@@ -1,9 +1,9 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd, CommandFilterTextAny
+from tobot import CommandFilterTextCmd, CommandFilterTextAny
 from core.handlers.boterator.start import start_command
 from core.handlers.boterator.setlanguage import get_keyboard, setlanguage_plaintext
-from helpers import pgettext
+from tobot.helpers import pgettext
 
 
 @coroutine

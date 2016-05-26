@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 from datetime import datetime, timedelta
 
 from tornado.gen import coroutine
@@ -7,8 +6,8 @@ from tornado.ioloop import IOLoop
 from tornado import locale
 from ujson import dumps
 
-from core.bot import Base
-from core.bot.stages import PersistentStages
+from tobot import Base
+from tobot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.emoji_end import emoji_end
 from core.handlers.slave.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
@@ -36,9 +35,9 @@ from core.handlers.slave.vote import vote_yes, vote_no
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
 from core.settings import DEFAULT_SLAVE_SETTINGS
-from helpers import report_botan, npgettext, pgettext, Emoji
-from helpers.lazy_gettext import set_locale_recursive
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton, ApiError
+from tobot.helpers import report_botan, npgettext, pgettext, Emoji
+from tobot.helpers.lazy_gettext import set_locale_recursive
+from tobot.telegram import InlineKeyboardMarkup, InlineKeyboardButton, ApiError
 
 
 class Slave(Base):

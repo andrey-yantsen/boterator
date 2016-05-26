@@ -4,11 +4,10 @@ from math import floor
 
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd, CommandFilterTextAny
+from tobot import CommandFilterTextCmd, CommandFilterTextAny
 from core.settings import LANGUAGE_LIST
-from helpers import Emoji
-from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardHide
-from helpers.lazy_gettext import pgettext
+from tobot.helpers import Emoji, pgettext
+from tobot.telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardHide
 
 
 def get_keyboard(with_back: bool):

@@ -36,7 +36,8 @@ if __name__ == '__main__':
     except Exception as e:
         if not isinstance(e, KeyboardInterrupt):
             logging.exception('Got exception')
-        bm.stop()
+        if bm.is_alive:
+            bm.stop()
 
     signal.signal(signal.SIGTERM, bm.stop)
     signal.signal(signal.SIGINT, bm.stop)

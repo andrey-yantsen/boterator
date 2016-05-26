@@ -1,4 +1,4 @@
-from core.bot import CommandFilterAny
+from tobot import CommandFilterAny
 
 
 class CommandFilterIsModerationChat(CommandFilterAny):

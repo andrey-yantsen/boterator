@@ -1,10 +1,10 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextRegexp, CommandFilterTextCmd, CommandFilterTextAny, \
+from tobot import CommandFilterTextRegexp, CommandFilterTextCmd, CommandFilterTextAny, \
     CommandFilterCallbackQueryRegexp
 from core.slave_command_filters import CommandFilterIsModerationChat
-from helpers import report_botan, pgettext
-from telegram import ForceReply
+from tobot.helpers import report_botan, pgettext
+from tobot.telegram import ForceReply
 
 
 @coroutine

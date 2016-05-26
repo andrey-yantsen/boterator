@@ -1,8 +1,8 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextRegexp, CommandFilterCallbackQueryRegexp
+from tobot import CommandFilterCallbackQueryRegexp
 from core.slave_command_filters import CommandFilterIsModerationChat
-from helpers import pgettext, report_botan
+from tobot.helpers import pgettext, report_botan
 
 
 @coroutine

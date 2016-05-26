@@ -1,11 +1,11 @@
 from babel.numbers import format_number
 from ujson import dumps
 
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+from tobot.telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterPrivate, CommandFilterTextAny, CommandFilterMultimediaAny, CommandFilterCallbackQuery
-from helpers import report_botan, pgettext, Emoji
+from tobot import CommandFilterPrivate, CommandFilterTextAny, CommandFilterMultimediaAny, CommandFilterCallbackQuery
+from tobot.helpers import report_botan, pgettext
 
 
 @coroutine

@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterTextCmd
-from helpers import report_botan
+from tobot import CommandFilterTextCmd
+from tobot.helpers import report_botan
 
 
 @coroutine

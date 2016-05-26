@@ -1,8 +1,8 @@
-import os
-
 from tornado.locale import get_supported_locales, load_gettext_translations
 from babel import Locale
-from helpers import pgettext, Emoji
+from tobot.helpers import pgettext, Emoji
+
+load_gettext_translations('./locales', 'boterator')
 
 DEFAULT_SLAVE_SETTINGS = {
     'delay': 15,

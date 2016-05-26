@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
-from core.bot import CommandFilterNewChatMemberAny, CommandFilterLeftChatMemberAny
-from helpers import report_botan
+from tobot import CommandFilterNewChatMemberAny, CommandFilterLeftChatMemberAny
+from tobot.helpers import report_botan
 
 
 @coroutine

@@ -7,11 +7,11 @@ from tornado.gen import coroutine, with_timeout
 from tornado.ioloop import IOLoop
 from tornado.locks import Event
 
-from core.bot import CommandFilterTextCmd, CommandFilterNewChatMember, CommandFilterGroupChatCreated, \
+from tobot import CommandFilterTextCmd, CommandFilterNewChatMember, CommandFilterGroupChatCreated, \
     CommandFilterSupergroupChatCreated
-from core.queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
+from .queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
     QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, QUEUE_BOTERATOR_BOT_REVOKE
-from telegram import Api, ApiError
+from tobot.telegram import Api, ApiError
 from .slave import Slave
 
 
