@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-26 11:45+0100\n"
+"PO-Revision-Date: 2016-05-27 10:26+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: Russian (Russia)\n"
 "Language: ru-RU\n"
@@ -457,7 +457,8 @@ msgstr "Новая задержка между публикациями сооб
 msgctxt "New required votes count request"
 msgid "Set new amount of required votes"
 msgstr ""
-"Установите новое количество голосов, необходимое для одобрения сообщения."
+"Установите новое количество голосов, необходимое для одобрения или "
+"отклонения сообщения."
 
 #: core/handlers/slave/setvotes.py:25 loco:572f0e8214d7253d068b45ab
 msgctxt "Required votes count successfully changed"
@@ -844,22 +845,22 @@ msgstr[2] "%d голосований"
 #: core/boterator.py:53 loco:5744814014d725223c8b456b
 msgctxt "Command name"
 msgid "/reg â register a new bot"
-msgstr ""
+msgstr "/reg — регистрация нового бота"
 
 #: core/boterator.py:54 loco:5744814014d725223c8b456c
 msgctxt "Action description"
 msgid "Waiting for the token"
-msgstr ""
+msgstr "Ожидание ввода токена"
 
 #: core/boterator.py:69 loco:5744814014d725223c8b456d
 msgctxt "Action description"
 msgid "Waiting for the channel name"
-msgstr ""
+msgstr "Ожидание названия канала"
 
 #: core/handlers/emoji_end.py:12 loco:5744814014d725223c8b457b
 msgctxt "Reply to END button press on a keyboard"
 msgid "Ok"
-msgstr ""
+msgstr "Готово."
 
 #: core/handlers/slave/help.py:13 loco:5744814014d725223c8b457c
 msgctxt "Delay between channel messages"
@@ -888,32 +889,38 @@ msgstr[2] "{cnt} голосований"
 #: core/handlers/slave/setallowed.py:116 loco:5744814014d725223c8b4582
 msgctxt "Content type enabled/disabled"
 msgid "Documents enabled"
-msgstr ""
+msgstr "Документы запрещены."
 
 #: core/handlers/slave/setallowed.py:117 loco:5744814014d725223c8b4583
 msgctxt "Content type enabled/disabled"
 msgid "Documents disabled"
-msgstr ""
+msgstr "Документы разрешены."
 
 #: core/handlers/slave/setdelay.py:29 loco:5744814014d725223c8b4584
 msgctxt "Invalid delay value"
 msgid "Invalid delay value. Try again or type /cancel"
 msgstr ""
+"Некорректное значение для зареджки между публикациями сообщений. Повторите "
+"попытку или отправьте /cancel."
 
 #: core/handlers/slave/settimeout.py:30 loco:5744814014d725223c8b4585
 msgctxt "Invalid voting duration value"
 msgid "Invalid voting duration value. Try again or type /cancel"
 msgstr ""
+"Некорреткное значение продолжительности голосования. Повторите попытку или "
+"отправьте /cancel."
 
 #: core/handlers/slave/setvotes.py:31 loco:5744814014d725223c8b4586
 msgctxt "Invalid votes amount value"
 msgid "Invalid votes amount value. Try again or type /cancel"
 msgstr ""
+"Некорректное значение для количества голосов. Повторите попытку или "
+"отправьте /cancel."
 
 #: core/handlers/unknown_command.py:17 loco:5744814014d725223c8b4587
 msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
-msgstr ""
+msgstr "Некорректный ввод."
 
 #: core/boterator.py:92 loco:5744824d14d7254f3e8b4570
 msgctxt "Unable to establish startup connection with bot"
@@ -977,6 +984,8 @@ msgid ""
 "Unable to receive moderation group. Send me bot`s token if you would like to "
 "try again."
 msgstr ""
+"Не удалось получить идентификатор группы модерации. Если хотите повторить "
+"попытку — отправьте токен повторно, иначе отправьте /cancel."
 
 #: core/handlers/boterator/reg.py:113 loco:5744824d14d7254f3e8b4579
 msgctxt "Slave attached to moderator`s channel"
@@ -1133,11 +1142,15 @@ msgstr "Какое сообщение отправить пользовател�
 msgctxt "Vote status displaying disabled"
 msgid "From now other chat users WILL NOT see current votes distribution."
 msgstr ""
+"Теперь другие участники чата модераторов не увидят распределение голосов в "
+"голосовании до его окончания."
 
 #: core/handlers/slave/toggle_vote.py:20 loco:57453bae14d7253e058b456c
 msgctxt "Vote status displaying enabled"
 msgid "From now other chat users WILL see current votes distribution."
 msgstr ""
+"Теперь другие участники чата модераторов будут видеть распределение голосов "
+"в голосовании."
 
 #: core/handlers/slave/vote.py:83 loco:57453bae14d7253e058b456d
 msgctxt "User`s vote successfully counted"
@@ -1210,24 +1223,24 @@ msgstr "выкл"
 #: core/slave.py:260 loco:5745a3d314d72539698b4567
 msgctxt "Newer poll for this message posted below"
 msgid "_Outdated_"
-msgstr ""
+msgstr "_Устарело_"
 
 #: core/handlers/slave/post.py:92 loco:5745a9be14d725aa6f8b4567
 msgctxt "User sent a gif for verification while gifs are disabled"
 msgid "Accepting gifs is disabled"
-msgstr ""
+msgstr "Приём гифок сообщений отключён."
 
 #: core/handlers/slave/setallowed.py:102 loco:5745a9be14d725aa6f8b4568
 msgctxt "Content type"
 msgid "Gif"
-msgstr ""
+msgstr "Гифки"
 
 #: core/handlers/slave/setallowed.py:118 loco:5745a9be14d725aa6f8b4569
 msgctxt "Content type enabled/disabled"
 msgid "Gifs enabled"
-msgstr ""
+msgstr "Гифки разрешены."
 
 #: core/handlers/slave/setallowed.py:119 loco:5745a9be14d725aa6f8b456a
 msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
-msgstr ""
+msgstr "Гифки запрещены."
