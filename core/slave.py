@@ -31,7 +31,7 @@ from core.handlers.slave.start import start_command
 from core.handlers.slave.stats import stats_command
 from core.handlers.slave.toggle_power import togglepower_command
 from core.handlers.slave.toggle_vote import togglevote_command
-from core.handlers.slave.vote import vote_yes, vote_no
+from core.handlers.slave.vote import vote_new, vote_old
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
 from core.settings import DEFAULT_SLAVE_SETTINGS
@@ -72,8 +72,8 @@ class Slave(Base):
         self._add_handler(start_command, None)
         self._add_handler(new_chat, None)
         self._add_handler(left_chat, None)
-        self._add_handler(vote_yes, None)
-        self._add_handler(vote_no, None)
+        self._add_handler(vote_new, None)
+        self._add_handler(vote_old, None)
 
         self._add_handler(setlanguage, is_final=False)
         self._add_handler(emoji_end, None, setlanguage)
