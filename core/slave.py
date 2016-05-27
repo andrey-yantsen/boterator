@@ -147,9 +147,10 @@ class Slave(Base):
             allowed_time = datetime.now()
 
         if datetime.now() >= allowed_time:
-            cur = yield self.db.execute('SELECT message, moderation_message_id FROM incoming_messages WHERE bot_id = %s '
-                                        'AND is_voting_success = TRUE AND is_published = FALSE '
-                                        'ORDER BY created_at LIMIT 1', (self.bot_id,))
+            cur = yield self.db.execute(
+                'SELECT message, moderation_message_id FROM incoming_messages WHERE bot_id = %s '
+                'AND is_voting_success = TRUE AND is_published = FALSE '
+                'ORDER BY created_at LIMIT 1', (self.bot_id,))
 
             row = cur.fetchone()
 
@@ -172,7 +173,7 @@ class Slave(Base):
 
             msg, keyboard = yield self.get_verification_message(message['message_id'], message['chat']['id'], True)
             yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
-                                             reply_markup=keyboard)
+                                         reply_markup=keyboard)
         except:
             logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
 
@@ -285,13 +286,27 @@ class Slave(Base):
                        cnt=total_votes)]
 
         if voting_finished or self.settings.get('public_vote', True):
-            message.append("{thumb_up}{thumbs_up} — {percent_yes}%\n" \
-                           "{thumb_down}{thumbs_down} — {percent_no}%\n".format(thumb_up=Emoji.THUMBS_UP_SIGN,
-                                                                                thumbs_up=thumb_ups,
-                                                                                percent_yes=round(percent_yes * 100),
-                                                                                thumb_down=Emoji.THUMBS_DOWN_SIGN,
-                                                                                thumbs_down=thumb_downs,
-                                                                                percent_no=round(percent_no * 100)))
+            if voting_finished:
+                more_yes = more_no = ''
+            else:
+                to_win_yes = self.settings['votes'] - approves
+                more_yes = npgettext('Votes left to make a decision', '{cnt} more to win', '{cnt} more to win', to_win_yes) \
+                    .format(cnt=to_win_yes)
+                to_win_no = self.settings['votes'] - total_votes + approves
+                more_no = npgettext('Votes left to make a decision', '{cnt} more to win', '{cnt} more to win', to_win_no) \
+                    .format(cnt=to_win_no)
+
+                more_yes = pgettext('ignore', ' ({})').format(more_yes)
+                more_no = pgettext('ignore', ' ({})').format(more_no)
+                more_yes.locale = self.locale
+                more_no.locale = self.locale
+
+            message.append("{thumb_up}{thumbs_up} — {percent_yes}%{more_yes}\n"
+                           "{thumb_down}{thumbs_down} — {percent_no}%{more_no}\n"
+                           .format(thumb_up=Emoji.THUMBS_UP_SIGN, thumbs_up=thumb_ups,
+                                   percent_yes=round(percent_yes * 100), thumb_down=Emoji.THUMBS_DOWN_SIGN,
+                                   thumbs_down=thumb_downs, percent_no=round(percent_no * 100), more_yes=more_yes,
+                                   more_no=more_no))
 
         if voting_finished:
             message.append(pgettext('Poll finished', 'Poll is closed.'))

@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-27 10:26+0100\n"
+"PO-Revision-Date: 2016-05-27 11:28+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: Russian (Russia)\n"
 "Language: ru-RU\n"
@@ -41,7 +41,7 @@ msgstr[0] "%d час"
 msgstr[1] "%d часа"
 msgstr[2] "%d часов"
 
-#: core/slave.py:229 loco:572f0e8214d7253d068b456d
+#: core/slave.py:224 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
 msgid "{votes_received} vote"
 msgid_plural "{votes_received} votes"
@@ -49,7 +49,7 @@ msgstr[0] "{votes_received} голос"
 msgstr[1] "{votes_received} голоса"
 msgstr[2] "{votes_received} голосов"
 
-#: core/slave.py:232 loco:572f0e8214d7253d068b456f
+#: core/slave.py:227 loco:572f0e8214d7253d068b456f
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
@@ -273,7 +273,7 @@ msgctxt "User banned"
 msgid "Access denied"
 msgstr "Доступ запрещён."
 
-#: core/slave.py:235 loco:572f0e8214d7253d068b4591
+#: core/slave.py:230 loco:572f0e8214d7253d068b4591
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message got only {votes_received_msg} out of required "
@@ -407,7 +407,7 @@ msgstr ""
 "Отправить пользователю сообщение {reply_cmd}\n"
 "Забанить негодяя {ban_cmd}"
 
-#: core/handlers/slave/vote.py:66 loco:572f0e8214d7253d068b45a6
+#: core/handlers/slave/vote.py:69 loco:572f0e8214d7253d068b45a6
 msgctxt "Message verified and queued for publishing"
 msgid "Your message was verified and queued for publishing."
 msgstr "Ура! Ваше сообщение было одобрено и добавлено в очередь публикаций."
@@ -686,22 +686,22 @@ msgstr ""
 "Вы можете видеть текущее состояние на клавиатуре. Просто нажмите на нужную "
 "кнопку чтобы разрешить или запретить тип сообщений."
 
-#: core/handlers/boterator/setlanguage.py:51 
-#: core/handlers/slave/setallowed.py:91 core/handlers/slave/setlanguage.py:53 
+#: core/handlers/boterator/setlanguage.py:50 
+#: core/handlers/slave/setallowed.py:91 core/handlers/slave/setlanguage.py:52 
 #: loco:572f0e8214d7253d068b45d2
 msgctxt "Invalid user response"
 msgid "Wrong input"
 msgstr "Некорректный ввод."
 
-#: core/handlers/boterator/setlanguage.py:32 
+#: core/handlers/boterator/setlanguage.py:31 
 #: core/handlers/boterator/setlanguage_at_start.py:15 
-#: core/handlers/slave/setlanguage.py:34 loco:572f0e8214d7253d068b45d3
+#: core/handlers/slave/setlanguage.py:33 loco:572f0e8214d7253d068b45d3
 msgctxt "Change language prompt"
 msgid "Select your language"
 msgstr "Выберите язык."
 
-#: core/handlers/boterator/setlanguage.py:47 
-#: core/handlers/slave/setlanguage.py:49 loco:572f0e8214d7253d068b45d4
+#: core/handlers/boterator/setlanguage.py:46 
+#: core/handlers/slave/setlanguage.py:48 loco:572f0e8214d7253d068b45d4
 msgctxt "Language changed"
 msgid "Language changed"
 msgstr "Язык изменён."
@@ -917,12 +917,12 @@ msgstr ""
 "Некорректное значение для количества голосов. Повторите попытку или "
 "отправьте /cancel."
 
-#: core/handlers/unknown_command.py:17 loco:5744814014d725223c8b4587
+#: core/handlers/unknown_command.py:10 loco:5744814014d725223c8b4587
 msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
 msgstr "Некорректный ввод."
 
-#: core/boterator.py:92 loco:5744824d14d7254f3e8b4570
+#: core/boterator.py:93 loco:5744824d14d7254f3e8b4570
 msgctxt "Unable to establish startup connection with bot"
 msgid ""
 "I'm failed to establish connection to your bot with token `{token}`, "
@@ -1152,22 +1152,22 @@ msgstr ""
 "Теперь другие участники чата модераторов будут видеть распределение голосов "
 "в голосовании."
 
-#: core/handlers/slave/vote.py:83 loco:57453bae14d7253e058b456d
+#: core/handlers/slave/vote.py:87 loco:57453bae14d7253e058b456d
 msgctxt "User`s vote successfully counted"
 msgid "Counted."
 msgstr "Ваш голос учтён."
 
-#: core/handlers/slave/vote.py:89 loco:57453bae14d7253e058b456e
+#: core/handlers/slave/vote.py:93 loco:57453bae14d7253e058b456e
 msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
 msgstr "Вы уже проголосовали."
 
-#: core/slave.py:289 loco:57453bae14d7253e058b456f
+#: core/slave.py:284 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
 msgid "Current poll progress:"
 msgstr "Текущий прогресс голосования:"
 
-#: core/slave.py:290 loco:57453bae14d7253e058b4570
+#: core/slave.py:285 loco:57453bae14d7253e058b4570
 msgctxt "Count of voted moderators"
 msgid "{cnt} vote"
 msgid_plural "{cnt} votes"
@@ -1175,37 +1175,37 @@ msgstr[0] "{cnt} голос"
 msgstr[1] "{cnt} голоса"
 msgstr[2] "{cnt} голосов"
 
-#: core/slave.py:303 loco:57453bae14d7253e058b4572
+#: core/slave.py:310 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr "Голосование завершено."
 
-#: core/slave.py:310 loco:57453bae14d7253e058b4573
+#: core/slave.py:317 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr "Сообщение опубликовано."
 
-#: core/slave.py:312 loco:57453bae14d7253e058b4574
+#: core/slave.py:319 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr "Сообщение будет опубликовано в ближайшем будущем."
 
-#: core/slave.py:314 loco:57453bae14d7253e058b4575
+#: core/slave.py:321 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr "Сообщение не будет опубликовано."
 
-#: core/slave.py:328 loco:57453bae14d7253e058b4576
+#: core/slave.py:335 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr "Ответить"
 
-#: core/slave.py:330 loco:57453bae14d7253e058b4577
+#: core/slave.py:337 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr "Забанить негодяя"
 
-#: core/slave.py:349 loco:57453bae14d7253e058b4578
+#: core/slave.py:356 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr "Время голосовать!"
@@ -1220,7 +1220,7 @@ msgctxt "Boolean settings"
 msgid "off"
 msgstr "выкл"
 
-#: core/slave.py:260 loco:5745a3d314d72539698b4567
+#: core/slave.py:255 loco:5745a3d314d72539698b4567
 msgctxt "Newer poll for this message posted below"
 msgid "_Outdated_"
 msgstr "_Устарело_"
@@ -1244,3 +1244,16 @@ msgstr "Гифки разрешены."
 msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
 msgstr "Гифки запрещены."
+
+#: core/slave.py:293 core/slave.py:296 loco:57481f4a14d725a04c8b4575
+msgctxt "Votes left to make a decision"
+msgid "{cnt} more to win"
+msgid_plural "{cnt} more to win"
+msgstr[0] "ещё {cnt} для победы"
+msgstr[1] "ещё {cnt} для победы"
+msgstr[2] "ещё {cnt} для победы"
+
+#: core/slave.py:299 core/slave.py:300 loco:5748200314d7251e4d8b459a
+msgctxt "ignore"
+msgid " ({})"
+msgstr ""
