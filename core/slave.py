@@ -197,7 +197,7 @@ class Slave(Base):
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
 
     @coroutine
-    def decline_message(self, message, yes_votes):
+    def decline_message(self, message, yes_votes, notify=True):
         cur = yield self.db.execute('SELECT moderation_message_id FROM incoming_messages WHERE bot_id = %s AND '
                                     'original_chat_id = %s AND id = %s', (self.bot_id, message['chat']['id'],
                                                                           message['message_id']))
@@ -221,17 +221,19 @@ class Slave(Base):
                               'AND id = %s',
                               (self.bot_id, message['chat']['id'], message['message_id']))
 
-        received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
-                                       '{votes_received} votes',
-                                       yes_votes).format(votes_received=yes_votes)
-        required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
-                                       self.settings['votes']).format(votes_required=self.settings['votes'])
+        if notify:
+            received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
+                                           '{votes_received} votes',
+                                           yes_votes).format(votes_received=yes_votes)
+            required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
+                                           self.settings['votes']).format(votes_required=self.settings['votes'])
 
-        yield self.send_message(pgettext('Voting failed', 'Unfortunately your message got only {votes_received_msg} '
-                                                          'out of required {votes_required_msg} and won\'t be '
-                                                          'published to the channel.')
-                                .format(votes_received_msg=received_votes_msg,
-                                        votes_required_msg=required_votes_msg), reply_to_message=message)
+            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
+                                                              '{votes_received_msg} out of required '
+                                                              '{votes_required_msg} and won\'t be published to the '
+                                                              'channel.')
+                                    .format(votes_received_msg=received_votes_msg,
+                                            votes_required_msg=required_votes_msg), reply_to_message=message)
 
     @property
     def language(self):

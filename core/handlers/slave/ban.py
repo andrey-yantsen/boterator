@@ -56,9 +56,15 @@ def plaintext_ban_handler(bot, message, user_id):
                                    chat_id=user_id)
         except:
             pass
-        yield bot.db.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
-                             'owner_id = %s AND is_voting_success = FALSE',
-                             (bot.id, user_id,))
+        cur = yield bot.db.execute('SELECT message FROM incoming_messages WHERE bot_id = %s AND owner_id = %s AND '
+                                   'is_voting_success = FALSE AND is_voting_fail = FALSE AND is_message_published = '
+                                   'FALSE', (bot.id, user_id,))
+        while True:
+            row = cur.fetchone()
+            if not row:
+                continue
+            yield bot.decline_message(row[0], 0, False)
+
         yield bot.db.execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
                              'bot_id = %s', (msg, user_id, bot.id))
         yield bot.send_message(pgettext('Ban confirmation', 'User banned'), reply_to_message=message)
