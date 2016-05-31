@@ -12,6 +12,12 @@ from tobot.telegram import ForceReply
 @CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)')
 def ban_command(bot, callback_query, user_id):
     report_botan(callback_query, 'slave_ban_cmd')
+    cur = yield bot.db.execute('SELECT banned_at FROM users WHERE bot_id = %s AND user_id = %s', (bot.bot_id, user_id))
+    row = cur.fetchone()
+    if row and row[0]:
+        yield bot.answer_callback_query(callback_query['id'], pgettext('User already banned', 'User already banned.'))
+        return None
+
     msg = pgettext('Ban reason request', 'Please enter a ban reason for the user, @{moderator_username}')\
         .format(moderator_username=callback_query['from']['username'])
     yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
@@ -25,6 +31,14 @@ def ban_command(bot, callback_query, user_id):
 @CommandFilterTextAny()
 def plaintext_ban_handler(bot, message, user_id):
     chat_id = message['chat']['id']
+
+    cur = yield bot.db.execute('SELECT banned_at FROM users WHERE bot_id = %s AND user_id = %s', (bot.bot_id, user_id))
+    row = cur.fetchone()
+    if row and row[0]:
+        yield bot.send_message(pgettext('Somebody banned a user faster than another one',
+                                        'Somebody already banned the user. Be faster next time.'),
+                               reply_to_message=message)
+        return True
 
     msg = message['text'].strip()
     if len(msg) < 5:
