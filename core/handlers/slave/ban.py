@@ -15,7 +15,7 @@ def ban_command(bot, callback_query, user_id):
     cur = yield bot.db.execute('SELECT banned_at FROM users WHERE bot_id = %s AND user_id = %s', (bot.bot_id, user_id))
     row = cur.fetchone()
     if row and row[0]:
-        yield bot.answer_callback_query(callback_query['id'], pgettext('User already banned', 'User already banned.'))
+        yield bot.answer_callback_query(callback_query['id'], pgettext('User already banned', 'User already banned'))
         return None
 
     msg = pgettext('Ban reason request', 'Please enter a ban reason for the user, @{moderator_username}')\
