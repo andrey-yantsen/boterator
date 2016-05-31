@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-05-27 11:28+0100\n"
+"PO-Revision-Date: 2016-05-31 18:12+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -558,13 +558,13 @@ msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user"
 msgstr "Please set a ban reason for this user."
 
-#: core/handlers/slave/ban.py:32 loco:572f0e8214d7253d068b45be
+#: core/handlers/slave/ban.py:46 loco:572f0e8214d7253d068b45be
 msgctxt "Ban reason too short"
 msgid "Reason is too short (5 symbols required), try again or send /cancel"
 msgstr ""
 "Hey, it’s too short (we need at least 5 chars). Try again or type /cancel."
 
-#: core/handlers/slave/ban.py:39 loco:572f0e8214d7253d068b45bf
+#: core/handlers/slave/ban.py:53 loco:572f0e8214d7253d068b45bf
 msgctxt "Message to user in case of ban"
 msgid ""
 "You've been banned from further communication with this bot. Reason:\n"
@@ -573,32 +573,32 @@ msgstr ""
 "Sorry, but you've been banned. Bot will ignore you. Reason:\\n\n"
 "> {ban_reason}"
 
-#: core/handlers/slave/ban.py:50 loco:572f0e8214d7253d068b45c0
+#: core/handlers/slave/ban.py:64 loco:572f0e8214d7253d068b45c0
 msgctxt "Ban confirmation"
 msgid "User banned"
 msgstr "User was banned."
 
-#: core/handlers/slave/ban.py:91 loco:572f0e8214d7253d068b45c1
+#: core/handlers/slave/ban.py:105 loco:572f0e8214d7253d068b45c1
 msgctxt "Ban user item"
 msgid "{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}"
 msgstr "{row_id}. {user} — {ban_reason} (banned {ban_date}) {unban_cmd}"
 
-#: core/handlers/slave/ban.py:98 loco:572f0e8214d7253d068b45c2
+#: core/handlers/slave/ban.py:112 loco:572f0e8214d7253d068b45c2
 msgctxt "Bot owner notification"
 msgid "You can use /unban command only in moderators group"
 msgstr "You can use /unban command only in moderators group."
 
-#: core/handlers/slave/ban.py:102 loco:572f0e8214d7253d068b45c3
+#: core/handlers/slave/ban.py:116 loco:572f0e8214d7253d068b45c3
 msgctxt "Ban list is empty"
 msgid "No banned users yet"
 msgstr "No banned users yet."
 
-#: core/handlers/slave/ban.py:62 loco:572f0e8214d7253d068b45c4
+#: core/handlers/slave/ban.py:76 loco:572f0e8214d7253d068b45c4
 msgctxt "Unban confirmation"
 msgid "User unbanned"
 msgstr "User was unbanned. Amnesty!"
 
-#: core/handlers/slave/ban.py:64 loco:572f0e8214d7253d068b45c5
+#: core/handlers/slave/ban.py:78 loco:572f0e8214d7253d068b45c5
 msgctxt "User notification in case of unban"
 msgid "Access restored"
 msgstr "You were granted an amnesty. Hurrah!"
@@ -1075,7 +1075,7 @@ msgstr ""
 "need to do — is to write a message to me (bot named @{bot_username}) and I "
 "will send it for moderation."
 
-#: core/handlers/slave/ban.py:15 loco:57453bae14d7253e058b4569
+#: core/handlers/slave/ban.py:21 loco:57453bae14d7253e058b4569
 msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user, @{moderator_username}"
 msgstr "Please enter a ban reason for this user, @{moderator_username}."
@@ -1117,37 +1117,37 @@ msgid_plural "{cnt} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:310 loco:57453bae14d7253e058b4572
+#: core/slave.py:312 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr ""
 
-#: core/slave.py:317 loco:57453bae14d7253e058b4573
+#: core/slave.py:319 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr ""
 
-#: core/slave.py:319 loco:57453bae14d7253e058b4574
+#: core/slave.py:321 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr ""
 
-#: core/slave.py:321 loco:57453bae14d7253e058b4575
+#: core/slave.py:323 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr ""
 
-#: core/slave.py:335 loco:57453bae14d7253e058b4576
+#: core/slave.py:337 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr ""
 
-#: core/slave.py:337 loco:57453bae14d7253e058b4577
+#: core/slave.py:339 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr ""
 
-#: core/slave.py:356 loco:57453bae14d7253e058b4578
+#: core/slave.py:358 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr ""
@@ -1197,4 +1197,14 @@ msgstr[1] ""
 #: core/slave.py:299 core/slave.py:300 loco:5748200314d7251e4d8b459a
 msgctxt "ignore"
 msgid " ({})"
+msgstr ""
+
+#: core/handlers/slave/ban.py:18 loco:574dc21714d725954d8b456f
+msgctxt "User already banned"
+msgid "User already banned"
+msgstr ""
+
+#: core/handlers/slave/ban.py:38 loco:574dc21714d725954d8b4570
+msgctxt "Somebody banned a user faster than another one"
+msgid "Somebody already banned the user. Be faster next time."
 msgstr ""
