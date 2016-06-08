@@ -32,7 +32,14 @@ def __is_voting_opened(db, original_chat_id, message_id):
 @coroutine
 def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, message=None):
     assert callback_query or message
+
     user_id = callback_query['from']['id'] if callback_query else message['from']['id']
+
+    if not bot.settings.get('selfvote') and int(original_chat_id) == user_id and user_id != bot.moderator_chat_id:
+        if callback_query:
+            yield bot.answer_callback_query(callback_query['id'], pgettext('Moderator voted for own message',
+                                                                           'It\'s not allowed to vote for own messages'))
+        return False
 
     voted = yield __is_user_voted(bot.db, user_id, original_chat_id, message_id)
     opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)

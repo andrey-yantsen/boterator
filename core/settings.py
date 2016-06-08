@@ -27,6 +27,7 @@ DEFAULT_SLAVE_SETTINGS = {
         'sticker': False,
         'gif': False,
     },
+    'selfvote': True,
 }
 
 supported_locales = sorted(get_supported_locales())
