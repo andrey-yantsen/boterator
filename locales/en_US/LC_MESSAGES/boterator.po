@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-06-08 18:42+0100\n"
+"PO-Revision-Date: 2016-06-19 14:19+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -14,28 +14,7 @@ msgstr ""
 "X-Generator: Loco https://localise.biz\n"
 "X-Loco-Source-Locale: en\n"
 "X-Loco-Project-Id: 15312\n"
-"X-Loco-Api-Version: 1.0.14 20160607-1"
-
-#: boterator.py:286 loco:572f0e8214d7253d068b4567
-msgctxt "Boterator: default votes cnt"
-msgid "%d vote"
-msgid_plural "%d votes"
-msgstr[0] ""
-msgstr[1] ""
-
-#: boterator.py:289 loco:572f0e8214d7253d068b4569
-msgctxt "Boterator: default delay"
-msgid "%d minute"
-msgid_plural "%d minutes"
-msgstr[0] ""
-msgstr[1] ""
-
-#: boterator.py:292 loco:572f0e8214d7253d068b456b
-msgctxt "Boterator: default timeout"
-msgid "%d hour"
-msgid_plural "%d hours"
-msgstr[0] ""
-msgstr[1] ""
+"X-Loco-Api-Version: 1.0.14 20160610-1"
 
 #: core/slave.py:227 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
@@ -86,181 +65,6 @@ msgstr[1] ""
 msgctxt "User not allowed to perform this action"
 msgid "Access denied"
 msgstr "Access denied."
-
-#: core/handlers/boterator/start.py:11 loco:572f0e8214d7253d068b457a
-msgctxt "Boterator: /start response"
-msgid ""
-"Hello, this is Boterator. In order to start ask @BotFather to create a new "
-"bot. Then feel free to use /reg command to register new bot using token."
-msgstr ""
-"Hello, this is Boterator. In order to start ask @BotFather to create a new "
-"bot. Then return back here and use /reg command and token which you were "
-"given by @BotFather."
-
-#: core/handlers/boterator/reg.py:22 loco:572f0e8214d7253d068b457b
-msgctxt "Boterator: /reg response"
-msgid "Ok, please tell me the token, which you've received from @BotFather"
-msgstr "@BotFather gave you the token. Please send it to me."
-
-#: core/handlers/boterator/reg.py:45 loco:572f0e8214d7253d068b457c
-msgctxt "Boterator: empty token entered"
-msgid "I guess you forgot to enter the token :)"
-msgstr ""
-
-#: core/handlers/boterator/reg.py:50 loco:572f0e8214d7253d068b457d
-msgctxt "Boterator: non-well formatted token"
-msgid "Token is incorrect. And I can do nothing with that."
-msgstr "Token is incorrect. And I can do nothing with that. Sorry."
-
-#: core/handlers/boterator/reg.py:68 loco:572f0e8214d7253d068b457e
-msgctxt "Boterator: provided token is already registered and alive"
-msgid "It seems like this bot is already registered. Try to create another one"
-msgstr ""
-"It looks like this bot is already registered. Try to register another one."
-
-#: boterator.py:124 loco:572f0e8214d7253d068b457f
-msgctxt "Boterator: token received"
-msgid ""
-"Ok, I've got basic information for @%s\n"
-"Now add him to a group of moderators (or copy and paste `@%s /attach` to the "
-"group, in case youâve already added him), where I should send messages for "
-"verification, or type /cancel"
-msgstr ""
-"Ok, I've got basic information for @%s.\n"
-"Now add this bot to the group of moderators (or copy and paste `@%s /attach` "
-"to the group, in case youâve already added him), where I should send "
-"messages for moderation, or type /cancel."
-
-#: core/settings.py:12 loco:572f0e8214d7253d068b4580
-msgctxt "Boterator: default channel-hello message"
-msgid ""
-"Hi there, guys! Now it is possible to publish messages in this channel by "
-"any of you. All you need to do â is to write a message to me (bot named "
-"@{bot_username}), and it will be published after verification by our team."
-msgstr ""
-"Hi there, guys! Now all of you can publish messages to this channel. All you "
-"need to do â is to write a message to me (bot named @%s) and I will send "
-"it for moderation."
-
-#: boterator.py:154 loco:572f0e8214d7253d068b4582
-msgctxt "Boterator: /cancel response"
-msgid "Oka-a-a-a-a-ay."
-msgstr ""
-
-#: core/handlers/boterator/reg.py:149 loco:572f0e8214d7253d068b4583
-msgctxt "Boterator: invalid channel name received"
-msgid "Invalid channel name. Try again or type /cancel"
-msgstr "Invalid channel name. Try again or type /cancel."
-
-#: core/handlers/boterator/reg.py:201 loco:572f0e8214d7253d068b4584
-msgctxt "Boterator: sending channel-hello message failed"
-msgid ""
-"Hey, I'm unable to send hello message, is everything ready for me? Here is "
-"an error from Telegram api: {error}"
-msgstr ""
-"Hey, I can't send the welcome message! Are you sure that everything is ready?"
-" Here is an error from Telegram API: %s"
-
-#: core/settings.py:11 loco:572f0e8214d7253d068b4585
-msgctxt "Boterator: default start message"
-msgid "Just enter your message, and we're ready."
-msgstr "Please enter your message."
-
-#: core/boterator.py:86 loco:572f0e8214d7253d068b4586
-msgctxt "Boterator: unable to establish startup connection with bot"
-msgid ""
-"I'm failed to establish connection to your bot with token `{token}`, "
-"received error: `{error}`.\n"
-"Your bot was deactivated, to enable it again - perform registration process "
-"from the beginning."
-msgstr ""
-"I failed to establish connection to your bot with token %s. Your bot was "
-"deactivated, to enable it again — perform the registration process from the "
-"beginning."
-
-#: core/handlers/boterator/reg.py:175 loco:572f0e8214d7253d068b4587
-msgctxt "Boterator: new bot registered"
-msgid ""
-"And we're ready for some magic!\n"
-"By default the bot will wait for {votes_cnt_msg} to approve the message, "
-"perform {delay_msg} delay between channel messages, wait {timeout_msg} "
-"before closing a voting for each message and allow only text messages (no "
-"multimedia content at all). To modify this (and few other) settings send "
-"/help in PM to @{bot_username}. By default you're the only user who can "
-"change these settings and use /help command"
-msgstr ""
-"And we're ready for some magic!\n"
-"\n"
-"By default the bot will wait for {votes_cnt_msg} to approve or reject the "
-"message, make {delay_msg} delay between publishing messages to the channel, "
-"wait {timeout_msg} before closing a vote for each message and allow only "
-"text messages (no multimedia content at all). To modify these and some other "
-"settings send /help in PM to @{bot_username}. By default you're the only "
-"user who can change these settings and use /help command."
-
-#: boterator.py:316 loco:572f0e8214d7253d068b4588
-msgctxt "Boterator: registration cancelled due to timeout"
-msgid "@%s registration aborted due to timeout"
-msgstr "@%s registration aborted due to timeout."
-
-#: boterator.py:347 loco:572f0e8214d7253d068b4589
-msgctxt "Boterator: slave attached to moderator`s channel"
-msgid ""
-"Ok, I'll be sending moderation requests to %s %s\n"
-"Now you need to add your bot (@%s) to a channel as administrator and tell me "
-"the channel name (e.g. @mobilenewsru)\n"
-"As soon as I will receive the channel name I'll send a message with "
-"following text:\n"
-"> %s\n"
-"You can change the message, if you mind, just send me /changehello.\n"
-"Also there is 'start' message for your new bot:\n"
-"> %s\n"
-"You can change it with /changestart"
-msgstr ""
-"Ok, I will send all moderation requests to %s %s.\n"
-"\n"
-"Now you need to add your bot (@%s) to the channel as administrator and tell "
-"me the channel name. As soon as I receive the channel name I send a message "
-"with following text:\n"
-"> %s\n"
-"You can easily change the message, just ask me using command /changehello.\n"
-"\n"
-"By default your bot has it's own 'start' message:\n"
-"> %s\n"
-"In order to change it, send me /changestart."
-
-#: boterator.py:372 loco:572f0e8214d7253d068b458a
-msgctxt "Boterator: /changehello response"
-msgid "Ok, I'm listening to you. How I should say hello to your subscribers?"
-msgstr "Ok, I'm listening to you. How should I welcome your subscribers?"
-
-#: core/handlers/boterator/reg.py:224 loco:572f0e8214d7253d068b458b
-msgctxt "Boterator: channel-hello message updated"
-msgid "Ok, noted, now tell me the channel name"
-msgstr "Ok. Got it. Now tell me please the channel name."
-
-#: core/handlers/boterator/reg.py:233 loco:572f0e8214d7253d068b458c
-msgctxt "Boterator: channel-hello message is too short"
-msgid "Hey, you should write at least 10 symbols"
-msgstr ""
-"It's too short. You should use at least 10 chars to welcome your subscribers."
-
-#: boterator.py:404 loco:572f0e8214d7253d068b458d
-msgctxt "Boterator: /changestart response"
-msgid "Ok, I'm listening to you. How I should say hello to your authors?"
-msgstr "Ok, I'm listening to you. How should I welcome contributors?"
-
-#: core/handlers/boterator/reg.py:254 loco:572f0e8214d7253d068b458e
-msgctxt "Boterator: /start message updated"
-msgid "Ok, noted, now tell me the channel name"
-msgstr "Ok. Got it. Now tell me please the channel name."
-
-#: core/handlers/boterator/reg.py:263 loco:572f0e8214d7253d068b458f
-msgctxt "Boterator: /start message is too short"
-msgid "Hey, you should write at least 10 symbols"
-msgstr ""
-"It's too short. You should use at least 10 chars to welcome your "
-"contributors."
 
 #: core/handlers/validate_user.py:37 loco:572f0e8214d7253d068b4590
 msgctxt "User banned"
@@ -648,7 +452,7 @@ msgstr ""
 #: core/handlers/slave/setallowed.py:99 loco:572f0e8214d7253d068b45ce
 msgctxt "Content type"
 msgid "Document"
-msgstr ""
+msgstr "Documents"
 
 #: core/handlers/slave/setallowed.py:100 loco:572f0e8214d7253d068b45cf
 msgctxt "Content type"
@@ -792,16 +596,6 @@ msgctxt "Content type enabled/disabled"
 msgid "Stickers disabled"
 msgstr "Stickers: disabled."
 
-#: boterator.py:67 loco:572f0e9d14d725ad058b4567
-msgctxt "Boterator: User not allowed to perform this action"
-msgid "Access denied"
-msgstr "Access denied."
-
-#: boterator.py:146 loco:572f0e9d14d725ad058b4568
-msgctxt "Boterator: Token check failed"
-msgid "Unable to get bot info: %s"
-msgstr "Token check failed: %s."
-
 #: boterator.py:711 loco:5731ec6e14d7252c468b456a
 msgctxt "User sent a command while another one is processing"
 msgid "Another action is in progress."
@@ -827,7 +621,7 @@ msgstr[1] ""
 #: core/boterator.py:53 loco:5744814014d725223c8b456b
 msgctxt "Command name"
 msgid "/reg â register a new bot"
-msgstr ""
+msgstr "/reg to register a new bot"
 
 #: core/boterator.py:54 loco:5744814014d725223c8b456c
 msgctxt "Action description"
@@ -868,12 +662,12 @@ msgstr[1] ""
 #: core/handlers/slave/setallowed.py:116 loco:5744814014d725223c8b4582
 msgctxt "Content type enabled/disabled"
 msgid "Documents enabled"
-msgstr ""
+msgstr "Documents: enabled."
 
 #: core/handlers/slave/setallowed.py:117 loco:5744814014d725223c8b4583
 msgctxt "Content type enabled/disabled"
 msgid "Documents disabled"
-msgstr ""
+msgstr "Documents: disabled."
 
 #: core/handlers/slave/setdelay.py:29 loco:5744814014d725223c8b4584
 msgctxt "Invalid delay value"
@@ -893,7 +687,7 @@ msgstr ""
 #: core/handlers/unknown_command.py:10 loco:5744814014d725223c8b4587
 msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
-msgstr ""
+msgstr "I have no idea what do you want from me. Sorry :("
 
 #: core/boterator.py:93 loco:5744824d14d7254f3e8b4570
 msgctxt "Unable to establish startup connection with bot"
@@ -925,7 +719,7 @@ msgstr ""
 #: core/handlers/boterator/reg.py:60 loco:5744824d14d7254f3e8b4574
 msgctxt "Unable to validate token"
 msgid "Unable to validate token right now, please try again later"
-msgstr ""
+msgstr "Unable to validate token right now, please try again later."
 
 #: core/handlers/boterator/reg.py:68 loco:5744824d14d7254f3e8b4575
 msgctxt "Provided token is already registered and alive"
@@ -1031,12 +825,12 @@ msgstr "Ok, I'm listening to you. How should I welcome your subscribers?"
 #: core/handlers/boterator/reg.py:224 loco:5744824d14d7254f3e8b4584
 msgctxt "Channel-hello message updated"
 msgid "Ok, noted, now tell me the channel name"
-msgstr ""
+msgstr "Ok, noted, now tell me the channel name."
 
 #: core/handlers/boterator/reg.py:233 loco:5744824d14d7254f3e8b4585
 msgctxt "Channel-hello message is too short"
 msgid "Hey, you should write at least 10 symbols"
-msgstr ""
+msgstr "Hey, you should write at least 10 symbols."
 
 #: core/handlers/boterator/reg.py:242 loco:5744824d14d7254f3e8b4586
 msgctxt "/setstart response"
@@ -1046,12 +840,12 @@ msgstr ""
 #: core/handlers/boterator/reg.py:254 loco:5744824d14d7254f3e8b4587
 msgctxt "/start message updated"
 msgid "Ok, noted, now tell me the channel name"
-msgstr ""
+msgstr "Ok, noted, now tell me the channel name."
 
 #: core/handlers/boterator/reg.py:263 loco:5744824d14d7254f3e8b4588
 msgctxt "/start message is too short"
 msgid "Hey, you should write at least 10 symbols"
-msgstr ""
+msgstr "Hey, you should write at least 10 symbols."
 
 #: core/handlers/boterator/start.py:11 loco:5744824d14d7254f3e8b4589
 msgctxt "Boterator`s /start response"
@@ -1089,12 +883,12 @@ msgstr "What do you want to say to this user, @{moderator_username}?"
 #: core/handlers/slave/toggle_vote.py:15 loco:57453bae14d7253e058b456b
 msgctxt "Vote status displaying disabled"
 msgid "From now other chat users WILL NOT see current votes distribution."
-msgstr ""
+msgstr "Now other group members WILL NOT see current votes distribution."
 
 #: core/handlers/slave/toggle_vote.py:20 loco:57453bae14d7253e058b456c
 msgctxt "Vote status displaying enabled"
 msgid "From now other chat users WILL see current votes distribution."
-msgstr ""
+msgstr "Now other group members WILL see current votes distribution."
 
 #: core/handlers/slave/vote.py:94 loco:57453bae14d7253e058b456d
 msgctxt "User`s vote successfully counted"
@@ -1104,7 +898,7 @@ msgstr ""
 #: core/handlers/slave/vote.py:100 loco:57453bae14d7253e058b456e
 msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
-msgstr ""
+msgstr "Your vote is already counted."
 
 #: core/slave.py:288 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
@@ -1146,7 +940,7 @@ msgstr ""
 #: core/slave.py:343 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
-msgstr ""
+msgstr "Ban this badass"
 
 #: core/slave.py:362 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
@@ -1171,22 +965,22 @@ msgstr ""
 #: core/handlers/slave/post.py:92 loco:5745a9be14d725aa6f8b4567
 msgctxt "User sent a gif for verification while gifs are disabled"
 msgid "Accepting gifs is disabled"
-msgstr ""
+msgstr "Sorry, but GIFs are disabled."
 
 #: core/handlers/slave/setallowed.py:102 loco:5745a9be14d725aa6f8b4568
 msgctxt "Content type"
 msgid "Gif"
-msgstr ""
+msgstr "GIFs"
 
 #: core/handlers/slave/setallowed.py:118 loco:5745a9be14d725aa6f8b4569
 msgctxt "Content type enabled/disabled"
 msgid "Gifs enabled"
-msgstr ""
+msgstr "GIFs: enabled."
 
 #: core/handlers/slave/setallowed.py:119 loco:5745a9be14d725aa6f8b456a
 msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
-msgstr ""
+msgstr "GIFs: disabled."
 
 #: core/slave.py:297 core/slave.py:300 loco:57481f4a14d725a04c8b4575
 msgctxt "Votes left to make a decision"
@@ -1203,24 +997,24 @@ msgstr ""
 #: core/handlers/slave/ban.py:18 loco:574dc21714d725954d8b456f
 msgctxt "User already banned"
 msgid "User already banned"
-msgstr ""
+msgstr "User is already banned."
 
 #: core/handlers/slave/ban.py:38 loco:574dc21714d725954d8b4570
 msgctxt "Somebody banned a user faster than another one"
 msgid "Somebody already banned the user. Be faster next time."
-msgstr ""
+msgstr "Someone has already banned this user. Try to be faster next time :)"
 
 #: core/handlers/slave/toggle_selfvote.py:15 loco:5758212314d7258f798b4575
 msgctxt "Self-vote disabled"
 msgid "From now moderators WILL NOT be able to vote for own messages."
-msgstr ""
+msgstr "Now moderators CAN'T vote for own messages."
 
 #: core/handlers/slave/toggle_selfvote.py:20 loco:5758212314d7258f798b4576
 msgctxt "Self-vote enabled"
 msgid "From now moderators WILL BE able to vote for own messages."
-msgstr ""
+msgstr "Now moderators CAN vote for own messages."
 
 #: core/handlers/slave/vote.py:40 loco:5758212314d7258f798b4577
 msgctxt "Moderator voted for own message"
 msgid "It's not allowed to vote for own messages"
-msgstr ""
+msgstr "It's not allowed to vote for own messages."
