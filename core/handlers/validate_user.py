@@ -30,7 +30,7 @@ def validate_user(bot, **kwargs):
     if 'message' not in kwargs:
         return False
 
-    allowed = is_allowed_user(bot.db, kwargs['message']['from'], bot.bot_id)
+    allowed = yield is_allowed_user(bot.db, kwargs['message']['from'], bot.bot_id)
     if allowed:
         return False
 
