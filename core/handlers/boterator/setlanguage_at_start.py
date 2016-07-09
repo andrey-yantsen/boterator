@@ -20,7 +20,7 @@ def setlanguage_at_start(bot, message):
 @coroutine
 @CommandFilterTextAny()
 def setlanguage_at_start_plaintext(bot, message):
-    ret = yield setlanguage_plaintext(bot, message)
+    ret = yield setlanguage_plaintext(bot, message=message)
     if ret is True:
-        yield start_command(bot, message)
+        yield start_command(bot, message=message)
         return True
