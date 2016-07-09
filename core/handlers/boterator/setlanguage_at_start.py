@@ -22,5 +22,5 @@ def setlanguage_at_start(bot, message):
 def setlanguage_at_start_plaintext(bot, message):
     ret = yield setlanguage_plaintext(bot, message=message)
     if ret is True:
-        yield start_command(bot, message=message)
+        yield start_command(bot, message=message, bypass_command_filter=True)
         return True
