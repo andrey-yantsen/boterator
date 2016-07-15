@@ -224,7 +224,7 @@ def plaintext_set_hello(bot, message, **kwargs):
         yield bot.send_message(pgettext('Channel-hello message updated',
                                         'Ok, noted, now tell me the channel name'),
                                reply_to_message=message)
-        kwargs['settings']['start'] = text
+        kwargs['settings']['hello'] = text
         return {
             'settings': kwargs['settings']
         }
@@ -254,7 +254,7 @@ def plaintext_set_start_message(bot, message, **kwargs):
         yield bot.send_message(pgettext('/start message updated',
                                         'Ok, noted, now tell me the channel name'),
                                reply_to_message=message)
-        kwargs['settings']['hello'] = text
+        kwargs['settings']['start'] = text
         return {
             'settings': kwargs['settings']
         }
