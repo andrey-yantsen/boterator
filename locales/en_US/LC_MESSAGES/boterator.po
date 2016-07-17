@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-06-19 14:19+0100\n"
+"PO-Revision-Date: 2016-07-17 08:09+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -27,20 +27,6 @@ msgstr[1] ""
 msgctxt "Required votes count"
 msgid "{votes_required}"
 msgid_plural "{votes_required}"
-msgstr[0] ""
-msgstr[1] ""
-
-#: boterator.py:953 loco:572f0e8214d7253d068b4571
-msgctxt "Delay between channel messages"
-msgid "%s minute"
-msgid_plural "%s minutes"
-msgstr[0] ""
-msgstr[1] ""
-
-#: boterator.py:955 loco:572f0e8214d7253d068b4573
-msgctxt "Voting timeout"
-msgid "%s hour"
-msgid_plural "%s hours"
 msgstr[0] ""
 msgstr[1] ""
 
@@ -645,7 +631,8 @@ msgid_plural "{delay} minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/handlers/slave/help.py:14 loco:5744814014d725223c8b457e
+#: core/handlers/boterator/reg.py:172 core/handlers/slave/help.py:14 
+#: loco:5744814014d725223c8b457e
 msgctxt "Voting timeout"
 msgid "{timeout} hour"
 msgid_plural "{timeout} hours"
@@ -736,7 +723,7 @@ msgctxt "Token received"
 msgid ""
 "Ok, I've got basic information for @{bot_username_escaped}\n"
 "Now add him to a group of moderators (or copy and paste "
-"`/attach@{bot_username}` to the group, in case youâve already added him), "
+"`/attach@{bot_username}` to the group, in case you've already added him), "
 "where I should send messages for verification, or type /cancel"
 msgstr ""
 
@@ -808,7 +795,7 @@ msgstr ""
 "settings send /help in PM to @{bot_username}. By default you're the only "
 "user who can change these settings and use /help command."
 
-#: core/handlers/boterator/reg.py:201 loco:5744824d14d7254f3e8b4582
+#: core/handlers/boterator/reg.py:204 loco:5744824d14d7254f3e8b4582
 msgctxt "Sending channel-hello message failed"
 msgid ""
 "Hey, I'm unable to send hello message, is everything ready for me? Here is "
@@ -817,27 +804,27 @@ msgstr ""
 "Hey, I can't send the welcome message! Are you sure that everything is ready?"
 " Here is an error from Telegram API: {error}."
 
-#: core/handlers/boterator/reg.py:211 loco:5744824d14d7254f3e8b4583
+#: core/handlers/boterator/reg.py:214 loco:5744824d14d7254f3e8b4583
 msgctxt "/sethello response"
 msgid "Ok, I'm listening to you. How I should say hello to your subscribers?"
 msgstr "Ok, I'm listening to you. How should I welcome your subscribers?"
 
-#: core/handlers/boterator/reg.py:224 loco:5744824d14d7254f3e8b4584
+#: core/handlers/boterator/reg.py:226 loco:5744824d14d7254f3e8b4584
 msgctxt "Channel-hello message updated"
 msgid "Ok, noted, now tell me the channel name"
 msgstr "Ok, noted, now tell me the channel name."
 
-#: core/handlers/boterator/reg.py:233 loco:5744824d14d7254f3e8b4585
+#: core/handlers/boterator/reg.py:234 loco:5744824d14d7254f3e8b4585
 msgctxt "Channel-hello message is too short"
 msgid "Hey, you should write at least 10 symbols"
 msgstr "Hey, you should write at least 10 symbols."
 
-#: core/handlers/boterator/reg.py:242 loco:5744824d14d7254f3e8b4586
+#: core/handlers/boterator/reg.py:243 loco:5744824d14d7254f3e8b4586
 msgctxt "/setstart response"
 msgid "Ok, I'm listening to you. How I should say hello to your authors?"
 msgstr ""
 
-#: core/handlers/boterator/reg.py:254 loco:5744824d14d7254f3e8b4587
+#: core/handlers/boterator/reg.py:255 loco:5744824d14d7254f3e8b4587
 msgctxt "/start message updated"
 msgid "Ok, noted, now tell me the channel name"
 msgstr "Ok, noted, now tell me the channel name."
@@ -863,7 +850,7 @@ msgstr ""
 msgctxt "Default channel-hello message"
 msgid ""
 "Hi there, guys! Now it is possible to publish messages in this channel by "
-"any of you. All you need to do â is to write a message to me (bot named "
+"any of you. All you need to do - is to write a message to me (bot named "
 "@{bot_username}), and it will be published after verification by our team."
 msgstr ""
 "Hi there, guys! Now all of you can publish messages to this channel. All you "
@@ -1018,3 +1005,13 @@ msgstr "Now moderators CAN vote for own messages."
 msgctxt "Moderator voted for own message"
 msgid "It's not allowed to vote for own messages"
 msgstr "It's not allowed to vote for own messages."
+
+#: core/boterator.py:53 loco:578b2e5114d72582138b4568
+msgctxt "Command name"
+msgid "/reg - register a new bot"
+msgstr ""
+
+#: core/handlers/boterator/reg.py:198 loco:578b2e5114d72582138b4569
+msgctxt "Bot registration failed"
+msgid "Unable to register the bot, please contact @andrey_yantsen."
+msgstr ""

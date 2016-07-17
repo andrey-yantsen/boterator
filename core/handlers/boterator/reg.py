@@ -79,7 +79,7 @@ def plaintext_token(bot, message, **kwargs):
         msg = pgettext('Token received',
                        "Ok, I\'ve got basic information for @{bot_username_escaped}\n"
                        'Now add him to a group of moderators (or copy and paste `/attach@{bot_username}` to the '
-                       'group, in case you’ve already added him), where I should send messages for verification, or '
+                       'group, in case you\'ve already added him), where I should send messages for verification, or '
                        'type /cancel')
 
         bot_username_escaped = new_bot_info['username'].replace('_', r'\_')
@@ -169,7 +169,7 @@ def plaintext_channel_name(bot, message, **kwargs):
             delay_msg = npgettext('Default delay', '{delay} minute', '{delay} minutes',
                                   settings['delay']).format(delay=settings['delay'])
 
-            timeout_msg = npgettext('Default timeout', '{timeout} hour', '{timeout} hours',
+            timeout_msg = npgettext('Voting timeout', '{timeout} hour', '{timeout} hours',
                                     settings['vote_timeout']).format(timeout=settings['vote_timeout'])
 
             msg = pgettext('New bot registered',
@@ -193,9 +193,12 @@ def plaintext_channel_name(bot, message, **kwargs):
                                         active = EXCLUDED.active""",
                                      (kwargs['id'], kwargs['token'], kwargs['owner_id'], kwargs['moderator_chat_id'],
                                       kwargs['target_channel'], dumps(kwargs['settings'])))
+                return True
             except:
-                logging.exception('Exception while finishing bot registration')
-            return True
+                yield bot.send_message(pgettext('Bot registration failed',
+                                                'Unable to register the bot, please contact @andrey_yantsen.'),
+                                       reply_to_message=message)
+                logging.exception('Exception while finishing bot registration, settings: %s', kwargs)
         except Exception as e:
             report_botan(message, 'boterator_channel_failure')
             yield bot.send_message(pgettext('Sending channel-hello message failed',
@@ -209,8 +212,7 @@ def plaintext_channel_name(bot, message, **kwargs):
 def change_hello_command(bot, message, **kwargs):
     report_botan(message, 'boterator_change_hello_cmd')
     yield bot.send_message(pgettext('/sethello response',
-                                    'Ok, I\'m listening to you. How I should say hello to your '
-                                    'subscribers?'),
+                                    'Ok, I\'m listening to you. How I should say hello to your subscribers?'),
                            reply_to_message=message)
     return True
 
@@ -221,8 +223,7 @@ def plaintext_set_hello(bot, message, **kwargs):
     text = message['text'].strip()
     if len(text) >= 10:
         report_botan(message, 'boterator_change_hello_success')
-        yield bot.send_message(pgettext('Channel-hello message updated',
-                                        'Ok, noted, now tell me the channel name'),
+        yield bot.send_message(pgettext('Channel-hello message updated', 'Ok, noted, now tell me the channel name'),
                                reply_to_message=message)
         kwargs['settings']['hello'] = text
         return {
@@ -251,8 +252,7 @@ def plaintext_set_start_message(bot, message, **kwargs):
     text = message['text'].strip()
     if len(text) >= 10:
         report_botan(message, 'boterator_change_start_success')
-        yield bot.send_message(pgettext('/start message updated',
-                                        'Ok, noted, now tell me the channel name'),
+        yield bot.send_message(pgettext('/start message updated', 'Ok, noted, now tell me the channel name'),
                                reply_to_message=message)
         kwargs['settings']['start'] = text
         return {
@@ -260,6 +260,5 @@ def plaintext_set_start_message(bot, message, **kwargs):
         }
     else:
         report_botan(message, 'boterator_change_start_short')
-        yield bot.send_message(pgettext('/start message is too short',
-                                        'Hey, you should write at least 10 symbols'),
+        yield bot.send_message(pgettext('/start message is too short', 'Hey, you should write at least 10 symbols'),
                                reply_to_message=message)

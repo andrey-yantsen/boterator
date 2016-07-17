@@ -50,7 +50,7 @@ class Boterator(Base):
         self._add_handler(setlanguage_at_start_plaintext, None, setlanguage_at_start)
         self._add_handler(start_command)
         self._add_handler(cancel_command)
-        self._add_handler(reg_command, pgettext('Command name', '/reg — register a new bot'), is_final=False)
+        self._add_handler(reg_command, pgettext('Command name', '/reg - register a new bot'), is_final=False)
         self._add_handler(plaintext_token, pgettext('Action description', 'Waiting for the token'),
                           previous_handler=reg_command, is_final=False)
 
