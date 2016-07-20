@@ -189,6 +189,8 @@ class Slave(Base):
                                     (self.bot_id, vote_timeout))
 
         for message, yes_votes in cur.fetchall():
+            if yes_votes is None:
+                yes_votes = 0
             report_botan(message, 'slave_verification_failed')
             try:
                 yield self.decline_message(message, yes_votes)
