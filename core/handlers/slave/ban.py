@@ -57,8 +57,8 @@ def plaintext_ban_handler(bot, message, user_id):
         except:
             pass
         cur = yield bot.db.execute('SELECT message FROM incoming_messages WHERE bot_id = %s AND owner_id = %s AND '
-                                   'is_voting_success = FALSE AND is_voting_fail = FALSE AND is_message_published = '
-                                   'FALSE', (bot.id, user_id,))
+                                   'is_voting_success = FALSE AND is_voting_fail = FALSE AND is_published = FALSE',
+                                   (bot.id, user_id,))
         while True:
             row = cur.fetchone()
             if not row:
