@@ -216,8 +216,9 @@ class Slave(Base):
                 yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
                                              reply_markup=keyboard)
             except Exception as e:
-                # Ignore `message is not modified` errors
-                if not isinstance(e, ApiError) or not e.code == 400 or 'message is not modified' not in e.description:
+                # Ignore `message is not modified` and `message not found` errors
+                if not isinstance(e, ApiError) or not e.code == 400 or 'message is not modified' not in e.description\
+                        or 'message not found' not in e.description:
                     raise
 
         yield self.db.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
