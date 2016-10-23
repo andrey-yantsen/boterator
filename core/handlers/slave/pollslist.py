@@ -9,7 +9,7 @@ from tobot.helpers import pgettext, npgettext
 @CommandFilterTextCmd('/pollslist')
 @CommandFilterIsModerationChat()
 def polls_list_command(bot, message):
-    cur = yield bot.db.execute('SELECT owner_id, original_chat_id, id FROM incoming_messages WHERE '
+    cur = yield bot.db.execute('SELECT original_chat_id, id FROM incoming_messages WHERE '
                                'is_voting_success = False AND is_voting_fail = False AND is_published = False AND '
                                'bot_id = %s',
                                (bot.bot_id,))
@@ -22,8 +22,8 @@ def polls_list_command(bot, message):
             .format(polls_msg=polls_cnt_msg)
         yield bot.send_message(reply_part_one, reply_to_message=message)
 
-        for (owner_id, original_chat_id, message_id) in pending:
-            yield bot.send_moderation_request(owner_id, original_chat_id, message_id)
+        for (original_chat_id, message_id) in pending:
+            yield bot.send_moderation_request(original_chat_id, message_id)
     else:
         yield bot.send_message(pgettext('/pollslist reply on empty pending-polls list',
                                         'There is no polls in progress.'),

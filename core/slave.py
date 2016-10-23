@@ -249,7 +249,7 @@ class Slave(Base):
         return locale.get(self.language)
 
     @coroutine
-    def send_moderation_request(self, message_owner_id, chat_id, message_id):
+    def send_moderation_request(self, chat_id, message_id):
         yield self.forward_message(self.moderator_chat_id, chat_id, message_id)
 
         msg, voting_keyboard = yield self.get_verification_message(message_id, chat_id)

@@ -111,7 +111,7 @@ def cbq_message_review(bot, callback_query, sent_message):
     VALUES (%s, %s, %s, %s, NOW(), %s)
     """, (sent_message['message_id'], sent_message['chat']['id'], user_id, bot.bot_id, dumps(sent_message)))
 
-    bot.send_moderation_request(sent_message['from']['id'], sent_message['chat']['id'], sent_message['message_id'])
+    bot.send_moderation_request(sent_message['chat']['id'], sent_message['message_id'])
 
     yield bot.db.execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
                          (bot.bot_id,))
