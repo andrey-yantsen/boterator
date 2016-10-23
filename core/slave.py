@@ -227,18 +227,9 @@ class Slave(Base):
                               (self.bot_id, message['chat']['id'], message['message_id']))
 
         if notify:
-            received_votes_msg = npgettext('Received votes count', '{votes_received} vote',
-                                           '{votes_received} votes',
-                                           yes_votes).format(votes_received=yes_votes)
-            required_votes_msg = npgettext('Required votes count', '{votes_required}', '{votes_required}',
-                                           self.settings['votes']).format(votes_required=self.settings['votes'])
-
-            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message got only '
-                                                              '{votes_received_msg} out of required '
-                                                              '{votes_required_msg} and won\'t be published to the '
-                                                              'channel.')
-                                    .format(votes_received_msg=received_votes_msg,
-                                            votes_required_msg=required_votes_msg), reply_to_message=message)
+            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not received enough votes '
+                                                              'and won\'t be published to the channel.'),
+                                    reply_to_message=message)
 
     @property
     def language(self):
