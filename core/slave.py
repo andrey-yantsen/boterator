@@ -227,8 +227,8 @@ class Slave(Base):
                               (self.bot_id, message['chat']['id'], message['message_id']))
 
         if notify:
-            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not received enough votes '
-                                                              'and won\'t be published to the channel.'),
+            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not passed moderation and '
+                                                              'won\'t be published to the channel.'),
                                     reply_to_message=message)
 
     @property
