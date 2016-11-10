@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-11-10 16:02+0000\n"
+"PO-Revision-Date: 2016-11-10 16:36+0000\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -194,7 +194,7 @@ msgctxt "Message verified and queued for publishing"
 msgid "Your message was verified and queued for publishing."
 msgstr "Your message was approved and queued for publishing."
 
-#: core/handlers/slave/help.py:21 loco:572f0e8214d7253d068b45a7
+#: core/handlers/slave/help.py:33 loco:572f0e8214d7253d068b45a7
 msgctxt "/help command response"
 msgid "bot.help.response"
 msgstr ""
@@ -218,6 +218,8 @@ msgstr ""
 "/banlist — banned users\n"
 "/setlanglanguage — change bot’s language\n"
 "/setallowed — change types of allowed content\n"
+"/setfreqlimit — change frequency limits for user messages (current: "
+"{current_freqlimit})\n"
 "\n"
 "/setstartmessage — change bot’s welcome message (current: "
 "{current_start_message})\n"
@@ -673,7 +675,7 @@ msgctxt "Invalid votes amount value"
 msgid "Invalid votes amount value. Try again or type /cancel"
 msgstr ""
 
-#: core/handlers/unknown_command.py:10 loco:5744814014d725223c8b4587
+#: core/handlers/unknown_command.py:16 loco:5744814014d725223c8b4587
 msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
 msgstr "I have no idea what do you want from me. Sorry :("
@@ -872,74 +874,74 @@ msgctxt "Vote status displaying enabled"
 msgid "From now other chat users WILL see current votes distribution."
 msgstr "Now other group members WILL see current votes distribution."
 
-#: core/handlers/slave/vote.py:94 loco:57453bae14d7253e058b456d
+#: core/handlers/slave/vote.py:95 loco:57453bae14d7253e058b456d
 msgctxt "User`s vote successfully counted"
 msgid "Counted."
 msgstr ""
 
-#: core/handlers/slave/vote.py:100 loco:57453bae14d7253e058b456e
+#: core/handlers/slave/vote.py:101 loco:57453bae14d7253e058b456e
 msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
 msgstr "Your vote is already counted."
 
-#: core/slave.py:282 loco:57453bae14d7253e058b456f
+#: core/slave.py:291 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
 msgid "Current poll progress:"
 msgstr ""
 
-#: core/slave.py:283 loco:57453bae14d7253e058b4570
+#: core/slave.py:292 loco:57453bae14d7253e058b4570
 msgctxt "Count of voted moderators"
 msgid "{cnt} vote"
 msgid_plural "{cnt} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:310 loco:57453bae14d7253e058b4572
+#: core/slave.py:319 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr ""
 
-#: core/slave.py:317 loco:57453bae14d7253e058b4573
+#: core/slave.py:326 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr ""
 
-#: core/slave.py:319 loco:57453bae14d7253e058b4574
+#: core/slave.py:328 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr ""
 
-#: core/slave.py:321 loco:57453bae14d7253e058b4575
+#: core/slave.py:330 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr ""
 
-#: core/slave.py:335 loco:57453bae14d7253e058b4576
+#: core/slave.py:344 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr ""
 
-#: core/slave.py:337 loco:57453bae14d7253e058b4577
+#: core/slave.py:346 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr "Ban this badass"
 
-#: core/slave.py:356 loco:57453bae14d7253e058b4578
+#: core/slave.py:365 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr ""
 
-#: core/handlers/slave/help.py:38 loco:57453dba14d725df0a8b4567
+#: core/handlers/slave/help.py:52 loco:57453dba14d725df0a8b4567
 msgctxt "Boolean settings"
 msgid "on"
 msgstr ""
 
-#: core/handlers/slave/help.py:39 loco:57453dba14d725df0a8b4568
+#: core/handlers/slave/help.py:53 loco:57453dba14d725df0a8b4568
 msgctxt "Boolean settings"
 msgid "off"
 msgstr ""
 
-#: core/slave.py:253 loco:5745a3d314d72539698b4567
+#: core/slave.py:262 loco:5745a3d314d72539698b4567
 msgctxt "Newer poll for this message posted below"
 msgid "_Outdated_"
 msgstr ""
@@ -964,14 +966,14 @@ msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
 msgstr "GIFs: disabled."
 
-#: core/slave.py:291 core/slave.py:294 loco:57481f4a14d725a04c8b4575
+#: core/slave.py:300 core/slave.py:303 loco:57481f4a14d725a04c8b4575
 msgctxt "Votes left to make a decision"
 msgid "{cnt} more to win"
 msgid_plural "{cnt} more to win"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:297 core/slave.py:298 loco:5748200314d7251e4d8b459a
+#: core/slave.py:306 core/slave.py:307 loco:5748200314d7251e4d8b459a
 msgctxt "ignore"
 msgid " ({})"
 msgstr ""
@@ -1018,7 +1020,7 @@ msgid ""
 "to the channel."
 msgstr ""
 
-#: core/slave.py:230 loco:580e304252e1a133578b45be
+#: core/slave.py:239 loco:580e304252e1a133578b45be
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message not passed moderation and won't be published to "
@@ -1026,3 +1028,87 @@ msgid ""
 msgstr ""
 "Unfortunately your message did not passed moderation and won't be published "
 "to the channel."
+
+#: core/handlers/slave/check_freq.py:33 core/handlers/slave/help.py:26
+#: loco:5824a09052e1a15d6d8b456c
+msgctxt "Messages count"
+msgid "{msg} message"
+msgid_plural "{msg} messages"
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/handlers/slave/check_freq.py:34 core/handlers/slave/help.py:27
+#: loco:5824a09052e1a15d6d8b456e
+msgctxt "Days"
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] ""
+msgstr[1] ""
+
+#: core/handlers/slave/check_freq.py:35 core/handlers/slave/help.py:28
+#: loco:5824a09052e1a15d6d8b4570
+msgctxt "Frequency limit"
+msgid "{messages_str} per {days_str}"
+msgstr ""
+
+#: core/handlers/slave/check_freq.py:38 loco:5824a09052e1a15d6d8b4571
+msgctxt "Out of limits"
+msgid "Unfortunately, you're out of limits! You can send only {freq_limit_str}"
+msgstr ""
+"Unfortunately, you're out of limits! You can send only {freq_limit_str}."
+
+#: core/handlers/slave/help.py:31 loco:5824a09052e1a15d6d8b4572
+msgctxt "No frequency limit"
+msgid "unlimited"
+msgstr ""
+
+#: core/handlers/slave/setfreqlimit.py:13 loco:5824a09052e1a15d6d8b4573
+msgctxt "New frequency limits request"
+msgid ""
+"Please enter new value for messages frequency limits formatted like "
+"`{messages_count}/{days}`, or `0` to disable limits (e.g. `1/7` to set limit "
+"to 1 message per week)"
+msgstr ""
+"Please enter new value for messages frequency limits formatted like "
+"`{messages_count}/{days}` (e.g. `1/7` to set limit to 1 message per week), "
+"or `0` to disable limits."
+
+#: core/handlers/slave/setfreqlimit.py:27 loco:5824a09052e1a15d6d8b4574
+msgctxt "Limits reset"
+msgid "Limits reset"
+msgstr ""
+
+#: core/handlers/slave/setfreqlimit.py:35 loco:5824a09052e1a15d6d8b4575
+msgctxt "Msg limit is too low"
+msgid "Messages count limit must be greater than 0"
+msgstr ""
+
+#: core/handlers/slave/setfreqlimit.py:38 loco:5824a09052e1a15d6d8b4576
+msgctxt "Days limit is too low"
+msgid "Days count must be greater than 0"
+msgstr ""
+
+#: core/handlers/slave/setfreqlimit.py:42 loco:5824a09052e1a15d6d8b4577
+msgctxt "Limits changed successfully"
+msgid "Limits updated"
+msgstr ""
+
+#: core/handlers/slave/setfreqlimit.py:46 loco:5824a09052e1a15d6d8b4578
+msgctxt "Non-well formatted freq limits provided"
+msgid ""
+"Please use following format: `{messages_count}/{days}` (e.g. `1/7`), or send "
+"/cancel"
+msgstr ""
+
+#: core/handlers/slave/toggle_start_web_preview.py:15
+#: loco:5824a09052e1a15d6d8b4579
+msgctxt "Web preview disabled in /start"
+msgid ""
+"From now web previews WILL NOT BE generated for links in /start message."
+msgstr ""
+
+#: core/handlers/slave/toggle_start_web_preview.py:20
+#: loco:5824a09052e1a15d6d8b457a
+msgctxt "Web preview enabled in /start"
+msgid "From now web previews WILL BE generated for links in /start message."
+msgstr ""

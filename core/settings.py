@@ -29,6 +29,7 @@ DEFAULT_SLAVE_SETTINGS = {
     },
     'selfvote': True,
     'start_web_preview': True,
+    'msg_freq_limit': None,
 }
 
 supported_locales = sorted(get_supported_locales())

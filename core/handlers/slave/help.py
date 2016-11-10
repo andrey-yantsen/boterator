@@ -20,6 +20,16 @@ def help_command(bot, message):
     selfvote_state_str = pgettext('Boolean settings', selfvote_state)
     start_web_preview_state = 'on' if bot.settings.get('start_web_preview') else 'off'
     start_web_preview_state_str = pgettext('Boolean settings', start_web_preview_state)
+
+    if bot.settings.get('msg_freq_limit'):
+        fl = bot.settings['msg_freq_limit']
+        freq_limit_msg_str = npgettext('Messages count', '{msg} message', '{msg} messages', fl[0]).format(msg=fl[0])
+        freq_limit_days_str = npgettext('Days', '{n} day', '{n} days', fl[1]).format(n=fl[1])
+        freq_limit_str = pgettext('Frequency limit', '{messages_str} per {days_str}') \
+            .format(messages_str=freq_limit_msg_str, days_str=freq_limit_days_str)
+    else:
+        freq_limit_str = pgettext('No frequency limit', 'unlimited')
+
     msg = pgettext('/help command response', 'bot.help.response') \
         .format(current_delay_with_minutes=delay_str.format(delay=bot.settings['delay']),
                 current_votes_required=bot.settings['votes'],
@@ -28,7 +38,8 @@ def help_command(bot, message):
                 current_start_message=bot.settings['start'], power_state=power_state_str,
                 public_vote_state=public_vote_state_str,
                 current_text_limit={'min': bot.settings['text_min'], 'max': bot.settings['text_max']},
-                selfvote_state=selfvote_state_str, start_web_preview_state=start_web_preview_state_str)
+                selfvote_state=selfvote_state_str, start_web_preview_state=start_web_preview_state_str,
+                current_freqlimit=freq_limit_str)
 
     try:
         yield bot.send_message(msg, reply_to_message=message, parse_mode=bot.PARSE_MODE_MD,

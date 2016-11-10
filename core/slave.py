@@ -11,11 +11,13 @@ from tobot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.emoji_end import emoji_end
 from core.handlers.slave.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
+from core.handlers.slave.check_freq import check_freq
 from core.handlers.slave.help import help_command
 from core.handlers.slave.pollslist import polls_list_command
 from core.handlers.slave.reply import reply_command, plaintext_reply_handler
 from core.handlers.slave.setallowed import change_allowed_command, plaintext_contenttype_handler
 from core.handlers.slave.setdelay import setdelay_command, plaintext_delay_handler
+from core.handlers.slave.setfreqlimit import setfreqlimit_command, plaintext_freqlimit_handler
 from core.handlers.slave.setlanguage import setlanguage, setlanguage_plaintext
 from core.handlers.slave.chat import new_chat, left_chat
 from core.handlers.slave.post import plaintext_post_handler, multimedia_post_handler, cbq_message_review, \
@@ -70,6 +72,7 @@ class Slave(Base):
         self.cancellation_handler = cancel_command
         self.unknown_command_handler = unknown_command
         self._add_handler(validate_user, None)
+        self._add_handler(check_freq, None)
         self._add_handler(cancel_command, None)
         self._add_handler(start_command, None)
         self._add_handler(new_chat, None)
@@ -103,6 +106,9 @@ class Slave(Base):
 
         self._add_handler(settextlimits_command, None, is_final=False)
         self._add_handler(plaintext_textlimits_handler, None, settextlimits_command)
+
+        self._add_handler(setfreqlimit_command, None, is_final=False)
+        self._add_handler(plaintext_freqlimit_handler, None, setfreqlimit_command)
 
         self._add_handler(change_allowed_command, None, is_final=False)
         self._add_handler(emoji_end, None, change_allowed_command)
@@ -144,6 +150,7 @@ class Slave(Base):
     def check_votes_success(self):
         cur = yield self.db.execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s',
                                     (self.bot_id,))
+
         row = cur.fetchone()
         if row and row[0]:
             allowed_time = row[0] + timedelta(minutes=self.settings.get('delay', 15))
