@@ -28,6 +28,7 @@ DEFAULT_SLAVE_SETTINGS = {
         'gif': False,
     },
     'selfvote': True,
+    'start_web_preview': True,
 }
 
 supported_locales = sorted(get_supported_locales())
