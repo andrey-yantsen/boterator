@@ -7,6 +7,12 @@ from tobot.helpers import pgettext
 @coroutine
 @CommandFilterAny()
 def unknown_command(bot, *args, **kwargs):
+    if kwargs.get('message'):
+        msg = kwargs['message']
+        if msg['chat']['id'] == bot.moderator_chat_id and \
+            msg.get('reply_to_message', {}).get('from', {}).get('id') != bot.id:
+            return False
+
     message = pgettext('Unknown command', 'I have no idea what a hell do you want from me, sorry :(')
     if kwargs.get('message'):
         yield bot.send_message(message, reply_to_message=kwargs['message'])
