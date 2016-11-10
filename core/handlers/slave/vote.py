@@ -79,6 +79,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                 except:
                     pass
                 report_botan(row[1], 'slave_verification_success')
+                bot.check_votes_success()
         elif current_total - current_yes >= bot.settings.get('votes', 5):
             cur = yield bot.db.execute('SELECT is_voting_fail, is_voting_success, message FROM incoming_messages '
                                        'WHERE id = %s AND original_chat_id = %s', (message_id, original_chat_id))
