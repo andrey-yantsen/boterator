@@ -72,7 +72,6 @@ class Slave(Base):
         self.cancellation_handler = cancel_command
         self.unknown_command_handler = unknown_command
         self._add_handler(validate_user, None)
-        self._add_handler(check_freq, None)
         self._add_handler(cancel_command, None)
         self._add_handler(start_command, None)
         self._add_handler(new_chat, None)
@@ -122,6 +121,8 @@ class Slave(Base):
         self._add_handler(stats_command, None)
         self._add_handler(help_command, None)
         self._add_handler(polls_list_command, None)
+
+        self._add_handler(check_freq, None)
 
         self._add_handler(plaintext_post_handler, None, is_final=False)
         self._add_handler(cbq_message_review, None, plaintext_post_handler)
