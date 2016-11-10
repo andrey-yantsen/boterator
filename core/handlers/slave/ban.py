@@ -62,7 +62,7 @@ def plaintext_ban_handler(bot, message, user_id):
         while True:
             row = cur.fetchone()
             if not row:
-                continue
+                break
             yield bot.decline_message(row[0], 0, False)
 
         yield bot.db.execute('UPDATE users SET banned_at = NOW(), ban_reason = %s WHERE user_id = %s AND '
