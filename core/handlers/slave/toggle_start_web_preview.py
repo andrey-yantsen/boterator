@@ -6,7 +6,7 @@ from tobot.helpers import report_botan, pgettext
 
 
 @coroutine
-@CommandFilterTextCmd('/toggle_start_web_preview')
+@CommandFilterTextCmd('/togglestartwebpreview')
 @CommandFilterIsPowerfulUser()
 def toggle_start_web_preview_command(bot, message):
     report_botan(message, 'slave_toggle_start_web_preview_cmd')
