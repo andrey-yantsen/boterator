@@ -21,7 +21,8 @@ def get_messages_count(db, user_id, bot_id, days_limit):
 @coroutine
 @CommandFilterAny()
 def check_freq(bot, **kwargs):
-    if 'message' not in kwargs or not bot.settings.get('msg_freq_limit'):
+    if 'message' not in kwargs or not bot.settings.get('msg_freq_limit') or \
+                    kwargs['message']['chat']['id'] == bot.moderator_chat_id:
         return False
 
     fl = bot.settings['msg_freq_limit']
