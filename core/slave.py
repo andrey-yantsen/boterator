@@ -152,9 +152,11 @@ class Slave(Base):
         cur = yield self.db.execute('SELECT last_channel_message_at FROM registered_bots WHERE id = %s',
                                     (self.bot_id,))
 
+        delay = self.settings.get('delay', 15)
+
         row = cur.fetchone()
         if row and row[0]:
-            allowed_time = row[0] + timedelta(minutes=self.settings.get('delay', 15))
+            allowed_time = row[0] + timedelta(minutes=delay)
         else:
             allowed_time = datetime.now()
 
@@ -170,7 +172,8 @@ class Slave(Base):
                 yield self.publish_message(row[0], row[1])
 
         if not self._finished.is_set():
-            IOLoop.current().add_timeout(timedelta(minutes=1), self.check_votes_success)
+            IOLoop.current().add_timeout(timedelta(minutes=delay, seconds=5 if delay == 0 else 0),
+                                         self.check_votes_success)
 
     @coroutine
     def publish_message(self, message, moderation_message_id):
