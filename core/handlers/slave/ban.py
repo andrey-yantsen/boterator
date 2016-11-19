@@ -98,9 +98,13 @@ def ban_list_command(bot, message):
                                'FROM users WHERE bot_id = %s AND '
                                'banned_at IS NOT NULL ORDER BY banned_at DESC', (bot.bot_id,))
 
-    msg = ''
+    bans = cur.fetchall()
 
-    for row_id, (user_id, first_name, last_name, username, banned_at, ban_reason) in enumerate(cur.fetchall()):
+    msg = '{}\n' * len(bans) if len(bans) > 0 else ''
+    msg = msg.strip()
+
+    data = []
+    for row_id, (user_id, first_name, last_name, username, banned_at, ban_reason) in enumerate(bans):
         if first_name and last_name:
             user = first_name + ' ' + last_name
         elif first_name:
@@ -108,9 +112,11 @@ def ban_list_command(bot, message):
         else:
             user = 'userid %s' % user_id
 
-        msg += pgettext('Ban user item', '{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}') \
-            .format(row_id=row_id + 1, user=user, ban_reason=ban_reason,
-                    ban_date=banned_at.strftime('%Y-%m-%d'), unban_cmd='/unban_%s' % (user_id,))
+        data.append(pgettext('Ban user item', '{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}') \
+                    .format(row_id=row_id + 1, user=user, ban_reason=ban_reason,
+                            ban_date=banned_at.strftime('%Y-%m-%d'), unban_cmd='/unban_%s' % (user_id,)))
+
+    msg = msg.format(*data)
 
     if msg:
         yield bot.send_message(msg, reply_to_message=message)
