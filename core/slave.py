@@ -242,7 +242,7 @@ class Slave(Base):
         if notify:
             yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not passed moderation and '
                                                               'won\'t be published to the channel.'),
-                                    reply_to_message=message)
+                                    chat_id=message['chat']['id'], reply_to_message=message)
 
     @property
     def language(self):
