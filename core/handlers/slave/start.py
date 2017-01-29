@@ -8,7 +8,7 @@ from tobot.helpers import report_botan
 @CommandFilterTextCmd('/start')
 def start_command(bot, message):
     report_botan(message, 'slave_start')
-    username = message['from']['username']
+    username = message['from'].get('username', message['from']['first_name'])
     if message['from'].get('first_name', '').strip():
         username = message['from']['first_name'].strip()
 
