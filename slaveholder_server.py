@@ -4,6 +4,7 @@ import signal
 from burlesque import Burlesque
 from momoko import Pool
 from tornado import autoreload
+from tornado.httpclient import AsyncHTTPClient
 from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line
 
@@ -16,6 +17,8 @@ if __name__ == '__main__':
     define('debug', type=bool, default=False)
 
     parse_command_line()
+
+    AsyncHTTPClient.configure(None, max_clients=1024)
 
     ioloop = IOLoop.instance()
 
