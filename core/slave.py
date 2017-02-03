@@ -172,19 +172,32 @@ class Slave(Base):
                 yield self.publish_message(row[0], row[1])
 
         if not self._finished.is_set():
-            IOLoop.current().add_timeout(timedelta(minutes=delay, seconds=5 if delay == 0 else 0),
+            IOLoop.current().add_timeout(timedelta(minutes=1 if delay > 0 else 0, seconds=5 if delay == 0 else 0),
                                          self.check_votes_success)
 
     @coroutine
     def publish_message(self, message, moderation_message_id):
         report_botan(message, 'slave_publish')
         try:
-            yield self.api.forward_message(self.target_channel, message['chat']['id'], message['message_id'])
-            yield self.db.execute(
-                'UPDATE incoming_messages SET is_published = TRUE WHERE id = %s AND original_chat_id = %s',
-                (message['message_id'], message['chat']['id']))
-            yield self.db.execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
-                                  (self.bot_id,))
+            conn = yield self.db.getconn()
+            with self.db.manage(conn):
+                try:
+                    yield conn.execute('BEGIN')
+                    cur = yield conn.execute(
+                        'UPDATE incoming_messages SET is_published = TRUE WHERE id = %s AND original_chat_id = %s AND '
+                        'is_published = FALSE',
+                        (message['message_id'], message['chat']['id']))
+                    if cur.rowcount == 0:
+                        yield conn.execute('ROLLBACK')
+                        return
+                    yield conn.execute('UPDATE registered_bots SET last_channel_message_at = NOW() WHERE id = %s',
+                                       (self.bot_id,))
+
+                    yield self.api.forward_message(self.target_channel, message['chat']['id'], message['message_id'])
+                    yield conn.execute('COMMIT')
+                except:
+                    yield conn.execute('ROLLBACK')
+                    raise
 
             msg, keyboard = yield self.get_verification_message(message['message_id'], message['chat']['id'], True)
             yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
@@ -196,7 +209,8 @@ class Slave(Base):
     def check_votes_failures(self):
         vote_timeout = datetime.now() - timedelta(hours=self.settings.get('vote_timeout', 24))
         cur = yield self.db.execute('SELECT message,'
-                                    '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id AND vh.original_chat_id = im.original_chat_id)'
+                                    '(SELECT SUM(vote_yes::INT) FROM votes_history vh WHERE vh.message_id = im.id '
+                                    '                               AND vh.original_chat_id = im.original_chat_id)'
                                     'FROM incoming_messages im WHERE bot_id = %s AND '
                                     'is_voting_success = FALSE AND is_voting_fail = FALSE AND created_at <= %s',
                                     (self.bot_id, vote_timeout))
