@@ -9,7 +9,7 @@ from tobot.helpers import pgettext
 def unknown_command(bot, *args, **kwargs):
     if kwargs.get('message'):
         msg = kwargs['message']
-        if 'moderator_chat_id' in bot and msg['chat']['id'] == bot.moderator_chat_id and \
+        if hasattr(bot, 'moderator_chat_id') and msg['chat']['id'] == bot.moderator_chat_id and \
             msg.get('reply_to_message', {}).get('from', {}).get('id') != bot.id:
             return False
 
