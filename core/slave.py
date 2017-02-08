@@ -242,11 +242,12 @@ class Slave(Base):
             try:
                 yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
                                              reply_markup=keyboard)
-            except Exception as e:
-                # Ignore `message is not modified` and `message not found` errors
-                if not isinstance(e, ApiError) or e.code != 400 or ('message is not modified' not in e.description\
-                                                                    and 'message not found' not in e.description\
-                                                                    and 'message to edit not found' not in e.description):
+            except ApiError as e:
+                # Ignore few errors while declining errors
+                if e.code != 400 or ('message is not modified' not in e.description
+                                     and 'message not found' not in e.description
+                                     and 'message to edit not found' not in e.description
+                                     and 'bot was blocked by the user' not in e.description):
                     raise
 
         yield self.db.execute('UPDATE incoming_messages SET is_voting_fail = TRUE WHERE bot_id = %s AND '
@@ -255,9 +256,13 @@ class Slave(Base):
                               (self.bot_id, message['chat']['id'], message['message_id']))
 
         if notify:
-            yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not passed moderation and '
-                                                              'won\'t be published to the channel.'),
-                                    chat_id=message['chat']['id'], reply_to_message=message)
+            try:
+                yield self.send_message(pgettext('Voting failed', 'Unfortunately your message not passed moderation and '
+                                                                  'won\'t be published to the channel.'),
+                                        chat_id=message['chat']['id'], reply_to_message=message)
+            except ApiError as e:
+                if e.code != 400 or ('bot was blocked by the user' not in e.description):
+                    raise
 
     @property
     def language(self):
