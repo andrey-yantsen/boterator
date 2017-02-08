@@ -12,6 +12,18 @@ from tobot.telegram import ForceReply
 @CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)')
 def ban_command(bot, callback_query, user_id):
     report_botan(callback_query, 'slave_ban_cmd')
+
+    if int(user_id) == bot.owner_id:
+        yield bot.answer_callback_query(callback_query['id'],
+                                        pgettext('Somebody trying to ban the owner',
+                                                 'It\'s not allowed to ban the bot owner'))
+        return None
+
+    if int(user_id) == callback_query['from']['id']:
+        yield bot.answer_callback_query(callback_query['id'],
+                                        pgettext('Somebody trying to ban himself', 'It\'s not allowed to ban yourself'))
+        return None
+
     cur = yield bot.db.execute('SELECT banned_at FROM users WHERE bot_id = %s AND user_id = %s', (bot.bot_id, user_id))
     row = cur.fetchone()
     if row and row[0]:
