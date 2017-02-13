@@ -264,7 +264,7 @@ class Slave(Base):
                                                                   'won\'t be published to the channel.'),
                                         chat_id=message['chat']['id'], reply_to_message=message)
             except ApiError as e:
-                if e.code != 400 or ('bot was blocked by the user' not in e.description):
+                if e.code != 403 or ('bot was blocked by the user' not in e.description):
                     raise
 
     @property
