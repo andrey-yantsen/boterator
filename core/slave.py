@@ -13,6 +13,7 @@ from core.handlers.emoji_end import emoji_end
 from core.handlers.slave.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
 from core.handlers.slave.check_freq import check_freq
 from core.handlers.slave.help import help_command
+from core.handlers.slave.migrate_to_supergroup import migrate, migrate_to_supergroup_msg
 from core.handlers.slave.pollslist import polls_list_command
 from core.handlers.slave.reply import reply_command, plaintext_reply_handler
 from core.handlers.slave.setallowed import change_allowed_command, plaintext_contenttype_handler
@@ -131,6 +132,8 @@ class Slave(Base):
         self._add_handler(multimedia_post_handler, None, is_final=False)
         self._add_handler(cbq_message_review, None, multimedia_post_handler)
         self._add_handler(cbq_cancel_publishing, None, multimedia_post_handler)
+
+        self._add_handler(migrate_to_supergroup_msg)
 
     @coroutine
     def start(self):
@@ -274,7 +277,15 @@ class Slave(Base):
 
     @coroutine
     def send_moderation_request(self, chat_id, message_id):
-        yield self.forward_message(self.moderator_chat_id, chat_id, message_id)
+        try:
+            yield self.forward_message(self.moderator_chat_id, chat_id, message_id)
+        except ApiError as e:
+            if 'migrated' in e.description and 'migrate_to_chat_id' in e.parameters:
+                yield migrate(self, e.parameters['migrate_to_chat_id'])
+                yield self.send_moderation_request(chat_id, message_id)
+                return
+            else:
+                raise
 
         msg, voting_keyboard = yield self.get_verification_message(message_id, chat_id)
 

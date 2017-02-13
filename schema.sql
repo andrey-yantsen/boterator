@@ -38,7 +38,7 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE incoming_messages (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     original_chat_id integer NOT NULL,
     owner_id integer NOT NULL,
     bot_id integer NOT NULL,
@@ -58,10 +58,10 @@ ALTER TABLE incoming_messages OWNER TO boterator;
 --
 
 CREATE TABLE registered_bots (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     token character varying NOT NULL,
-    owner_id integer NOT NULL,
-    moderator_chat_id integer NOT NULL,
+    owner_id bigint NOT NULL,
+    moderator_chat_id bigint NOT NULL,
     target_channel character varying NOT NULL,
     active boolean NOT NULL,
     last_moderation_message_at timestamp without time zone,
