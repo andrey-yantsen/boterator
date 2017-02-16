@@ -95,8 +95,8 @@ class Boterator(Base):
                                                  'I\'m failed to establish connection to your bot with token `{token}`'
                                                  ', received error: `{error}`.\n'
                                                  'Your bot was deactivated, to enable it again - perform registration '
-                                                 'process from the beginning.').format(token=body['token'],
-                                                                                       error=body['error'].replace('_', r'\_')),
+                                                 'process from the beginning.').format(token=body['token'].replace('_', r'\_'),
+                                                                                       error=body['error']),
                                         chat_id=body['owner_id'], parse_mode=Api.PARSE_MODE_MD)
             except:
                 logging.exception('Got exception while notifying user on bot disable')
