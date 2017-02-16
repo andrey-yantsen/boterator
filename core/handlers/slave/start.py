@@ -1,3 +1,4 @@
+from tobot.telegram import ApiError
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
@@ -20,6 +21,8 @@ def start_command(bot, message):
     try:
         yield bot.send_message(msg, reply_to_message=message, parse_mode=bot.PARSE_MODE_MD,
                                disable_web_page_preview=not bot.settings['start_web_preview'])
-    except:
+    except ApiError as e:
+        if e.code == 403:
+            return
         yield bot.send_message(msg, reply_to_message=message,
                                disable_web_page_preview=not bot.settings['start_web_preview'])
