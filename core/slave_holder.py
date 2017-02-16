@@ -54,7 +54,7 @@ class SlaveHolder:
             logging.debug('[bot#%s] Terminated', kwargs['id'])
             e = f.exception()
             if e:
-                logging.debug('[bot#%s] Got exception: %s %s', kwargs['id'], format_exception(f.exc_info()))
+                logging.debug('[bot#%s] Got exception: %s %s', kwargs['id'], format_exception(*f.exc_info()))
                 if isinstance(e, ApiError) and e.code == 401:
                     logging.warning('[bot#%d] Disabling due to connection error', kwargs['id'])
                     yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
