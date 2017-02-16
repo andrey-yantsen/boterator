@@ -24,7 +24,8 @@ class Boterator(Base):
 
     def __init__(self, token, db, queue, **kwargs):
         self.db = db
-        super().__init__(token, stages_builder=lambda bot_id: PersistentStages(bot_id, db), **kwargs)
+        super().__init__(token, stages_builder=lambda bot_id: PersistentStages(bot_id, db), ignore_403_in_handlers=True,
+                         **kwargs)
         self.queue = queue
 
     @coroutine

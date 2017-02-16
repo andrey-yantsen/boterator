@@ -1,7 +1,7 @@
 from babel.numbers import format_number
 from ujson import dumps
 
-from tobot.telegram import InlineKeyboardMarkup, InlineKeyboardButton, ApiError
+from tobot.telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from tornado.gen import coroutine
 
 from tobot import CommandFilterPrivate, CommandFilterTextAny, CommandFilterMultimediaAny, CommandFilterCallbackQuery
@@ -10,23 +10,19 @@ from tobot.helpers import report_botan, pgettext
 
 @coroutine
 def _request_message_confirmation(bot, message):
-    try:
-        yield bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
-        yield bot.send_message(pgettext('Message received, requesting the user to check the message once again',
-                                        'Looks good for me. I\'ve printed the message in exact same way as it '
-                                        'will be publised. Please, take a look on your message one more time. And '
-                                        'click Confirm button if everything is fine'),
-                               reply_to_message=message,
-                               reply_markup=InlineKeyboardMarkup([
-                                   [InlineKeyboardButton(pgettext('`Confirm` button on message review keyboard',
-                                                                  'Confirm'), callback_data='confirm_publishing'),
-                                    InlineKeyboardButton(pgettext('`Cancel` button on message review keyboard',
-                                                                  'Cancel'), callback_data='cancel_publishing'),
-                                    ]
-                               ]))
-    except ApiError as e:
-        if e.code != 403:
-            raise
+    yield bot.forward_message(message['from']['id'], message['chat']['id'], message['message_id'])
+    yield bot.send_message(pgettext('Message received, requesting the user to check the message once again',
+                                    'Looks good for me. I\'ve printed the message in exact same way as it '
+                                    'will be publised. Please, take a look on your message one more time. And '
+                                    'click Confirm button if everything is fine'),
+                           reply_to_message=message,
+                           reply_markup=InlineKeyboardMarkup([
+                               [InlineKeyboardButton(pgettext('`Confirm` button on message review keyboard',
+                                                              'Confirm'), callback_data='confirm_publishing'),
+                                InlineKeyboardButton(pgettext('`Cancel` button on message review keyboard',
+                                                              'Cancel'), callback_data='cancel_publishing'),
+                                ]
+                           ]))
 
 
 @coroutine

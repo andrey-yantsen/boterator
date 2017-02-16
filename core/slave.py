@@ -53,7 +53,7 @@ class Slave(Base):
         bot_settings = self.merge_settings_recursive(DEFAULT_SLAVE_SETTINGS, bot_settings)
         self.db = db
         super().__init__(token, stages_builder=lambda bot_id: PersistentStages(bot_id, db), settings=bot_settings,
-                         **kwargs)
+                         ignore_403_in_handlers=True, **kwargs)
         self.administrators = [kwargs['owner_id']]
 
     @coroutine
