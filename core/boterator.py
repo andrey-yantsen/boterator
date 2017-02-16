@@ -96,7 +96,7 @@ class Boterator(Base):
                                                  ', received error: `{error}`.\n'
                                                  'Your bot was deactivated, to enable it again - perform registration '
                                                  'process from the beginning.').format(token=body['token'],
-                                                                                       error=body['error']),
+                                                                                       error=body['error'].replace('_', r'\_')),
                                         chat_id=body['owner_id'], parse_mode=Api.PARSE_MODE_MD)
             except:
                 logging.exception('Got exception while notifying user on bot disable')
