@@ -23,5 +23,5 @@ def unknown_command(bot, *args, **kwargs):
         else:
             return False
     except ApiError as e:
-        if e.code == 403:
-            return
+        if e.code != 403:
+            raise
