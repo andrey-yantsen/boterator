@@ -1,4 +1,5 @@
 import logging
+from traceback import format_exception
 from ujson import loads, dumps
 
 from datetime import timedelta
@@ -53,9 +54,16 @@ class SlaveHolder:
             logging.debug('[bot#%s] Terminated', kwargs['id'])
             e = f.exception()
             if e:
-                logging.debug('[bot#%s] Got exception: %s', kwargs['id'], f.exception())
+                logging.debug('[bot#%s] Got exception: %s %s', kwargs['id'], format_exception(f.exc_info()))
                 if isinstance(e, ApiError) and e.code == 401:
                     logging.warning('[bot#%d] Disabling due to connection error', kwargs['id'])
+                    yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
+                elif isinstance(e, ApiError) and e.code == 400 and 'chat not found' in e.description and \
+                    str(kwargs['moderator_chat_id']) in e.request_body:
+                    logging.warning('[bot#%d] Disabling due to unavailable moderator chat', kwargs['id'])
+                    yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
+                elif isinstance(e, ApiError) and e.code == 409 and 'webhook is active' in e.description:
+                    logging.warning('[bot#%d] Disabling due to misconfigured webhook', kwargs['id'])
                     yield self.queue.send(QUEUE_BOTERATOR_BOT_REVOKE, dumps(dict(error=str(e), **kwargs)))
                 else:
                     IOLoop.current().add_timeout(timedelta(seconds=5), self._start_bot, **kwargs)
