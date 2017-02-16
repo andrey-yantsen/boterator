@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2016-11-21 09:28+0000\n"
+"PO-Revision-Date: 2017-02-16 05:17+0000\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Generator: Loco https://localise.biz\n"
 "X-Loco-Source-Locale: en\n"
 "X-Loco-Project-Id: 15312\n"
-"X-Loco-Api-Version: 1.0.15 20161109-1"
+"X-Loco-Api-Version: 1.0.15 20170208-1"
 
 #: core/slave.py:227 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
@@ -353,13 +353,13 @@ msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user"
 msgstr "Please set a ban reason for this user."
 
-#: core/handlers/slave/ban.py:46 loco:572f0e8214d7253d068b45be
+#: core/handlers/slave/ban.py:58 loco:572f0e8214d7253d068b45be
 msgctxt "Ban reason too short"
 msgid "Reason is too short (5 symbols required), try again or send /cancel"
 msgstr ""
 "Hey, it’s too short (we need at least 5 chars). Try again or type /cancel."
 
-#: core/handlers/slave/ban.py:53 loco:572f0e8214d7253d068b45bf
+#: core/handlers/slave/ban.py:65 loco:572f0e8214d7253d068b45bf
 msgctxt "Message to user in case of ban"
 msgid ""
 "You've been banned from further communication with this bot. Reason:\n"
@@ -368,32 +368,32 @@ msgstr ""
 "Sorry, but you've been banned. Bot will ignore you. Reason:\n"
 "> {ban_reason}"
 
-#: core/handlers/slave/ban.py:70 loco:572f0e8214d7253d068b45c0
+#: core/handlers/slave/ban.py:82 loco:572f0e8214d7253d068b45c0
 msgctxt "Ban confirmation"
 msgid "User banned"
 msgstr "User was banned."
 
-#: core/handlers/slave/ban.py:111 loco:572f0e8214d7253d068b45c1
+#: core/handlers/slave/ban.py:127 loco:572f0e8214d7253d068b45c1
 msgctxt "Ban user item"
 msgid "{row_id}. {user} - {ban_reason} (banned {ban_date}) {unban_cmd}"
 msgstr "{row_id}. {user} — {ban_reason} (banned {ban_date}) {unban_cmd}"
 
-#: core/handlers/slave/ban.py:118 loco:572f0e8214d7253d068b45c2
+#: core/handlers/slave/ban.py:136 loco:572f0e8214d7253d068b45c2
 msgctxt "Bot owner notification"
 msgid "You can use /unban command only in moderators group"
 msgstr "You can use /unban command only in moderators group."
 
-#: core/handlers/slave/ban.py:122 loco:572f0e8214d7253d068b45c3
+#: core/handlers/slave/ban.py:140 loco:572f0e8214d7253d068b45c3
 msgctxt "Ban list is empty"
 msgid "No banned users yet"
 msgstr "No banned users yet."
 
-#: core/handlers/slave/ban.py:82 loco:572f0e8214d7253d068b45c4
+#: core/handlers/slave/ban.py:94 loco:572f0e8214d7253d068b45c4
 msgctxt "Unban confirmation"
 msgid "User unbanned"
 msgstr "User was unbanned. Amnesty!"
 
-#: core/handlers/slave/ban.py:84 loco:572f0e8214d7253d068b45c5
+#: core/handlers/slave/ban.py:96 loco:572f0e8214d7253d068b45c5
 msgctxt "User notification in case of unban"
 msgid "Access restored"
 msgstr "You were granted an amnesty. Hurrah!"
@@ -613,12 +613,12 @@ msgctxt "Command name"
 msgid "/reg â register a new bot"
 msgstr "/reg to register a new bot"
 
-#: core/boterator.py:54 loco:5744814014d725223c8b456c
+#: core/boterator.py:55 loco:5744814014d725223c8b456c
 msgctxt "Action description"
 msgid "Waiting for the token"
 msgstr ""
 
-#: core/boterator.py:69 loco:5744814014d725223c8b456d
+#: core/boterator.py:70 loco:5744814014d725223c8b456d
 msgctxt "Action description"
 msgid "Waiting for the channel name"
 msgstr ""
@@ -680,7 +680,7 @@ msgctxt "Unknown command"
 msgid "I have no idea what a hell do you want from me, sorry :("
 msgstr "I have no idea what do you want from me. Sorry :("
 
-#: core/boterator.py:93 loco:5744824d14d7254f3e8b4570
+#: core/boterator.py:94 loco:5744824d14d7254f3e8b4570
 msgctxt "Unable to establish startup connection with bot"
 msgid ""
 "I'm failed to establish connection to your bot with token `{token}`, "
@@ -854,7 +854,7 @@ msgstr ""
 "need to do — is to write a message to me (bot named @{bot_username}) and I "
 "will send it for moderation."
 
-#: core/handlers/slave/ban.py:21 loco:57453bae14d7253e058b4569
+#: core/handlers/slave/ban.py:33 loco:57453bae14d7253e058b4569
 msgctxt "Ban reason request"
 msgid "Please enter a ban reason for the user, @{moderator_username}"
 msgstr "Please enter a ban reason for this user, @{moderator_username}."
@@ -874,59 +874,59 @@ msgctxt "Vote status displaying enabled"
 msgid "From now other chat users WILL see current votes distribution."
 msgstr "Now other group members WILL see current votes distribution."
 
-#: core/handlers/slave/vote.py:95 loco:57453bae14d7253e058b456d
+#: core/handlers/slave/vote.py:94 loco:57453bae14d7253e058b456d
 msgctxt "User`s vote successfully counted"
 msgid "Counted."
 msgstr ""
 
-#: core/handlers/slave/vote.py:101 loco:57453bae14d7253e058b456e
+#: core/handlers/slave/vote.py:100 loco:57453bae14d7253e058b456e
 msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
 msgstr "Your vote is already counted."
 
-#: core/slave.py:291 loco:57453bae14d7253e058b456f
+#: core/slave.py:326 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
 msgid "Current poll progress:"
 msgstr ""
 
-#: core/slave.py:292 loco:57453bae14d7253e058b4570
+#: core/slave.py:327 loco:57453bae14d7253e058b4570
 msgctxt "Count of voted moderators"
 msgid "{cnt} vote"
 msgid_plural "{cnt} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:319 loco:57453bae14d7253e058b4572
+#: core/slave.py:354 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr ""
 
-#: core/slave.py:326 loco:57453bae14d7253e058b4573
+#: core/slave.py:361 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr ""
 
-#: core/slave.py:328 loco:57453bae14d7253e058b4574
+#: core/slave.py:363 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr ""
 
-#: core/slave.py:330 loco:57453bae14d7253e058b4575
+#: core/slave.py:365 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr ""
 
-#: core/slave.py:344 loco:57453bae14d7253e058b4576
+#: core/slave.py:379 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr ""
 
-#: core/slave.py:346 loco:57453bae14d7253e058b4577
+#: core/slave.py:381 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr "Ban this badass"
 
-#: core/slave.py:365 loco:57453bae14d7253e058b4578
+#: core/slave.py:400 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr ""
@@ -941,7 +941,7 @@ msgctxt "Boolean settings"
 msgid "off"
 msgstr ""
 
-#: core/slave.py:262 loco:5745a3d314d72539698b4567
+#: core/slave.py:297 loco:5745a3d314d72539698b4567
 msgctxt "Newer poll for this message posted below"
 msgid "_Outdated_"
 msgstr ""
@@ -966,24 +966,24 @@ msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
 msgstr "GIFs: disabled."
 
-#: core/slave.py:300 core/slave.py:303 loco:57481f4a14d725a04c8b4575
+#: core/slave.py:335 core/slave.py:338 loco:57481f4a14d725a04c8b4575
 msgctxt "Votes left to make a decision"
 msgid "{cnt} more to win"
 msgid_plural "{cnt} more to win"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:306 core/slave.py:307 loco:5748200314d7251e4d8b459a
+#: core/slave.py:341 core/slave.py:342 loco:5748200314d7251e4d8b459a
 msgctxt "ignore"
 msgid " ({})"
 msgstr ""
 
-#: core/handlers/slave/ban.py:18 loco:574dc21714d725954d8b456f
+#: core/handlers/slave/ban.py:30 loco:574dc21714d725954d8b456f
 msgctxt "User already banned"
 msgid "User already banned"
 msgstr "User is already banned."
 
-#: core/handlers/slave/ban.py:38 loco:574dc21714d725954d8b4570
+#: core/handlers/slave/ban.py:50 loco:574dc21714d725954d8b4570
 msgctxt "Somebody banned a user faster than another one"
 msgid "Somebody already banned the user. Be faster next time."
 msgstr "Someone has already banned this user. Try to be faster next time :)"
@@ -1003,7 +1003,7 @@ msgctxt "Moderator voted for own message"
 msgid "It's not allowed to vote for own messages"
 msgstr "You are not allowed to vote for own messages."
 
-#: core/boterator.py:53 loco:578b2e5114d72582138b4568
+#: core/boterator.py:54 loco:578b2e5114d72582138b4568
 msgctxt "Command name"
 msgid "/reg - register a new bot"
 msgstr ""
@@ -1020,7 +1020,7 @@ msgid ""
 "to the channel."
 msgstr ""
 
-#: core/slave.py:239 loco:580e304252e1a133578b45be
+#: core/slave.py:263 loco:580e304252e1a133578b45be
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message not passed moderation and won't be published to "
@@ -1029,7 +1029,7 @@ msgstr ""
 "Unfortunately your message did not pass moderation and won't be published to "
 "the channel."
 
-#: core/handlers/slave/check_freq.py:33 core/handlers/slave/help.py:26
+#: core/handlers/slave/check_freq.py:34 core/handlers/slave/help.py:26
 #: loco:5824a09052e1a15d6d8b456c
 msgctxt "Messages count"
 msgid "{msg} message"
@@ -1037,7 +1037,7 @@ msgid_plural "{msg} messages"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/handlers/slave/check_freq.py:34 core/handlers/slave/help.py:27
+#: core/handlers/slave/check_freq.py:35 core/handlers/slave/help.py:27
 #: loco:5824a09052e1a15d6d8b456e
 msgctxt "Days"
 msgid "{n} day"
@@ -1045,13 +1045,13 @@ msgid_plural "{n} days"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/handlers/slave/check_freq.py:35 core/handlers/slave/help.py:28
+#: core/handlers/slave/check_freq.py:36 core/handlers/slave/help.py:28
 #: loco:5824a09052e1a15d6d8b4570
 msgctxt "Frequency limit"
 msgid "{messages_str} per {days_str}"
 msgstr ""
 
-#: core/handlers/slave/check_freq.py:38 loco:5824a09052e1a15d6d8b4571
+#: core/handlers/slave/check_freq.py:39 loco:5824a09052e1a15d6d8b4571
 msgctxt "Out of limits"
 msgid "Unfortunately, you're out of limits! You can send only {freq_limit_str}"
 msgstr ""
@@ -1111,4 +1111,14 @@ msgstr ""
 #: loco:5824a09052e1a15d6d8b457a
 msgctxt "Web preview enabled in /start"
 msgid "From now web previews WILL BE generated for links in /start message."
+msgstr ""
+
+#: core/handlers/slave/ban.py:18 loco:58a5357052e1a1a60f8b4567
+msgctxt "Somebody trying to ban the owner"
+msgid "It's not allowed to ban the bot owner"
+msgstr ""
+
+#: core/handlers/slave/ban.py:24 loco:58a5357052e1a1a60f8b4568
+msgctxt "Somebody trying to ban himself"
+msgid "It's not allowed to ban yourself"
 msgstr ""
