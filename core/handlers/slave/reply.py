@@ -12,7 +12,7 @@ from tobot.telegram import ForceReply
 def reply_command(bot, callback_query, chat_id, message_id):
     report_botan(callback_query, 'slave_reply_cmd')
     msg = pgettext('Reply message request', 'What message should I send to user, @{moderator_username}?') \
-        .format(moderator_username=callback_query['from']['username'])
+        .format(moderator_username=callback_query['from'].get('username', callback_query['from']['id']))
     yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
     yield bot.answer_callback_query(callback_query['id'])
     return {
