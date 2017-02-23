@@ -17,6 +17,6 @@ def unknown_command(bot, *args, **kwargs):
     if kwargs.get('message'):
         yield bot.send_message(message, reply_to_message=kwargs['message'])
     elif kwargs.get('callback_query'):
-        yield bot.answer_callback_query(kwargs['callback_query']['message']['chat']['id'], message)
+        yield bot.answer_callback_query(kwargs['callback_query']['id'], message)
     else:
         return False
