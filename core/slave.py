@@ -15,6 +15,7 @@ from core.handlers.slave.check_freq import check_freq
 from core.handlers.slave.help import help_command
 from core.handlers.slave.migrate_to_supergroup import migrate, migrate_to_supergroup_msg
 from core.handlers.slave.pollslist import polls_list_command
+from core.handlers.slave.reject import reject_command, plaintext_reject_handler
 from core.handlers.slave.reply import reply_command, plaintext_reply_handler
 from core.handlers.slave.setallowed import change_allowed_command, plaintext_contenttype_handler
 from core.handlers.slave.setdelay import setdelay_command, plaintext_delay_handler
@@ -88,6 +89,9 @@ class Slave(Base):
         self._add_handler(plaintext_ban_handler, None, ban_command)
         self._add_handler(unban_command, None)
         self._add_handler(ban_list_command, None)
+
+        self._add_handler(reject_command, None, is_final=False)
+        self._add_handler(plaintext_reject_handler, None, reject_command)
 
         self._add_handler(reply_command, None, is_final=False)
         self._add_handler(plaintext_reply_handler, None, reply_command)
@@ -380,6 +384,10 @@ class Slave(Base):
                                      callback_data='reply_%s_%s' % (chat_id, message_id)),
                 InlineKeyboardButton(pgettext('Ban user button', 'Ban this ass'),
                                      callback_data='ban_%s' % (message_owner_id,)),
+            ],
+            [
+                InlineKeyboardButton(pgettext('Reject post button', 'Reject'),
+                                     callback_data='reject_%s_%s' % (chat_id, message_id)),
             ],
         ])
 
