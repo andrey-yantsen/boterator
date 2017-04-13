@@ -282,7 +282,7 @@ class Slave(Base):
     @coroutine
     def send_moderation_request(self, chat_id, message_id):
         try:
-            yield self.forward_message(self.moderator_chat_id, chat_id, message_id)
+            fwd = yield self.forward_message(self.moderator_chat_id, chat_id, message_id)
         except ApiError as e:
             if 'migrated' in e.description and 'migrate_to_chat_id' in e.parameters:
                 yield migrate(self, e.parameters['migrate_to_chat_id'])
@@ -301,10 +301,9 @@ class Slave(Base):
             self.edit_message_text(pgettext('Newer poll for this message posted below', '_Outdated_'),
                                    chat_id=self.moderator_chat_id, message_id=row[0], parse_mode=self.PARSE_MODE_MD)
 
-        yield self.db.execute('UPDATE incoming_messages SET moderation_message_id = %s WHERE id = %s AND '
-                              'original_chat_id = %s AND bot_id = %s',
-                              (moderation_msg['message_id'], message_id, chat_id,
-                               self.bot_id))
+        yield self.db.execute('UPDATE incoming_messages SET moderation_message_id = %s, moderation_fwd_message_id = %s '
+                              'WHERE id = %s AND original_chat_id = %s AND bot_id = %s',
+                              (moderation_msg['message_id'], fwd['message_id'], message_id, chat_id, self.bot_id))
         yield self.db.execute('UPDATE registered_bots SET last_moderation_message_at = NOW() WHERE id = %s',
                               (self.bot_id,))
 
