@@ -308,6 +308,17 @@ class Slave(Base):
                               (self.bot_id,))
 
     @coroutine
+    def get_message_fwd_id(self, chat_id, message_id):
+        try:
+            cur = yield self.db.execute('SELECT moderation_fwd_message_id FROM incoming_messages WHERE id = %s AND '
+                                        'original_chat_id = %s AND bot_id = %s', (message_id, chat_id, self.bot_id))
+            row = cur.fetchone()
+            if row and row[0]:
+                return row[0]
+        except:
+            return
+
+    @coroutine
     def _build_voting_status(self, message_id, chat_id, voting_finished):
         cur = yield self.db.execute('SELECT count(*), sum(vote_yes::int) FROM votes_history WHERE message_id = %s AND '
                                     'original_chat_id = %s', (message_id, chat_id))
@@ -382,7 +393,7 @@ class Slave(Base):
                 InlineKeyboardButton(pgettext('Reply to user button', 'Reply'),
                                      callback_data='reply_%s_%s' % (chat_id, message_id)),
                 InlineKeyboardButton(pgettext('Ban user button', 'Ban this ass'),
-                                     callback_data='ban_%s' % (message_owner_id,)),
+                                     callback_data='ban_%s_%s_%s' % (message_owner_id, chat_id, message_id)),
             ],
             [
                 InlineKeyboardButton(pgettext('Reject post button', 'Reject'),

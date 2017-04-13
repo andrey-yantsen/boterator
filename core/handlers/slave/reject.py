@@ -13,7 +13,9 @@ def reject_command(bot, callback_query, chat_id, message_id):
     report_botan(callback_query, 'slave_reject_cmd')
     msg = pgettext('Reject message request', 'Please enter a reject reason, @{moderator_username}?') \
         .format(moderator_username=callback_query['from'].get('username', callback_query['from']['id']))
-    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
+    fwd_id = yield bot.get_message_fwd_id(chat_id, message_id)
+    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True),
+                           reply_to_message_id=fwd_id)
     yield bot.answer_callback_query(callback_query['id'])
     return {
         'chat_id': chat_id,

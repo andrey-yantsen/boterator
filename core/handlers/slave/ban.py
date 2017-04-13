@@ -9,8 +9,8 @@ from tobot.telegram import ForceReply
 
 @coroutine
 @CommandFilterIsModerationChat()
-@CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)')
-def ban_command(bot, callback_query, user_id):
+@CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)(?:_(?P<chat_id>\d+)_(?P<message_id>\d+))?')
+def ban_command(bot, callback_query, user_id, chat_id=None, message_id=None):
     report_botan(callback_query, 'slave_ban_cmd')
 
     if int(user_id) == bot.owner_id:
@@ -32,7 +32,14 @@ def ban_command(bot, callback_query, user_id):
 
     msg = pgettext('Ban reason request', 'Please enter a ban reason for the user, @{moderator_username}')\
         .format(moderator_username=callback_query['from']['username'])
-    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True))
+
+    if chat_id and message_id:
+        fwd_id = yield bot.get_message_fwd_id(chat_id, message_id)
+    else:
+        fwd_id = None
+
+    yield bot.send_message(msg, chat_id=bot.moderator_chat_id, reply_markup=ForceReply(True),
+                           reply_to_message_id=fwd_id)
     yield bot.answer_callback_query(callback_query['id'])
     return {
         'user_id': user_id
