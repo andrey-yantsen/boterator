@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Boterator\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-05-08 07:42+0100\n"
-"PO-Revision-Date: 2017-02-16 05:17+0000\n"
+"PO-Revision-Date: 2017-04-13 07:32+0100\n"
 "Last-Translator: Andrey Yantsen\n"
 "Language-Team: English (USA)\n"
 "Language: en-US\n"
@@ -14,7 +14,7 @@ msgstr ""
 "X-Generator: Loco https://localise.biz\n"
 "X-Loco-Source-Locale: en\n"
 "X-Loco-Project-Id: 15312\n"
-"X-Loco-Api-Version: 1.0.15 20170208-1"
+"X-Loco-Api-Version: 1.0.16 20170411-1"
 
 #: core/slave.py:227 loco:572f0e8214d7253d068b456d
 msgctxt "Received votes count"
@@ -884,49 +884,49 @@ msgctxt "User tapped voting button second time"
 msgid "Your vote is already counted. You changed nothing this time."
 msgstr "Your vote is already counted."
 
-#: core/slave.py:326 loco:57453bae14d7253e058b456f
+#: core/slave.py:330 loco:57453bae14d7253e058b456f
 msgctxt "Beginning of poll message"
 msgid "Current poll progress:"
 msgstr ""
 
-#: core/slave.py:327 loco:57453bae14d7253e058b4570
+#: core/slave.py:331 loco:57453bae14d7253e058b4570
 msgctxt "Count of voted moderators"
 msgid "{cnt} vote"
 msgid_plural "{cnt} votes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:354 loco:57453bae14d7253e058b4572
+#: core/slave.py:358 loco:57453bae14d7253e058b4572
 msgctxt "Poll finished"
 msgid "Poll is closed."
 msgstr ""
 
-#: core/slave.py:361 loco:57453bae14d7253e058b4573
+#: core/slave.py:365 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
 msgid "The message is published."
 msgstr ""
 
-#: core/slave.py:363 loco:57453bae14d7253e058b4574
+#: core/slave.py:367 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
 msgid "The message will be published soon."
 msgstr ""
 
-#: core/slave.py:365 loco:57453bae14d7253e058b4575
+#: core/slave.py:369 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
 msgid "The message will not be published."
 msgstr ""
 
-#: core/slave.py:379 loco:57453bae14d7253e058b4576
+#: core/slave.py:383 loco:57453bae14d7253e058b4576
 msgctxt "Reply to user button"
 msgid "Reply"
 msgstr ""
 
-#: core/slave.py:381 loco:57453bae14d7253e058b4577
+#: core/slave.py:385 loco:57453bae14d7253e058b4577
 msgctxt "Ban user button"
 msgid "Ban this ass"
 msgstr "Ban this badass"
 
-#: core/slave.py:400 loco:57453bae14d7253e058b4578
+#: core/slave.py:408 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
 msgid "What will we do with this message?"
 msgstr ""
@@ -941,7 +941,7 @@ msgctxt "Boolean settings"
 msgid "off"
 msgstr ""
 
-#: core/slave.py:297 loco:5745a3d314d72539698b4567
+#: core/slave.py:301 loco:5745a3d314d72539698b4567
 msgctxt "Newer poll for this message posted below"
 msgid "_Outdated_"
 msgstr ""
@@ -966,14 +966,14 @@ msgctxt "Content type enabled/disabled"
 msgid "Gifs disabled"
 msgstr "GIFs: disabled."
 
-#: core/slave.py:335 core/slave.py:338 loco:57481f4a14d725a04c8b4575
+#: core/slave.py:339 core/slave.py:342 loco:57481f4a14d725a04c8b4575
 msgctxt "Votes left to make a decision"
 msgid "{cnt} more to win"
 msgid_plural "{cnt} more to win"
 msgstr[0] ""
 msgstr[1] ""
 
-#: core/slave.py:341 core/slave.py:342 loco:5748200314d7251e4d8b459a
+#: core/slave.py:345 core/slave.py:346 loco:5748200314d7251e4d8b459a
 msgctxt "ignore"
 msgid " ({})"
 msgstr ""
@@ -1020,7 +1020,7 @@ msgid ""
 "to the channel."
 msgstr ""
 
-#: core/slave.py:263 loco:580e304252e1a133578b45be
+#: core/slave.py:267 loco:580e304252e1a133578b45be
 msgctxt "Voting failed"
 msgid ""
 "Unfortunately your message not passed moderation and won't be published to "
@@ -1121,4 +1121,38 @@ msgstr ""
 #: core/handlers/slave/ban.py:24 loco:58a5357052e1a1a60f8b4568
 msgctxt "Somebody trying to ban himself"
 msgid "It's not allowed to ban yourself"
+msgstr ""
+
+#: core/handlers/slave/reject.py:14 loco:58ef1af552e1a1d44a8b4567
+msgctxt "Reject message request"
+msgid "Please enter a reject reason, @{moderator_username}?"
+msgstr ""
+
+#: core/handlers/slave/reject.py:31 loco:58ef1af552e1a1d44a8b4568
+msgctxt "Reject message is too short"
+msgid ""
+"Reject message is too short (10 symbols required), try again or send /cancel"
+msgstr ""
+"Reject message is too short (10 symbols required), try again or send /cancel."
+
+#: core/handlers/slave/reject.py:42 loco:58ef1af552e1a1d44a8b4569
+msgctxt "Message to user in case of rejection"
+msgid ""
+"Your post has been rejected. Reason:\n"
+"> {reject_reason}"
+msgstr ""
+
+#: core/handlers/slave/reject.py:46 loco:58ef1af552e1a1d44a8b456a
+msgctxt "Rejection delivery confirmation"
+msgid "Message sent and post rejected"
+msgstr "Message sent and post rejected."
+
+#: core/handlers/slave/reject.py:49 loco:58ef1af552e1a1d44a8b456b
+msgctxt "Rejection failed"
+msgid "Message sending failed: {reason}"
+msgstr ""
+
+#: core/slave.py:389 loco:58ef1af552e1a1d44a8b456c
+msgctxt "Reject post button"
+msgid "Reject"
 msgstr ""
