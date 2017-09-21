@@ -16,6 +16,15 @@ def __is_user_voted(db, user_id, original_chat_id, message_id):
 
     return False
 
+@coroutine
+def __prev_vote(db, user_id, original_chat_id, message_id):
+    cur = yield db.execute('SELECT vote_yes FROM votes_history WHERE user_id = %s AND message_id = %s AND '
+                           'original_chat_id = %s',
+                           (user_id, message_id, original_chat_id))
+
+    row = cur.fetchone()
+    return row[0]
+
 
 @coroutine
 def __is_voting_opened(db, original_chat_id, message_id):
@@ -51,13 +60,29 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
     if not current_yes:
         current_yes = 0
 
-    if not voted and opened:
-        current_yes += int(yes)
-        current_total += 1
+    if opened:
 
-        yield bot.db.execute("""INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes, created_at)
-                                VALUES (%s, %s, %s, %s, NOW())""",
-                             (user_id, message_id, original_chat_id, yes))
+        if not voted:
+            current_yes += int(yes)
+            current_total += 1
+
+            yield bot.db.execute("""INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes, created_at)
+                                    VALUES (%s, %s, %s, %s, NOW())""",
+                                 (user_id, message_id, original_chat_id, yes))
+        else:
+            prev_vote = yield __prev_vote(bot.db, user_id, original_chat_id, message_id)
+
+            if yes == prev_vote and callback_query:
+                yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
+                                                                               'Your vote is already counted. You changed '
+                                                                               'nothing this time.'))
+            elif yes != prev_vote:
+                current_yes += int(yes)
+
+                yield bot.db.execute("""UPDATE votes_history SET vote_yes  = %s
+                                        WHERE user_id = %s AND message_id = %s AND original_chat_id = %s)""",
+                                     (yes, user_id, message_id, original_chat_id))
+
 
         if current_yes >= bot.settings.get('votes', 5):
             if callback_query:
@@ -96,10 +121,6 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
         msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, True)
         yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
         yield bot.answer_callback_query(callback_query['id'])
-    elif voted and callback_query:
-        yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
-                                                                       'Your vote is already counted. You changed '
-                                                                       'nothing this time.'))
 
 
 @coroutine
