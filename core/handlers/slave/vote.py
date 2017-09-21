@@ -67,7 +67,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                 yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
                                                                                'Your vote is already counted. You changed '
                                                                                'nothing this time.'))
-            elif yes != prev_vote:
+            elif yes != prev_vote and bot.settings.get('allow_vote_switch'):
                 current_yes += int(yes)
 
                 yield bot.db.execute("""UPDATE votes_history SET vote_yes  = %s
