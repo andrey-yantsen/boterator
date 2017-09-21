@@ -6,17 +6,6 @@ from tobot.helpers import pgettext, report_botan
 
 
 @coroutine
-def __is_user_voted(db, user_id, original_chat_id, message_id):
-    cur = yield db.execute('SELECT 1 FROM votes_history WHERE user_id = %s AND message_id = %s AND '
-                           'original_chat_id = %s',
-                           (user_id, message_id, original_chat_id))
-
-    if cur.fetchone():
-        return True
-
-    return False
-
-@coroutine
 def __prev_vote(db, user_id, original_chat_id, message_id):
     cur = yield db.execute('SELECT vote_yes FROM votes_history WHERE user_id = %s AND message_id = %s AND '
                            'original_chat_id = %s',
@@ -50,7 +39,10 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                                                                            'It\'s not allowed to vote for own messages'))
         return False
 
-    voted = yield __is_user_voted(bot.db, user_id, original_chat_id, message_id)
+    prev_vote = yield __prev_vote(bot.db, user_id, original_chat_id, message_id)
+    voted = False
+    if prev_vote:
+        voted = True
     opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)
 
     cur = yield bot.db.execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
@@ -70,7 +62,6 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                                     VALUES (%s, %s, %s, %s, NOW())""",
                                  (user_id, message_id, original_chat_id, yes))
         else:
-            prev_vote = yield __prev_vote(bot.db, user_id, original_chat_id, message_id)
 
             if yes == prev_vote and callback_query:
                 yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
