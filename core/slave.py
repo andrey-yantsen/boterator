@@ -210,7 +210,7 @@ class Slave(Base):
             yield self.edit_message_text(msg, chat_id=self.moderator_chat_id, message_id=moderation_message_id,
                                          reply_markup=keyboard)
         except:
-            logging.exception('Message forwarding failed (#%s from %s)', message['message_id'], message['chat']['id'])
+            logging.exception('[bot #%d] Message forwarding failed (#%s from %s)', self.bot_id, message['message_id'], message['chat']['id'])
 
     @coroutine
     def check_votes_failures(self):
@@ -229,7 +229,7 @@ class Slave(Base):
             try:
                 yield self.decline_message(message, yes_votes)
             except:
-                logging.exception('Got exception while declining message')
+                logging.exception('[bot #%d] Got exception while declining message', self.bot_id)
 
         if not self._finished.is_set():
             IOLoop.current().add_timeout(timedelta(minutes=10), self.check_votes_failures)
