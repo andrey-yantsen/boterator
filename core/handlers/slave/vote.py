@@ -71,7 +71,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                 current_yes += int(yes)
 
                 yield bot.db.execute("""UPDATE votes_history SET vote_yes  = %s
-                                        WHERE user_id = %s AND message_id = %s AND original_chat_id = %s)""",
+                                        WHERE user_id = %s AND message_id = %s AND original_chat_id = %s""",
                                      (yes, user_id, message_id, original_chat_id))
 
 
