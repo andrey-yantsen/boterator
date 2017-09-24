@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.5.3
--- Dumped by pg_dump version 9.5.3
+-- Dumped from database version 9.5.2
+-- Dumped by pg_dump version 9.6.5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -38,16 +38,17 @@ SET default_with_oids = false;
 --
 
 CREATE TABLE incoming_messages (
-    id bigint NOT NULL,
-    original_chat_id integer NOT NULL,
-    owner_id integer NOT NULL,
-    bot_id integer NOT NULL,
+    id integer NOT NULL,
+    original_chat_id bigint NOT NULL,
+    owner_id bigint NOT NULL,
+    bot_id bigint NOT NULL,
     created_at timestamp without time zone NOT NULL,
     is_voting_fail boolean DEFAULT false NOT NULL,
     is_published boolean DEFAULT false NOT NULL,
     is_voting_success boolean DEFAULT false NOT NULL,
     message jsonb,
-    moderation_message_id integer
+    moderation_message_id integer,
+    moderation_fwd_message_id integer
 );
 
 
@@ -77,7 +78,7 @@ ALTER TABLE registered_bots OWNER TO boterator;
 --
 
 CREATE TABLE stages (
-    bot_id integer NOT NULL,
+    bot_id bigint NOT NULL,
     key character varying NOT NULL,
     stage character varying NOT NULL,
     data jsonb DEFAULT '{}'::jsonb NOT NULL,
@@ -92,8 +93,8 @@ ALTER TABLE stages OWNER TO boterator;
 --
 
 CREATE TABLE users (
-    bot_id integer NOT NULL,
-    user_id integer NOT NULL,
+    bot_id bigint NOT NULL,
+    user_id bigint NOT NULL,
     first_name character varying NOT NULL,
     last_name character varying,
     username character varying,
@@ -113,9 +114,9 @@ ALTER TABLE users OWNER TO boterator;
 
 CREATE TABLE votes_history (
     id integer NOT NULL,
-    user_id integer NOT NULL,
-    message_id integer NOT NULL,
-    original_chat_id integer NOT NULL,
+    user_id bigint NOT NULL,
+    message_id bigint NOT NULL,
+    original_chat_id bigint NOT NULL,
     created_at timestamp without time zone NOT NULL,
     vote_yes boolean NOT NULL
 );
@@ -145,22 +146,22 @@ ALTER SEQUENCE votes_history_id_seq OWNED BY votes_history.id;
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: boterator
+-- Name: votes_history id; Type: DEFAULT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY votes_history ALTER COLUMN id SET DEFAULT nextval('votes_history_id_seq'::regclass);
 
 
 --
--- Name: incoming_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: incoming_messages incoming_messages_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY incoming_messages
-    ADD CONSTRAINT incoming_messages_pkey PRIMARY KEY (id, original_chat_id);
+    ADD CONSTRAINT incoming_messages_pkey PRIMARY KEY (bot_id, original_chat_id, id);
 
 
 --
--- Name: registered_bots_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: registered_bots registered_bots_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY registered_bots
@@ -168,7 +169,7 @@ ALTER TABLE ONLY registered_bots
 
 
 --
--- Name: stages_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: stages stages_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY stages
@@ -176,7 +177,7 @@ ALTER TABLE ONLY stages
 
 
 --
--- Name: users_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: users users_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY users
@@ -184,7 +185,7 @@ ALTER TABLE ONLY users
 
 
 --
--- Name: votes_history_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
+-- Name: votes_history votes_history_pkey; Type: CONSTRAINT; Schema: public; Owner: boterator
 --
 
 ALTER TABLE ONLY votes_history
@@ -241,12 +242,12 @@ CREATE INDEX votes_history_umo_idx ON votes_history USING btree (user_id, messag
 
 
 --
--- Name: public; Type: ACL; Schema: -; Owner: boterator
+-- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
 
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM boterator;
-GRANT ALL ON SCHEMA public TO boterator;
+REVOKE ALL ON SCHEMA public FROM postgres;
+GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 

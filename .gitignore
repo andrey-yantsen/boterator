@@ -90,3 +90,5 @@ ENV/
 # Created by .ignore support plugin (hsz.mobi)
 
 src/
+
+docker-compose.yml
