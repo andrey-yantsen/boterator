@@ -20,6 +20,8 @@ def help_command(bot, message):
     selfvote_state_str = pgettext('Boolean settings', selfvote_state)
     start_web_preview_state = 'on' if bot.settings.get('start_web_preview') else 'off'
     start_web_preview_state_str = pgettext('Boolean settings', start_web_preview_state)
+    voteswitch_state = 'on' if bot.settings.get('allow_vote_switch') else 'off'
+    voteswitch_state_str = pgettext('Boolean settings', voteswitch_state)
 
     if bot.settings.get('msg_freq_limit'):
         fl = bot.settings['msg_freq_limit']
@@ -39,7 +41,7 @@ def help_command(bot, message):
                 public_vote_state=public_vote_state_str,
                 current_text_limit={'min': bot.settings['text_min'], 'max': bot.settings['text_max']},
                 selfvote_state=selfvote_state_str, start_web_preview_state=start_web_preview_state_str,
-                current_freqlimit=freq_limit_str)
+                current_freqlimit=freq_limit_str, voteswitch_state=voteswitch_state_str)
 
     try:
         yield bot.send_message(msg, reply_to_message=message, parse_mode=bot.PARSE_MODE_MD,

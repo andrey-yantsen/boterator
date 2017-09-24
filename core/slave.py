@@ -37,6 +37,7 @@ from core.handlers.slave.toggle_power import togglepower_command
 from core.handlers.slave.toggle_selfvote import toggleselfvote_command
 from core.handlers.slave.toggle_start_web_preview import toggle_start_web_preview_command
 from core.handlers.slave.toggle_vote import togglevote_command
+from core.handlers.slave.toggle_vote_switch import togglevoteswitch_command
 from core.handlers.slave.vote import vote_new, vote_old
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
@@ -122,6 +123,7 @@ class Slave(Base):
         self._add_handler(togglevote_command, None)
         self._add_handler(toggleselfvote_command, None)
         self._add_handler(toggle_start_web_preview_command, None)
+        self._add_handler(togglevoteswitch_command, None)
 
         self._add_handler(stats_command, None)
         self._add_handler(help_command, None)

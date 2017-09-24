@@ -40,9 +40,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
         return False
 
     prev_vote = yield __prev_vote(bot.db, user_id, original_chat_id, message_id)
-    voted = False
-    if prev_vote is not None:
-        voted = True
+    voted = prev_vote is not None
     opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)
 
     cur = yield bot.db.execute('SELECT SUM(vote_yes::INT), COUNT(*) FROM votes_history WHERE message_id = %s AND '
@@ -51,29 +49,35 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
     current_yes, current_total = cur.fetchone()
     if not current_yes:
         current_yes = 0
+    votes_updates = False
 
     if opened:
 
         if not voted:
             current_yes += int(yes)
             current_total += 1
+            votes_updates = True
 
             yield bot.db.execute("""INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes, created_at)
                                     VALUES (%s, %s, %s, %s, NOW())""",
                                  (user_id, message_id, original_chat_id, yes))
         else:
 
-            if yes == prev_vote and callback_query:
+            if (yes == prev_vote or not bot.settings.get('allow_vote_switch')) and callback_query:
                 yield bot.answer_callback_query(callback_query['id'], pgettext('User tapped voting button second time',
                                                                                'Your vote is already counted. You changed '
                                                                                'nothing this time.'))
             elif yes != prev_vote and bot.settings.get('allow_vote_switch'):
-                current_yes += int(yes)
+                votes_updates = True
+
+                if yes:
+                    current_yes += 1
+                else:
+                    current_yes -= 1
 
                 yield bot.db.execute("""UPDATE votes_history SET vote_yes  = %s
                                         WHERE user_id = %s AND message_id = %s AND original_chat_id = %s""",
                                      (yes, user_id, message_id, original_chat_id))
-
 
         if current_yes >= bot.settings.get('votes', 5):
             if callback_query:
@@ -102,11 +106,11 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
 
             if row and not row[0] and not row[1]:
                 yield bot.decline_message(row[2], current_yes)
-        elif callback_query:
+        elif callback_query and votes_updates:
             msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, False)
             yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
 
-        if callback_query:
+        if callback_query and votes_updates:
             yield bot.answer_callback_query(callback_query['id'], pgettext('User`s vote successfully counted', 'Counted.'))
     elif not opened and callback_query:
         msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, True)
