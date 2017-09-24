@@ -12,8 +12,8 @@ def __prev_vote(db, user_id, original_chat_id, message_id):
                            (user_id, message_id, original_chat_id))
 
     row = cur.fetchone()
-    return row[0]
-
+    if row:
+        return row[0]
 
 @coroutine
 def __is_voting_opened(db, original_chat_id, message_id):
@@ -41,7 +41,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
 
     prev_vote = yield __prev_vote(bot.db, user_id, original_chat_id, message_id)
     voted = False
-    if prev_vote:
+    if prev_vote is not None:
         voted = True
     opened = yield __is_voting_opened(bot.db, original_chat_id, message_id)
 
