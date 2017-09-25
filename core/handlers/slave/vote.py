@@ -107,8 +107,12 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
             if row and not row[0] and not row[1]:
                 yield bot.decline_message(row[2], current_yes)
         elif callback_query and votes_updated:
-            msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, False)
-            yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
+            # Change poll's message only when message is actually changed:
+            # this happens if user wasn't voted previously or then votes are
+            # publicly visible
+            if bot.settings.get('public_vote', True) or not voted:
+                msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, False)
+                yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
 
         if callback_query and votes_updated:
             yield bot.answer_callback_query(callback_query['id'], pgettext('User`s vote successfully counted', 'Counted.'))
