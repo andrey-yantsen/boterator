@@ -186,7 +186,6 @@ def plaintext_channel_name(bot, message, **kwargs):
                                                                     bot_username=bot_info['username'])
 
             try:
-                yield bot.send_message(msg, reply_to_message=message)
                 yield bot.db.execute("""INSERT INTO registered_bots (id, token, owner_id, moderator_chat_id, target_channel, active, settings)
                                         VALUES (%s, %s, %s, %s, %s, TRUE, %s)
                                         ON CONFLICT (id) DO UPDATE SET token = EXCLUDED.token, owner_id = EXCLUDED.owner_id,
@@ -194,6 +193,7 @@ def plaintext_channel_name(bot, message, **kwargs):
                                         active = EXCLUDED.active""",
                                      (kwargs['id'], kwargs['token'], kwargs['owner_id'], kwargs['moderator_chat_id'],
                                       kwargs['target_channel'], dumps(kwargs['settings'])))
+                yield bot.send_message(msg, reply_to_message=message)
                 return True
             except:
                 yield bot.send_message(pgettext('Bot registration failed',
