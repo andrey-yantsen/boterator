@@ -107,6 +107,7 @@ def plaintext_token(bot, message, **kwargs):
 
         if chat['type'] == 'private':
             chat['title'] = '@' + chat['sender']['username']
+            kwargs['settings']['votes'] = 1
         elif not chat['title']:
             chat['title'] = '<no title>'
 
