@@ -49,14 +49,14 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
     current_yes, current_total = cur.fetchone()
     if not current_yes:
         current_yes = 0
-    votes_updates = False
+    votes_updated = False
 
     if opened:
 
         if not voted:
             current_yes += int(yes)
             current_total += 1
-            votes_updates = True
+            votes_updated = True
 
             yield bot.db.execute("""INSERT INTO votes_history (user_id, message_id, original_chat_id, vote_yes, created_at)
                                     VALUES (%s, %s, %s, %s, NOW())""",
@@ -68,7 +68,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                                                                                'Your vote is already counted. You changed '
                                                                                'nothing this time.'))
             elif yes != prev_vote and bot.settings.get('allow_vote_switch'):
-                votes_updates = True
+                votes_updated = True
 
                 if yes:
                     current_yes += 1
@@ -106,11 +106,11 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
 
             if row and not row[0] and not row[1]:
                 yield bot.decline_message(row[2], current_yes)
-        elif callback_query and votes_updates:
+        elif callback_query and votes_updated:
             msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, False)
             yield bot.edit_message_text(msg, callback_query['message'], reply_markup=keyboard)
 
-        if callback_query and votes_updates:
+        if callback_query and votes_updated:
             yield bot.answer_callback_query(callback_query['id'], pgettext('User`s vote successfully counted', 'Counted.'))
     elif not opened and callback_query:
         msg, keyboard = yield bot.get_verification_message(message_id, original_chat_id, True)
