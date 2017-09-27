@@ -905,17 +905,17 @@ msgstr ""
 
 #: core/slave.py:365 loco:57453bae14d7253e058b4573
 msgctxt "Vote successful, message is published"
-msgid "The message is published."
+msgid "The message is published. #accepted"
 msgstr ""
 
 #: core/slave.py:367 loco:57453bae14d7253e058b4574
 msgctxt "Vote successful"
-msgid "The message will be published soon."
+msgid "The message will be published soon. #accepted #queued"
 msgstr ""
 
 #: core/slave.py:369 loco:57453bae14d7253e058b4575
 msgctxt "Vote failed"
-msgid "The message will not be published."
+msgid "The message will not be published. #rejected"
 msgstr ""
 
 #: core/slave.py:383 loco:57453bae14d7253e058b4576
@@ -930,7 +930,7 @@ msgstr "Ban this badass"
 
 #: core/slave.py:408 loco:57453bae14d7253e058b4578
 msgctxt "Verification message"
-msgid "What will we do with this message?"
+msgid "What will we do with this message? #open"
 msgstr ""
 
 #: core/handlers/slave/help.py:52 loco:57453dba14d725df0a8b4567
