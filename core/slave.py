@@ -36,6 +36,7 @@ from core.handlers.slave.stats import stats_command
 from core.handlers.slave.toggle_power import togglepower_command
 from core.handlers.slave.toggle_selfvote import toggleselfvote_command
 from core.handlers.slave.toggle_start_web_preview import toggle_start_web_preview_command
+from core.handlers.slave.toggle_tag_polls import toggletagpolls_command
 from core.handlers.slave.toggle_vote import togglevote_command
 from core.handlers.slave.toggle_vote_switch import togglevoteswitch_command
 from core.handlers.slave.vote import vote_new, vote_old
@@ -124,6 +125,7 @@ class Slave(Base):
         self._add_handler(toggleselfvote_command, None)
         self._add_handler(toggle_start_web_preview_command, None)
         self._add_handler(togglevoteswitch_command, None)
+        self._add_handler(toggletagpolls_command, None)
 
         self._add_handler(stats_command, None)
         self._add_handler(help_command, None)
@@ -368,17 +370,26 @@ class Slave(Base):
 
         if voting_finished:
             message.append(pgettext('Poll finished', 'Poll is closed.'))
+            tags = ''
             if approves >= self.settings['votes']:
                 cur = yield self.db.execute('SELECT is_published FROM incoming_messages WHERE bot_id = %s AND '
                                             'id = %s AND original_chat_id = %s', (self.bot_id, message_id, chat_id))
 
                 row = cur.fetchone()
                 if row and row[0]:
-                    message.append(pgettext('Vote successful, message is published', 'The message is published.'))
+                    msg = pgettext('Vote successful, message is published', 'The message is published.')
+                    if self.settings.get('tag_polls'):
+                        tags = ' #accepted'
                 else:
-                    message.append(pgettext('Vote successful', 'The message will be published soon.'))
+                    msg = pgettext('Vote successful', 'The message will be published soon.')
+                    if self.settings.get('tag_polls'):
+                        tags = ' #accepted #queued'
             else:
-                message.append(pgettext('Vote failed', 'The message will not be published.'))
+                msg = pgettext('Vote failed', 'The message will not be published.')
+                if self.settings.get('tag_polls'):
+                    tags = '#rejected'
+
+            message.append(pgettext('Ignore', '{}{}').format(msg, tags))
 
         return message
 
@@ -417,7 +428,11 @@ class Slave(Base):
                 message_owner_id = row[0]
             else:
                 message_owner_id = chat_id
-            msg.insert(0, pgettext('Verification message', 'What will we do with this message?'))
+            m = pgettext('Verification message', 'What will we do with this message?')
+            tags = ''
+            if self.settings.get('tag_polls'):
+                tags = ' #open'
+            msg.insert(0, pgettext('Ignore', '{}{}').format(m, tags))
             voting_keyboard = self.build_voting_keyboard(message_owner_id, message_id, chat_id)
 
         return '\n'.join(set_locale_recursive(msg, self.locale)), voting_keyboard

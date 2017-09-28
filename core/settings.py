@@ -31,6 +31,7 @@ DEFAULT_SLAVE_SETTINGS = {
     'start_web_preview': True,
     'msg_freq_limit': None,
     'allow_vote_switch': False,
+    'tag_polls': False,
 }
 
 supported_locales = sorted(get_supported_locales())
