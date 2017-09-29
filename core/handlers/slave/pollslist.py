@@ -11,7 +11,7 @@ from tobot.helpers import pgettext, npgettext
 def polls_list_command(bot, message):
     cur = yield bot.db.execute('SELECT original_chat_id, id FROM incoming_messages WHERE '
                                'is_voting_success = False AND is_voting_fail = False AND is_published = False AND '
-                               'bot_id = %s',
+                               'bot_id = %s ORDER BY created_at ASC',
                                (bot.bot_id,))
 
     pending = cur.fetchall()
