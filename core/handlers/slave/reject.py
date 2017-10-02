@@ -40,15 +40,14 @@ def plaintext_reject_handler(bot, message, chat_id, message_id):
             },
             'message_id': message_id
         }, 0, False)
-    try:
-        yield bot.send_message(pgettext('Message to user in case of rejection',
-                                        "Your post has been rejected. "
-                                        "Reason:\n> {reject_reason}").format(reject_reason=msg),
-                               chat_id=chat_id, reply_to_message_id=message_id)
-        yield bot.send_message(pgettext('Rejection delivery confirmation', 'Message sent and post rejected'),
-                               reply_to_message=message)
-    except Exception as e:
-        yield bot.send_message(pgettext('Rejection failed', 'Message sending failed: {reason}').format(reason=str(e)),
-                               reply_to_message=message)
-
-    return True
+        try:
+            yield bot.send_message(pgettext('Message to user in case of rejection',
+                                            "Your post has been rejected. "
+                                            "Reason:\n> {reject_reason}").format(reject_reason=msg),
+                                   chat_id=chat_id, reply_to_message_id=message_id)
+            yield bot.send_message(pgettext('Rejection delivery confirmation', 'Message sent and post rejected'),
+                                   reply_to_message=message)
+        except Exception as e:
+            yield bot.send_message(pgettext('Rejection failed', 'Message sending failed: {reason}').format(reason=str(e)),
+                                   reply_to_message=message)
+        return True
