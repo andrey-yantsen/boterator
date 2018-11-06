@@ -32,8 +32,8 @@ msgstr[1] ""
 
 #: core/handlers/slave/stats.py:102 loco:572f0e8214d7253d068b4575
 msgctxt "Votes count"
-msgid "{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})"
-msgid_plural "{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})"
+msgid "{votes_cnt} vote with {votes_yes_cnt} {thumb_up_sign} ({votes_percent}%)"
+msgid_plural "{votes_cnt} votes with {votes_yes_cnt} {thumb_up_sign} ({votes_percent}%)"
 msgstr[0] ""
 msgstr[1] ""
 

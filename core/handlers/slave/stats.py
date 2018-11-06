@@ -97,13 +97,16 @@ def stats_command(bot, message):
         """
 
     cur = yield bot.db.execute(query, (bot.bot_id, period_begin, period_end))
+    votes_cnt=format_number(row[0], bot.language)
+    votes_yes_cnt=format_number(row[1], bot.language)
 
     def format_top_votes(row):
-        return npgettext('Votes count', '{votes_cnt} vote (with {votes_yes_cnt} {thumb_up_sign})',
-                         '{votes_cnt} votes (with {votes_yes_cnt} {thumb_up_sign})',
-                         row[0]).format(votes_cnt=format_number(row[0], bot.language),
-                                        votes_yes_cnt=format_number(row[1], bot.language),
-                                        thumb_up_sign=Emoji.THUMBS_UP_SIGN)
+        return npgettext('Votes count', '{votes_cnt} vote with {votes_yes_cnt} {thumb_up_sign} ({votes_percent}%)',
+                         '{votes_cnt} votes with {votes_yes_cnt} {thumb_up_sign} ({votes_percent}%)',
+                         row[0]).format(votes_cnt,
+                                        votes_yes_cnt,
+                                        thumb_up_sign=Emoji.THUMBS_UP_SIGN,
+                                        votes_percent=100 * votes_yes_cnt // votes_cnt)
 
     lines += format_top(cur.fetchall(), format_top_votes)
     lines.append('')
