@@ -5,7 +5,7 @@ from babel.numbers import format_number
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsModerator
+from core.subordinate_command_filters import CommandFilterIsModerator
 from tobot.helpers import pgettext, Emoji, npgettext, report_botan
 from tobot.helpers.lazy_gettext import set_locale_recursive
 
@@ -34,7 +34,7 @@ def stats_command(bot, message):
 
         return ret
 
-    report_botan(message, 'slave_stats')
+    report_botan(message, 'subordinate_stats')
 
     period = message['text'][6:].strip()
     if period:

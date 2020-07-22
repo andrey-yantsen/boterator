@@ -10,36 +10,36 @@ from tobot import Base
 from tobot.stages import PersistentStages
 from core.handlers.cancel import cancel_command
 from core.handlers.emoji_end import emoji_end
-from core.handlers.slave.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
-from core.handlers.slave.check_freq import check_freq
-from core.handlers.slave.help import help_command
-from core.handlers.slave.migrate_to_supergroup import migrate, migrate_to_supergroup_msg
-from core.handlers.slave.pollslist import polls_list_command
-from core.handlers.slave.reject import reject_command, plaintext_reject_handler
-from core.handlers.slave.reply import reply_command, plaintext_reply_handler
-from core.handlers.slave.setallowed import change_allowed_command, plaintext_contenttype_handler
-from core.handlers.slave.setdelay import setdelay_command, plaintext_delay_handler
-from core.handlers.slave.setfreqlimit import setfreqlimit_command, plaintext_freqlimit_handler
-from core.handlers.slave.setlanguage import setlanguage, setlanguage_plaintext
-from core.handlers.slave.chat import new_chat, left_chat
-from core.handlers.slave.post import plaintext_post_handler, multimedia_post_handler, cbq_message_review, \
+from core.handlers.subordinate.ban import ban_command, plaintext_ban_handler, unban_command, ban_list_command
+from core.handlers.subordinate.check_freq import check_freq
+from core.handlers.subordinate.help import help_command
+from core.handlers.subordinate.migrate_to_supergroup import migrate, migrate_to_supergroup_msg
+from core.handlers.subordinate.pollslist import polls_list_command
+from core.handlers.subordinate.reject import reject_command, plaintext_reject_handler
+from core.handlers.subordinate.reply import reply_command, plaintext_reply_handler
+from core.handlers.subordinate.setallowed import change_allowed_command, plaintext_contenttype_handler
+from core.handlers.subordinate.setdelay import setdelay_command, plaintext_delay_handler
+from core.handlers.subordinate.setfreqlimit import setfreqlimit_command, plaintext_freqlimit_handler
+from core.handlers.subordinate.setlanguage import setlanguage, setlanguage_plaintext
+from core.handlers.subordinate.chat import new_chat, left_chat
+from core.handlers.subordinate.post import plaintext_post_handler, multimedia_post_handler, cbq_message_review, \
     cbq_cancel_publishing
-from core.handlers.slave.setstartmessage import plaintext_startmessage_handler
-from core.handlers.slave.setstartmessage import setstartmessage_command
-from core.handlers.slave.settextlimits import plaintext_textlimits_handler, settextlimits_command
-from core.handlers.slave.settimeout import plaintext_timeout_handler
-from core.handlers.slave.settimeout import settimeout_command
-from core.handlers.slave.setvotes import plaintext_votes_handler
-from core.handlers.slave.setvotes import setvotes_command
-from core.handlers.slave.start import start_command
-from core.handlers.slave.stats import stats_command
-from core.handlers.slave.toggle_power import togglepower_command
-from core.handlers.slave.toggle_selfvote import toggleselfvote_command
-from core.handlers.slave.toggle_start_web_preview import toggle_start_web_preview_command
-from core.handlers.slave.toggle_tag_polls import toggletagpolls_command
-from core.handlers.slave.toggle_vote import togglevote_command
-from core.handlers.slave.toggle_vote_switch import togglevoteswitch_command
-from core.handlers.slave.vote import vote_new, vote_old
+from core.handlers.subordinate.setstartmessage import plaintext_startmessage_handler
+from core.handlers.subordinate.setstartmessage import setstartmessage_command
+from core.handlers.subordinate.settextlimits import plaintext_textlimits_handler, settextlimits_command
+from core.handlers.subordinate.settimeout import plaintext_timeout_handler
+from core.handlers.subordinate.settimeout import settimeout_command
+from core.handlers.subordinate.setvotes import plaintext_votes_handler
+from core.handlers.subordinate.setvotes import setvotes_command
+from core.handlers.subordinate.start import start_command
+from core.handlers.subordinate.stats import stats_command
+from core.handlers.subordinate.toggle_power import togglepower_command
+from core.handlers.subordinate.toggle_selfvote import toggleselfvote_command
+from core.handlers.subordinate.toggle_start_web_preview import toggle_start_web_preview_command
+from core.handlers.subordinate.toggle_tag_polls import toggletagpolls_command
+from core.handlers.subordinate.toggle_vote import togglevote_command
+from core.handlers.subordinate.toggle_vote_switch import togglevoteswitch_command
+from core.handlers.subordinate.vote import vote_new, vote_old
 from core.handlers.unknown_command import unknown_command
 from core.handlers.validate_user import validate_user
 from core.settings import DEFAULT_SLAVE_SETTINGS
@@ -48,7 +48,7 @@ from tobot.helpers.lazy_gettext import set_locale_recursive
 from tobot.telegram import InlineKeyboardMarkup, InlineKeyboardButton, ApiError
 
 
-class Slave(Base):
+class Subordinate(Base):
     def __init__(self, token, db, **kwargs):
         bot_settings = kwargs.pop('settings', {})
         if 'hello' in bot_settings:
@@ -188,7 +188,7 @@ class Slave(Base):
 
     @coroutine
     def publish_message(self, message, moderation_message_id):
-        report_botan(message, 'slave_publish')
+        report_botan(message, 'subordinate_publish')
         try:
             conn = yield self.db.getconn()
             with self.db.manage(conn):
@@ -229,7 +229,7 @@ class Slave(Base):
         for message, yes_votes in cur.fetchall():
             if yes_votes is None:
                 yes_votes = 0
-            report_botan(message, 'slave_verification_failed')
+            report_botan(message, 'subordinate_verification_failed')
             try:
                 yield self.decline_message(message, yes_votes)
             except:

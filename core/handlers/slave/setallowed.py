@@ -4,7 +4,7 @@ from math import floor
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import Emoji, pgettext, report_botan
 from tobot.telegram import ReplyKeyboardMarkup, KeyboardButton
 
@@ -45,7 +45,7 @@ def build_contenttype_keyboard(bot):
 @CommandFilterTextCmd('/setallowed')
 @CommandFilterIsPowerfulUser()
 def change_allowed_command(bot, message):
-    report_botan(message, 'slave_change_allowed_cmd')
+    report_botan(message, 'subordinate_change_allowed_cmd')
     yield bot.send_message(pgettext('/changeallowed response', 'You can see current status on keyboard, just click on '
                                                                'content type to change it\'s status'),
                            reply_to_message=message, reply_markup=build_contenttype_keyboard(bot))
@@ -81,7 +81,7 @@ def plaintext_contenttype_handler(bot, message):
 
         action_text = 'enable' if action_type else 'disable'
 
-        report_botan(message, 'slave_content_' + content_type_raw + '_' + action_text)
+        report_botan(message, 'subordinate_content_' + content_type_raw + '_' + action_text)
 
         msg = content_type_raw[0].upper() + content_type_raw[1:] + 's ' + action_text + 'd'
 

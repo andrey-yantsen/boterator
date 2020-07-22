@@ -9,7 +9,7 @@ from tornado.ioloop import IOLoop
 from tornado.options import define, options, parse_command_line
 from os import environ
 
-from core.slave_holder import SlaveHolder
+from core.subordinate_holder import SubordinateHolder
 
 
 if __name__ == '__main__':
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     if options.debug:
         autoreload.start()
 
-    sh = SlaveHolder(db, Burlesque(options.burlesque))
+    sh = SubordinateHolder(db, Burlesque(options.burlesque))
     try:
         ioloop.run_sync(sh.start)
     except Exception as e:

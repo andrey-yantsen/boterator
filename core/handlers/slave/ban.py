@@ -2,7 +2,7 @@ from tornado.gen import coroutine
 
 from tobot import CommandFilterTextRegexp, CommandFilterTextCmd, CommandFilterTextAny, \
     CommandFilterCallbackQueryRegexp
-from core.slave_command_filters import CommandFilterIsModerationChat
+from core.subordinate_command_filters import CommandFilterIsModerationChat
 from tobot.helpers import report_botan, pgettext
 from tobot.telegram import ForceReply
 
@@ -11,7 +11,7 @@ from tobot.telegram import ForceReply
 @CommandFilterIsModerationChat()
 @CommandFilterCallbackQueryRegexp(r'ban_(?P<user_id>\d+)(?:_(?P<chat_id>\d+)_(?P<message_id>\d+))?')
 def ban_command(bot, callback_query, user_id, chat_id=None, message_id=None):
-    report_botan(callback_query, 'slave_ban_cmd')
+    report_botan(callback_query, 'subordinate_ban_cmd')
 
     if int(user_id) == callback_query['from']['id']:
         yield bot.answer_callback_query(callback_query['id'],
@@ -61,12 +61,12 @@ def plaintext_ban_handler(bot, message, user_id):
 
     msg = message['text'].strip()
     if len(msg) < 5:
-        report_botan(message, 'slave_ban_short_msg')
+        report_botan(message, 'subordinate_ban_short_msg')
         yield bot.send_message(pgettext('Ban reason too short', 'Reason is too short (5 symbols required), '
                                                                 'try again or send /cancel'),
                                reply_to_message=message, reply_markup=ForceReply(True))
     else:
-        report_botan(message, 'slave_ban_success')
+        report_botan(message, 'subordinate_ban_success')
         yield bot.send_chat_action(chat_id, bot.CHAT_ACTION_TYPING)
         try:
             yield bot.send_message(pgettext('Message to user in case of ban',
@@ -95,7 +95,7 @@ def plaintext_ban_handler(bot, message, user_id):
 @CommandFilterIsModerationChat()
 @CommandFilterTextRegexp(r'/unban_(?P<user_id>\d+)')
 def unban_command(bot, message, user_id):
-    report_botan(message, 'slave_unban_cmd')
+    report_botan(message, 'subordinate_unban_cmd')
     yield bot.db.execute('UPDATE users SET banned_at = NULL, ban_reason = NULL WHERE user_id = %s AND '
                          'bot_id = %s', (user_id, bot.id))
     yield bot.send_message(pgettext('Unban confirmation', 'User unbanned'), reply_to_message=message)
@@ -111,7 +111,7 @@ def unban_command(bot, message, user_id):
 @CommandFilterTextCmd('/banlist')
 def ban_list_command(bot, message):
     chat_id = message['chat']['id']
-    report_botan(message, 'slave_ban_list_cmd')
+    report_botan(message, 'subordinate_ban_list_cmd')
     yield bot.send_chat_action(chat_id, bot.CHAT_ACTION_TYPING)
     cur = yield bot.db.execute('SELECT user_id, first_name, last_name, username, banned_at, ban_reason '
                                'FROM users WHERE bot_id = %s AND '

@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import report_botan, pgettext
 
 
@@ -9,7 +9,7 @@ from tobot.helpers import report_botan, pgettext
 @CommandFilterTextCmd('/toggletagpolls')
 @CommandFilterIsPowerfulUser()
 def toggletagpolls_command(bot, message):
-    report_botan(message, 'slave_toggletagpolls_cmd')
+    report_botan(message, 'subordinate_toggletagpolls_cmd')
     if bot.settings.get('tag_polls'):
         yield bot.update_settings(message['from']['id'], tag_polls=False)
         yield bot.send_message(pgettext('Polls tagging disabled', 'State tags shall not pass.'),

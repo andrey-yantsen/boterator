@@ -39,12 +39,12 @@ def plaintext_post_handler(bot, message):
     if mes.strip() != '':
         if bot.settings['text_min'] <= len(mes) <= bot.settings['text_max']:
             yield _request_message_confirmation(bot, message)
-            report_botan(message, 'slave_message')
+            report_botan(message, 'subordinate_message')
             return {
                 'sent_message': message
             }
         else:
-            report_botan(message, 'slave_message_invalid')
+            report_botan(message, 'subordinate_message_invalid')
             yield bot.send_message(pgettext('Incorrect text message received', 'Sorry, but we can proceed only '
                                                                                'messages with length between '
                                                                                '{min_msg_length} and {max_msg_length} '
@@ -53,7 +53,7 @@ def plaintext_post_handler(bot, message):
                                            max_msg_length=format_number(bot.settings['text_max'], bot.language)),
                                    reply_to_message=message)
     else:
-        report_botan(message, 'slave_message_empty')
+        report_botan(message, 'subordinate_message_empty')
         yield bot.send_message(pgettext('User sent empty message', 'Seriously??? 8===3'),
                                reply_to_message=message)
 
@@ -93,7 +93,7 @@ def multimedia_post_handler(bot, message):
                                         'Accepting gifs is disabled'), reply_to_message=message)
         return
 
-    report_botan(message, 'slave_message_multimedia')
+    report_botan(message, 'subordinate_message_multimedia')
     yield _request_message_confirmation(bot, message)
     return {
         'sent_message': message
@@ -105,7 +105,7 @@ def multimedia_post_handler(bot, message):
 def cbq_message_review(bot, callback_query, sent_message):
     user_id = callback_query['from']['id']
 
-    report_botan(callback_query, 'slave_confirm')
+    report_botan(callback_query, 'subordinate_confirm')
     yield bot.db.execute("""
     INSERT INTO incoming_messages (id, original_chat_id, owner_id, bot_id, created_at, message)
     VALUES (%s, %s, %s, %s, NOW(), %s)

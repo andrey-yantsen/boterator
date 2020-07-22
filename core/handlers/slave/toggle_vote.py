@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import report_botan, pgettext
 
 
@@ -9,7 +9,7 @@ from tobot.helpers import report_botan, pgettext
 @CommandFilterTextCmd('/togglevote')
 @CommandFilterIsPowerfulUser()
 def togglevote_command(bot, message):
-    report_botan(message, 'slave_togglevote_cmd')
+    report_botan(message, 'subordinate_togglevote_cmd')
     if bot.settings.get('public_vote'):
         yield bot.update_settings(message['from']['id'], public_vote=False)
         yield bot.send_message(pgettext('Vote status displaying disabled', 'From now other chat users WILL NOT see '

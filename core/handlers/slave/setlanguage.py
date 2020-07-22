@@ -6,7 +6,7 @@ from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd, CommandFilterTextAny
 from core.settings import LANGUAGE_LIST
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import Emoji, pgettext
 from tobot.telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardHide
 

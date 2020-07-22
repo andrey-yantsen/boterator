@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import report_botan, pgettext
 
 
@@ -9,7 +9,7 @@ from tobot.helpers import report_botan, pgettext
 @CommandFilterTextCmd('/togglepower')
 @CommandFilterIsPowerfulUser()
 def togglepower_command(bot, message):
-    report_botan(message, 'slave_togglepower_cmd')
+    report_botan(message, 'subordinate_togglepower_cmd')
     if bot.settings.get('power'):
         yield bot.update_settings(message['from']['id'], power=False)
         yield bot.send_message(pgettext('Power mode disabled', 'From now other chat users can not modify bot settings'),

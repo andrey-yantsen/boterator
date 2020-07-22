@@ -22,16 +22,16 @@ def reg_command(bot, message):
     yield bot.send_message(pgettext('/reg response', 'Ok, please tell me the token, which you\'ve received from '
                                                      '@BotFather'),
                            reply_to_message=message)
-    slave_settings = deepcopy(DEFAULT_SLAVE_SETTINGS)
-    slave_settings['locale'] = bot.get_settings(message['from']['id']).get('locale', 'en_US')
-    locale = tornado.locale.get(slave_settings['locale'])
-    slave_settings['hello'].locale = locale
-    slave_settings['hello'] = str(slave_settings['hello'])
-    slave_settings['start'].locale = locale
-    slave_settings['start'] = str(slave_settings['start'])
+    subordinate_settings = deepcopy(DEFAULT_SLAVE_SETTINGS)
+    subordinate_settings['locale'] = bot.get_settings(message['from']['id']).get('locale', 'en_US')
+    locale = tornado.locale.get(subordinate_settings['locale'])
+    subordinate_settings['hello'].locale = locale
+    subordinate_settings['hello'] = str(subordinate_settings['hello'])
+    subordinate_settings['start'].locale = locale
+    subordinate_settings['start'] = str(subordinate_settings['start'])
 
     return {
-        'settings': slave_settings,
+        'settings': subordinate_settings,
         'owner_id': message['from']['id'],
     }
 
@@ -111,7 +111,7 @@ def plaintext_token(bot, message, **kwargs):
         elif not chat['title']:
             chat['title'] = '<no title>'
 
-        msg = pgettext('Slave attached to moderator`s channel',
+        msg = pgettext('Subordinate attached to moderator`s channel',
                        "Ok, I'll be sending moderation requests to {chat_type} {chat_title}\n"
                        "Now you need to add your bot (@{bot_username_escaped}) to a channel as administrator and tell "
                        "me the channel name (e.g. @mobilenewsru)\n"
@@ -129,7 +129,7 @@ def plaintext_token(bot, message, **kwargs):
         except:
             yield bot.send_message(msg, reply_to_message=message)
 
-        report_botan(message, 'boterator_slave_attached_to_channel')
+        report_botan(message, 'boterator_subordinate_attached_to_channel')
 
         return {
             'id': new_bot_info['id'],
