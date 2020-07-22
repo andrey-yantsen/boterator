@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterCallbackQueryRegexp, CommandFilterTextRegexp
-from core.slave_command_filters import CommandFilterIsModerationChat
+from core.subordinate_command_filters import CommandFilterIsModerationChat
 from tobot.helpers import pgettext, report_botan
 
 
@@ -98,7 +98,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
                                            chat_id=original_chat_id, reply_to_message_id=message_id)
                 except:
                     pass
-                report_botan(row[1], 'slave_verification_success')
+                report_botan(row[1], 'subordinate_verification_success')
         elif current_total - current_yes >= bot.settings.get('votes', 5):
             cur = yield bot.db.execute('SELECT is_voting_fail, is_voting_success, message FROM incoming_messages '
                                        'WHERE id = %s AND original_chat_id = %s', (message_id, original_chat_id))
@@ -126,7 +126,7 @@ def __vote(bot, message_id, original_chat_id, yes: bool, callback_query=None, me
 @CommandFilterIsModerationChat()
 @CommandFilterCallbackQueryRegexp(r'vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_(?P<vote_type>yes|no)')
 def vote_new(bot, callback_query, original_chat_id, message_id, vote_type):
-    report_botan(callback_query, 'slave_vote_yes')
+    report_botan(callback_query, 'subordinate_vote_yes')
     yield __vote(bot, message_id, original_chat_id, vote_type == 'yes', callback_query=callback_query)
 
 
@@ -134,5 +134,5 @@ def vote_new(bot, callback_query, original_chat_id, message_id, vote_type):
 @CommandFilterIsModerationChat()
 @CommandFilterTextRegexp(r'/vote_(?P<original_chat_id>\d+)_(?P<message_id>\d+)_(?P<vote_type>yes|no)')
 def vote_old(bot, message, original_chat_id, message_id, vote_type):
-    report_botan(message, 'slave_vote_yes')
+    report_botan(message, 'subordinate_vote_yes')
     yield __vote(bot, message_id, original_chat_id, vote_type == 'yes', message=message)

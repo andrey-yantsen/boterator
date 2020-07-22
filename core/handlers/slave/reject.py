@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextAny, CommandFilterCallbackQueryRegexp
-from core.slave_command_filters import CommandFilterIsModerationChat
+from core.subordinate_command_filters import CommandFilterIsModerationChat
 from tobot.helpers import pgettext, report_botan
 from tobot.telegram import ForceReply
 
@@ -10,7 +10,7 @@ from tobot.telegram import ForceReply
 @CommandFilterIsModerationChat()
 @CommandFilterCallbackQueryRegexp(r'reject_(?P<chat_id>\d+)_(?P<message_id>\d+)')
 def reject_command(bot, callback_query, chat_id, message_id):
-    report_botan(callback_query, 'slave_reject_cmd')
+    report_botan(callback_query, 'subordinate_reject_cmd')
     msg = pgettext('Reject message request', 'Please enter a reject reason, @{moderator_username}?') \
         .format(moderator_username=callback_query['from'].get('username', callback_query['from']['id']))
     fwd_id = yield bot.get_message_fwd_id(chat_id, message_id)
@@ -28,7 +28,7 @@ def reject_command(bot, callback_query, chat_id, message_id):
 def plaintext_reject_handler(bot, message, chat_id, message_id):
     msg = message['text'].strip()
     if len(msg) < 10:
-        report_botan(message, 'slave_reply_short_msg')
+        report_botan(message, 'subordinate_reply_short_msg')
         yield bot.send_message(
             pgettext('Reject message is too short', 'Reject message is too short (10 symbols required), try '
                                                     'again or send /cancel'),

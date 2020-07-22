@@ -10,16 +10,16 @@ from tornado.locks import Event
 
 from tobot import CommandFilterTextCmd, CommandFilterNewChatMember, CommandFilterGroupChatCreated, \
     CommandFilterSupergroupChatCreated
-from .queues import slaveholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
+from .queues import subordinateholder_queues, QUEUE_SLAVEHOLDER_NEW_BOT, QUEUE_SLAVEHOLDER_GET_BOT_INFO, \
     QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP, QUEUE_BOTERATOR_BOT_REVOKE
 from tobot.telegram import Api, ApiError
-from .slave import Slave
+from .subordinate import Subordinate
 
 
-class SlaveHolder:
+class SubordinateHolder:
     def __init__(self, db, queue):
         self.db = db
-        self.slaves = {}
+        self.subordinates = {}
         self._finished = Event()
         self._finished.set()
         self.queue = queue
@@ -27,7 +27,7 @@ class SlaveHolder:
     @coroutine
     def start(self):
         self._finished.clear()
-        logging.debug('Starting slave-holder')
+        logging.debug('Starting subordinate-holder')
 
         cur = yield self.db.execute('SELECT * FROM registered_bots WHERE active = TRUE')
         columns = [i[0] for i in cur.description]
@@ -40,12 +40,12 @@ class SlaveHolder:
             row = dict(zip(columns, row))
             self._start_bot(**row)
 
-        listen_future = self.queue.listen(slaveholder_queues(), self.queue_handler)
+        listen_future = self.queue.listen(subordinateholder_queues(), self.queue_handler)
 
         try:
             yield self._finished.wait()
         finally:
-            self.queue.stop(slaveholder_queues())
+            self.queue.stop(subordinateholder_queues())
             yield listen_future
 
     def _start_bot(self, **kwargs):
@@ -68,20 +68,20 @@ class SlaveHolder:
                 else:
                     IOLoop.current().add_timeout(timedelta(seconds=5), self._start_bot, **kwargs)
 
-            del self.slaves[kwargs['id']]
+            del self.subordinates[kwargs['id']]
 
-        slave = Slave(db=self.db, **kwargs)
-        slave_listen_f = slave.start()
-        self.slaves[kwargs['id']] = {
-            'future': slave_listen_f,
-            'instance': slave,
+        subordinate = Subordinate(db=self.db, **kwargs)
+        subordinate_listen_f = subordinate.start()
+        self.subordinates[kwargs['id']] = {
+            'future': subordinate_listen_f,
+            'instance': subordinate,
         }
-        IOLoop.current().add_future(slave_listen_f, listen_done)
+        IOLoop.current().add_future(subordinate_listen_f, listen_done)
 
     def stop(self):
-        logging.info('Stopping slave-holder')
-        for slave in self.slaves.values():
-            slave['instance'].stop()
+        logging.info('Stopping subordinate-holder')
+        for subordinate in self.subordinates.values():
+            subordinate['instance'].stop()
 
         self._finished.set()
 
@@ -94,7 +94,7 @@ class SlaveHolder:
         elif queue_name == QUEUE_SLAVEHOLDER_GET_BOT_INFO:
             bot = Api(body['token'], lambda x: None)
 
-            if bot.bot_id in self.slaves:
+            if bot.bot_id in self.subordinates:
                 logging.debug('[bot#%s] Already registered', bot.bot_id)
                 yield self.queue.send(body['reply_to'], dumps(dict(error='duplicate')))
 
@@ -112,7 +112,7 @@ class SlaveHolder:
             timeout_f = with_timeout(timedelta(seconds=body['timeout']), update_with_command_f)
 
             @coroutine
-            def slave_update_handler(update):
+            def subordinate_update_handler(update):
                 logging.debug('[bot#%s] Received update', bot.bot_id)
                 if attach_cmd_filter.test(**update):
                     logging.debug('[bot#%s] /attach', bot.bot_id)
@@ -126,7 +126,7 @@ class SlaveHolder:
                 else:
                     logging.debug('[bot#%s] unsupported update: %s', dumps(update, indent=2))
 
-            bot = Api(body['token'], slave_update_handler)
+            bot = Api(body['token'], subordinate_update_handler)
 
             @coroutine
             def handle_finish(f):

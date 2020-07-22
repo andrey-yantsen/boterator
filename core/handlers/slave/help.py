@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import report_botan, pgettext, npgettext, Emoji
 
 
@@ -9,7 +9,7 @@ from tobot.helpers import report_botan, pgettext, npgettext, Emoji
 @CommandFilterIsPowerfulUser()
 @CommandFilterTextCmd('/help')
 def help_command(bot, message):
-    report_botan(message, 'slave_help')
+    report_botan(message, 'subordinate_help')
     delay_str = npgettext('Delay between channel messages', '{delay} minute', '{delay} minutes', bot.settings['delay'])
     timeout_str = npgettext('Voting timeout', '{timeout} hour', '{timeout} hours', bot.settings['vote_timeout'])
     power_state = 'on' if bot.settings.get('power') else 'off'

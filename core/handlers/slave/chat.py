@@ -8,7 +8,7 @@ from tobot.helpers import report_botan
 @CommandFilterNewChatMemberAny()
 def new_chat(bot, message):
     if message['new_chat_member']['id'] == bot.bot_id and message['chat']['id'] == bot.moderator_chat_id:
-        report_botan(message, 'slave_renew_chat')
+        report_botan(message, 'subordinate_renew_chat')
         yield bot.db.execute('UPDATE registered_bots SET active = TRUE WHERE id = %s', (bot.bot_id,))
     else:
         return False
@@ -18,7 +18,7 @@ def new_chat(bot, message):
 @CommandFilterLeftChatMemberAny()
 def left_chat(bot, message):
     if message['left_chat_member']['id'] == bot.bot_id and message['chat']['id'] == bot.moderator_chat_id:
-        report_botan(message, 'slave_left_chat')
+        report_botan(message, 'subordinate_left_chat')
         yield bot.db.execute('UPDATE registered_bots SET active = FALSE WHERE id = %s', (bot.bot_id,))
     else:
         return False

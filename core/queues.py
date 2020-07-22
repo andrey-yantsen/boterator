@@ -4,10 +4,10 @@ from tornado.gen import coroutine, with_timeout
 from ujson import dumps, loads
 
 QUEUE_BOTERATOR_BOT_REVOKE = 'boterator_bot_revoke'
-QUEUE_SLAVEHOLDER_NEW_BOT = 'slaveholder_new_bot'
-QUEUE_SLAVEHOLDER_GET_BOT_INFO = 'slaveholder_get_bot_info'
-QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP = 'slaveholder_get_moderation_group'
-QUEUE_SLAVEHOLDER_STOP_BOT = 'slaveholder_stop_bot'
+QUEUE_SLAVEHOLDER_NEW_BOT = 'subordinateholder_new_bot'
+QUEUE_SLAVEHOLDER_GET_BOT_INFO = 'subordinateholder_get_bot_info'
+QUEUE_SLAVEHOLDER_GET_MODERATION_GROUP = 'subordinateholder_get_moderation_group'
+QUEUE_SLAVEHOLDER_STOP_BOT = 'subordinateholder_stop_bot'
 
 
 def boterator_queues():
@@ -15,7 +15,7 @@ def boterator_queues():
             if queue_variable.startswith('QUEUE_BOTERATOR_')]
 
 
-def slaveholder_queues():
+def subordinateholder_queues():
     return [queue_name for queue_variable, queue_name in globals().items()
             if queue_variable.startswith('QUEUE_SLAVEHOLDER_')]
 

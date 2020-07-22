@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsModerationChat
+from core.subordinate_command_filters import CommandFilterIsModerationChat
 from tobot.helpers import pgettext, npgettext
 
 

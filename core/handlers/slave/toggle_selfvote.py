@@ -1,7 +1,7 @@
 from tornado.gen import coroutine
 
 from tobot import CommandFilterTextCmd
-from core.slave_command_filters import CommandFilterIsPowerfulUser
+from core.subordinate_command_filters import CommandFilterIsPowerfulUser
 from tobot.helpers import report_botan, pgettext
 
 
@@ -9,7 +9,7 @@ from tobot.helpers import report_botan, pgettext
 @CommandFilterTextCmd('/toggleselfvote')
 @CommandFilterIsPowerfulUser()
 def toggleselfvote_command(bot, message):
-    report_botan(message, 'slave_toggleselfvote_cmd')
+    report_botan(message, 'subordinate_toggleselfvote_cmd')
     if bot.settings.get('selfvote'):
         yield bot.update_settings(message['from']['id'], selfvote=False)
         yield bot.send_message(pgettext('Self-vote disabled', 'From now moderators WILL NOT be able to vote for own '
